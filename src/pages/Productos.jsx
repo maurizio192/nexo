@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   Button,
   Paper,
@@ -9,14 +11,15 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-
 function Productos() {
-  const productos = [
-    { id: 1, nombre: "Harina 00", unidad: "kg", precio: "0,95 €", stock: 25 },
-    { id: 2, nombre: "Mozzarella", unidad: "kg", precio: "7,80 €", stock: 12 },
-    { id: 3, nombre: "Parmigiano", unidad: "kg", precio: "14,50 €", stock: 6 },
-  ];
+  const [productos, setProductos] = useState([]);
 
+useEffect(() => {
+  fetch("http://localhost:3001/prodotti")
+    .then((res) => res.json())
+    .then((data) => setProductos(data))
+    .catch((err) => console.error(err));
+}, []);
   return (
     <>
       <Typography variant="h4" gutterBottom>
