@@ -29,7 +29,6 @@ app.get("/", (req, res) => {
     message: "NEXO Backend funzionante 🚀",
   });
 });
-
 app.get("/prodotti", async (req, res) => {
   try {
     const result = await pool.query(
@@ -37,10 +36,29 @@ app.get("/prodotti", async (req, res) => {
     );
 
     res.json(result.rows);
+
   } catch (err) {
     console.error(err);
+
     res.status(500).json({
       errore: "Errore del database",
+    });
+  }
+});
+
+app.get("/producciones", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM producciones ORDER BY fecha DESC"
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore database",
     });
   }
 });
