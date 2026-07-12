@@ -20,11 +20,12 @@ function ProductoForm({
   proveedor,
   setProveedor,
   guardarProducto,
+  modoEdicion,
 }) {
   return (
     <Paper sx={{ p: 3, mt: 3 }}>
       <Typography variant="h5" gutterBottom>
-        ➕ Nuevo Producto
+        {modoEdicion ? "✏️ Editar Producto" : "➕ Nuevo Producto"}
       </Typography>
 
       <TextField
@@ -45,12 +46,10 @@ function ProductoForm({
       >
         <MenuItem value="kg">kg</MenuItem>
         <MenuItem value="g">g</MenuItem>
-        <MenuItem value="l">l</MenuItem>
+        <MenuItem value="L">L</MenuItem>
         <MenuItem value="ml">ml</MenuItem>
-        <MenuItem value="unidad">Unidad</MenuItem>
-        <MenuItem value="caja">Caja</MenuItem>
-        <MenuItem value="botella">Botella</MenuItem>
-        <MenuItem value="lata">Lata</MenuItem>
+        <MenuItem value="ud">ud</MenuItem>
+        <MenuItem value="caja">caja</MenuItem>
       </TextField>
 
       <TextField
@@ -89,10 +88,11 @@ function ProductoForm({
 
       <Button
         variant="contained"
-        sx={{ mt: 2 }}
+        fullWidth
+        sx={{ mt: 3 }}
         onClick={guardarProducto}
       >
-        💾 Guardar Producto
+        {modoEdicion ? "✏️ Actualizar Producto" : "💾 Guardar Producto"}
       </Button>
     </Paper>
   );

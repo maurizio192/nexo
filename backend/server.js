@@ -39,18 +39,46 @@ app.get("/prodotti", async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error(err);
-
     res.status(500).json({
       errore: "Errore del database",
     });
   }
 });
-app.post("/test", (req, res) => {
-  res.json({ ok: true });
+app.get("/categorias", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM categorias ORDER BY nombre"
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore caricamento categorie",
+    });
+  }
+});app.get("/proveedores", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM proveedores ORDER BY nombre"
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore caricamento proveedores",
+    });
+  }
 });
 app.post("/prodotti", async (req, res) => {
   try {
     const {
+      codigo,
       nombre,
       unidad,
       precio,
@@ -61,13 +89,22 @@ app.post("/prodotti", async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO productos
-      (nombre, unidad, precio, stock, categoria, proveedor)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      (codigo, nombre, unidad, precio, stock, categoria, proveedor)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING *`,
-      [nombre, unidad, precio, stock, categoria, proveedor]
+      [
+        codigo,
+        nombre,
+        unidad,
+        precio,
+        stock,
+        categoria,
+        proveedor,
+      ]
     );
 
     res.status(201).json(result.rows[0]);
+
   } catch (err) {
     console.error(err);
 
@@ -76,9 +113,80 @@ app.post("/prodotti", async (req, res) => {
     });
   }
 });
-console.log("✅ Ruta POST /prodotti registrata");
+
+app.put("/prodotti/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      codigo,
+      nombre,
+      unidad,
+      precio,
+      stock,
+      categoria,
+      proveedor,
+    } = req.body;
+
+    const result = await pool.query(
+      `UPDATE productos
+       SET codigo = $1,
+           nombre = $2,
+           unidad = $3,
+           precio = $4,
+           stock = $5,
+           categoria = $6,
+           proveedor = $7
+       WHERE id = $8
+       RETURNING *`,
+      [
+        codigo,
+        nombre,
+        unidad,
+        precio,
+        stock,
+        categoria,
+        proveedor,
+        id,
+      ]
+    );
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore aggiornamento prodotto",
+    });
+  }
+});
+
+app.delete("/prodotti/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await pool.query(
+      "DELETE FROM productos WHERE id = $1",
+      [id]
+    );
+
+    res.json({
+      ok: true,
+      mensaje: "Producto eliminado correctamente",
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore durante l'eliminazione",
+    });
+  }
+});
+
 const PORT = 3001;
 
 app.listen(PORT, () => {
-  console.log(`Server avviato su http://localhost:${PORT}`);
+  console.log(`🚀 Server avviato su http://localhost:${PORT}`);
 });

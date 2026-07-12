@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import ProductoForm from "../components/ProductoForm";
 
@@ -20,19 +21,25 @@ function Productos() {
   const [productos, setProductos] = useState([]);
 
   const [nombre, setNombre] = useState("");
-  const [unidad, setUnidad] = useState("");
+  const [unidad, setUnidad] =useState("");
   const [precio, setPrecio] = useState("");
   const [stock, setStock] = useState("");
   const [categoria, setCategoria] = useState("");
   const [proveedor, setProveedor] = useState("");
-const [editandoId, setEditandoId] = useState(null);
-const [modoEdicion, setModoEdicion] = useState(false);
+
+  const [editandoId, setEditandoId] = useState(null);
+  const [modoEdicion, setModoEdicion] = useState(false);
+
   useEffect(() => {
+    cargarProductos();
+  }, []);
+
+  const cargarProductos = () => {
     fetch("http://localhost:3001/prodotti")
       .then((res) => res.json())
       .then((data) => setProductos(data))
       .catch((err) => console.error(err));
-  }, []);
+  };
 
   const guardarProducto = async () => {
     if (
@@ -46,8 +53,14 @@ const [modoEdicion, setModoEdicion] = useState(false);
     }
 
     try {
-      const response = await fetch("http://localhost:3001/prodotti", {
-        method: "POST",
+      const url = modoEdicion
+        ? `http://localhost:3001/prodotti/${editandoId}`
+        : "http://localhost:3001/prodotti";
+
+      const method = modoEdicion ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -61,9 +74,13 @@ const [modoEdicion, setModoEdicion] = useState(false);
         }),
       });
 
-      const nuevoProducto = await response.json();
+      if (!response.ok) {
+        throw new Error("Errore durante il salvataggio");
+      }
 
-      setProductos((prev) => [...prev, nuevoProducto]);
+      await response.json();
+
+      cargarProductos();
 
       setNombre("");
       setUnidad("");
@@ -71,16 +88,48 @@ const [modoEdicion, setModoEdicion] = useState(false);
       setStock("");
       setCategoria("");
       setProveedor("");
+
+      setEditandoId(null);
+      setModoEdicion(false);
+
     } catch (err) {
       console.error(err);
+      alert("Errore nel salvataggio");
+    }
+  };
+
+  const eliminarProducto = async (id) => {
+    const confirmar = window.confirm(
+      "¿Seguro que quieres eliminar este producto?"
+    );
+
+    if (!confirmar) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/prodotti/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Errore durante l'eliminazione");
+      }
+
+      cargarProductos();
+
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo eliminar el producto.");
     }
   };
 
   return (
     <>
       <Typography variant="h4" gutterBottom>
-        📦 Productos
-      </Typography>
+  📦 Productos NUEVO
+</Typography>
 
       <ProductoForm
         nombre={nombre}
@@ -96,6 +145,7 @@ const [modoEdicion, setModoEdicion] = useState(false);
         proveedor={proveedor}
         setProveedor={setProveedor}
         guardarProducto={guardarProducto}
+        modoEdicion={modoEdicion}
       />
 
       <TableContainer component={Paper} sx={{ mt: 3 }}>
@@ -119,23 +169,31 @@ const [modoEdicion, setModoEdicion] = useState(false);
                 <TableCell>{producto.stock}</TableCell>
 
                 <TableCell>
-                  <IconButton color="primary">
-                    <IconButton
-  color="primary"
-  onClick={() => {
-    setEditandoId(producto.id);
-    setModoEdicion(true);
+                  <IconButton
+                    color="primary"
+                    onClick={() => {
+                      setEditandoId(producto.id);
+                      setModoEdicion(true);
 
-    setNombre(producto.nombre);
-    setUnidad(producto.unidad);
-    setPrecio(producto.precio);
-    setStock(producto.stock);
-    setCategoria(producto.categoria);
-    setProveedor(producto.proveedor);
-  }}
->
-  <EditIcon />
-</IconButton>
+                      setNombre(producto.nombre);
+                      setUnidad(producto.unidad);
+                      setPrecio(producto.precio);
+                      setStock(producto.stock);
+                      setCategoria(producto.categoria);
+                      setProveedor(producto.proveedor);
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+
+                  <IconButton
+                    color="error"
+                    onClick={() => {
+                   alert("CLICK");
+                   eliminarProducto(producto.id);
+                 }}
+                  >
+                    <DeleteIcon />
                   </IconButton>
                 </TableCell>
 
