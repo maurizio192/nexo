@@ -31,12 +31,33 @@ function Menu() {
           📦 Productos
         </Link>
       </p>
-
+<p>
+  <Link
+    to="/elaboraciones"
+    style={{ color: "white", textDecoration: "none" }}
+  >
+    📖 Elaboraciones
+  </Link>
+</p>
+      <p>
+        <Link
+          to="/producciones"
+          style={{ color: "white", textDecoration: "none" }}
+        >
+          👨‍🍳 Producciones
+        </Link>
+      </p>
+<p>
+  <Link
+    to="/sancho"
+    style={{ color: "white", textDecoration: "none" }}
+  >
+    🧠 Sancho
+  </Link>
+</p>
       <p>🚚 Proveedores</p>
       <p>📊 Stock</p>
-      <p>👨‍🍳 Producción</p>
     </div>
   );
 }
-
 export default Menu;

@@ -1,9 +1,10 @@
+const sanchoRoutes = require("./routes/sancho");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
-
+const motor = require("./motor");
 const app = express();
-
+const consumos = require("./motor/consumos");
 app.use(cors());
 app.use(express.json());
 
@@ -13,7 +14,9 @@ const pool = new Pool({
   database: "nexo",
   password: "Nexo2026!",
   port: 5432,
+
 });
+app.locals.pool = pool;
 
 pool.connect()
   .then(() => {
@@ -62,6 +65,22 @@ app.get("/producciones", async (req, res) => {
     });
   }
 });
+app.get("/elaboraciones", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM elaboraciones ORDER BY nombre"
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore caricamento elaboraciones",
+    });
+  }
+});
 app.get("/categorias", async (req, res) => {
   try {
     const result = await pool.query(
@@ -104,7 +123,40 @@ app.post("/prodotti", async (req, res) => {
       categoria,
       proveedor,
     } = req.body;
+app.post("/elaboraciones", async (req, res) => {
+  try {
+    const {
+      nombre,
+      categoria,
+      dias_conservacion,
+      tipo,
+      activa,
+    } = req.body;
 
+    const result = await pool.query(
+      `INSERT INTO elaboraciones
+      (nombre, categoria, dias_conservacion, tipo, activa)
+      VALUES ($1,$2,$3,$4,$5)
+      RETURNING *`,
+      [
+        nombre,
+        categoria,
+        dias_conservacion,
+        tipo,
+        activa,
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore salvataggio elaborazione",
+    });
+  }
+});
     const result = await pool.query(
       `INSERT INTO productos
       (codigo, nombre, unidad, precio, stock, categoria, proveedor)
@@ -202,9 +254,38 @@ app.delete("/prodotti/:id", async (req, res) => {
     });
   }
 });
+app.use("/sancho", sanchoRoutes);
+
+app.post("/consumir/:id", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+
+    await consumos.registrarConsumo(pool, id, 1);
+
+    await motor.iniciarMotor(pool);
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      errore: "Errore consumo"
+    });
+
+   }
+});
+
 
 const PORT = 3001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server avviato su http://localhost:${PORT}`);
+
+ motor.iniciarMotor(pool);
 });
