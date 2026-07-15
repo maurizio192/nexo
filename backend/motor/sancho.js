@@ -18,20 +18,19 @@ async function generarAvisos(pool) {
     `);
 
     stock.rows.forEach(p => {
+
         avisos.push({
             tipo: "stock",
             mensaje: `${p.nombre} → quedan ${p.stock_actual}`
         });
-    });
-// SUGERENCIAS DE COMPRA
-stock.rows.forEach(p => {
 
-    avisos.push({
-        tipo: "compra",
-        mensaje: `Comprar ${p.nombre}`
+        avisos.push({
+            tipo: "compra",
+            mensaje: `Comprar ${p.nombre}`
+        });
+
     });
 
-});
     // DÍA ACTUAL
     const dias = [
         "Domingo",
@@ -47,40 +46,28 @@ stock.rows.forEach(p => {
 
     console.log("HOY =", hoy);
 
-    // PRODUCCIÓN PROGRAMADA
+    // PRODUCCIONES DEL DÍA
     const prod = await pool.query(
-        `SELECT nombre, producir
-         FROM elaboraciones
-         WHERE dia_produccion = $1`,
+        `
+        SELECT nombre, producir
+        FROM elaboraciones
+        WHERE dia_produccion = $1
+        `,
         [hoy]
     );
 
     prod.rows.forEach(e => {
+
         avisos.push({
             tipo: "produccion",
-            mensaje: `${e.nombre} → producir ${e.producir}`
+            mensaje: `${e.nombre} → producir ${e.producir} bolsas`
         });
-    });
-// PRODUCCIONES DEL DÍA
 
-const prod = await pool.query(
-`
-SELECT nombre, producir
-FROM elaboraciones
-WHERE dia_produccion = $1
-`,
-[hoy]
-);
-
-prod.rows.forEach(e => {
-
-    avisos.push({
-        tipo: "produccion",
-        mensaje: `${e.nombre} → producir ${e.producir} bolsas`
     });
 
-});
     return {
+
+    saludo: `Buenos días. Hoy tienes ${avisos.filter(a => a.tipo === "stock").length} productos con stock crítico.`,
 
     avisos,
 
@@ -95,6 +82,7 @@ prod.rows.forEach(e => {
     }
 
 };
+
 }
 
 module.exports = {

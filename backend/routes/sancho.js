@@ -11,22 +11,20 @@ router.get("/", async (req, res) => {
 
         const pool = req.app.locals.pool;
 
-        const datos = await sancho.generarAvisos(pool);
+        if (!pool) {
+            throw new Error("Pool PostgreSQL no inicializado");
+        }
 
-res.json(datos);
+        const resultado = await sancho.generarAvisos(pool);
 
-        res.json({ avisos });
+        res.json(resultado);
 
     } catch (err) {
 
-        console.error("========== ERROR SANCHO ==========");
         console.error(err);
-        console.error(err.stack);
-        console.error("==================================");
 
         res.status(500).json({
-            error: err.message,
-            stack: err.stack
+            error: err.message
         });
 
     }
