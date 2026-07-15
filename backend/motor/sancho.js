@@ -65,23 +65,65 @@ async function generarAvisos(pool) {
 
     });
 
-    return {
+    // ==========================
+    // RECOMENDACIONES INTELIGENTES
+    // ==========================
 
-    saludo: `Buenos días. Hoy tienes ${avisos.filter(a => a.tipo === "stock").length} productos con stock crítico.`,
+    const recomendaciones = [];
 
-    avisos,
+    const stockCritico =
+        avisos.filter(a => a.tipo === "stock").length;
 
-    resumen: {
+    const compras =
+        avisos.filter(a => a.tipo === "compra").length;
 
-        stockCritico: avisos.filter(a => a.tipo === "stock").length,
+    const producciones =
+        avisos.filter(a => a.tipo === "produccion").length;
 
-        compras: avisos.filter(a => a.tipo === "compra").length,
+    if (stockCritico >= 3) {
 
-        producciones: avisos.filter(a => a.tipo === "produccion").length
+        recomendaciones.push(
+            "⚠️ Hay varios productos con stock crítico. Conviene realizar un pedido hoy."
+        );
 
     }
 
-};
+    if (compras >= 3) {
+
+        recomendaciones.push(
+            "🛒 Existen varias compras pendientes."
+        );
+
+    }
+
+    if (producciones === 0) {
+
+        recomendaciones.push(
+            "👨‍🍳 Hoy no hay producciones programadas."
+        );
+
+    }
+
+    return {
+
+        saludo: `Buenos días. Hoy tienes ${stockCritico} productos con stock crítico.`,
+
+        avisos,
+
+        resumen: {
+
+            stockCritico,
+
+            compras,
+
+            producciones
+
+        },
+         ultimaActualizacion: new Date().toLocaleString("es-ES"),
+         
+        recomendaciones
+
+    };
 
 }
 

@@ -33,40 +33,67 @@ function Tarjeta({ titulo, valor, color }) {
     );
 }
 
-function Sancho() {
+export default function Sancho() {
 
     const [avisos, setAvisos] = useState([]);
-    const [resumen, setResumen] = useState({});
+    const [recomendaciones, setRecomendaciones] = useState([]);
+
+    const [resumen, setResumen] = useState({
+        stockCritico: 0,
+        compras: 0,
+        producciones: 0
+    });
+
+    const [saludo, setSaludo] = useState("");
     const [error, setError] = useState("");
 
     useEffect(() => {
 
-        fetch("http://localhost:3001/sancho")
-            .then(res => res.json())
-            .then(data => {
+        async function cargar() {
 
-                if (data.error) {
-                    setError(data.error);
-                    return;
-                }
+            try {
+
+                const res = await fetch("http://localhost:3001/sancho");
+                const data = await res.json();
 
                 setAvisos(data.avisos || []);
                 setResumen(data.resumen || {});
+                setSaludo(data.saludo || "");
+                setRecomendaciones(data.recomendaciones || []);
 
-            })
-            .catch(err => {
+            } catch (err) {
 
-                setError(err.message);
+                console.error(err);
+                setError("No se puede conectar con SANCHO");
 
-            });
+            }
+
+        }
+
+        cargar();
 
     }, []);
 
     return (
 
-        <div style={{ padding: "30px" }}>
+        <div
+            style={{
+                padding: "30px",
+                background: "#f5f6fa",
+                minHeight: "100vh"
+            }}
+        >
 
             <h1>🧠 SANCHO</h1>
+
+            <h3
+                style={{
+                    color: "#666",
+                    fontWeight: "normal"
+                }}
+            >
+                {saludo}
+            </h3>
 
             {error && (
 
@@ -95,23 +122,58 @@ function Sancho() {
 
                 <Tarjeta
                     titulo="🔴 Stock crítico"
-                    valor={resumen.stockCritico || 0}
+                    valor={resumen.stockCritico}
                     color="red"
                 />
 
                 <Tarjeta
                     titulo="🛒 Compras"
-                    valor={resumen.compras || 0}
+                    valor={resumen.compras}
                     color="orange"
                 />
 
                 <Tarjeta
                     titulo="👨‍🍳 Producciones"
-                    valor={resumen.producciones || 0}
+                    valor={resumen.producciones}
                     color="green"
                 />
 
             </div>
+
+            {recomendaciones.length > 0 && (
+
+                <div
+                    style={{
+                        background: "#eef5ff",
+                        borderLeft: "8px solid #2d7ff9",
+                        borderRadius: "12px",
+                        padding: "20px",
+                        marginBottom: "30px",
+                        boxShadow: "0 3px 10px rgba(0,0,0,.15)"
+                    }}
+                >
+
+                    <h2 style={{ marginTop: 0 }}>
+                        🧠 Recomendaciones de Sancho
+                    </h2>
+
+                    {recomendaciones.map((r, i) => (
+
+                        <div
+                            key={i}
+                            style={{
+                                marginTop: "12px",
+                                fontSize: "18px"
+                            }}
+                        >
+                            {r}
+                        </div>
+
+                    ))}
+
+                </div>
+
+            )}
 
             {avisos.length === 0 ? (
 
@@ -119,8 +181,7 @@ function Sancho() {
                     style={{
                         background: "#e8ffe8",
                         padding: "20px",
-                        borderRadius: "12px",
-                        fontSize: "20px"
+                        borderRadius: "12px"
                     }}
                 >
                     ✅ Todo está bajo control
@@ -133,37 +194,28 @@ function Sancho() {
                     <div
                         key={i}
                         style={{
-                            background: "#ffffff",
-
+                            background: "#fff",
                             borderLeft:
                                 a.tipo === "stock"
                                     ? "8px solid red"
                                     : a.tipo === "compra"
                                     ? "8px solid orange"
                                     : "8px solid green",
-
                             borderRadius: "12px",
-
                             padding: "20px",
-
                             marginBottom: "15px",
-
                             boxShadow: "0 2px 8px rgba(0,0,0,.12)"
                         }}
                     >
 
-                        <h3
-                            style={{
-                                marginTop: 0
-                            }}
-                        >
-                            {
-                                a.tipo === "stock"
-                                    ? "🔴 Stock crítico"
-                                    : a.tipo === "compra"
-                                    ? "🛒 Compra sugerida"
-                                    : "👨‍🍳 Producción"
-                            }
+                        <h3 style={{ marginTop: 0 }}>
+
+                            {a.tipo === "stock"
+                                ? "🔴 Stock crítico"
+                                : a.tipo === "compra"
+                                ? "🛒 Compra sugerida"
+                                : "👨‍🍳 Producción"}
+
                         </h3>
 
                         <div
@@ -185,5 +237,3 @@ function Sancho() {
     );
 
 }
-
-export default Sancho;
