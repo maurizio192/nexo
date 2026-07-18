@@ -48,67 +48,29 @@ export default function Sancho() {
     const [saludo, setSaludo] = useState("");
     const [error, setError] = useState("");
     const [textoVoz, setTextoVoz] = useState("")
-    const [pregunta, setPregunta] = useState("");
-    const [respuesta, setRespuesta] = useState("");
 
     function escuchar() {
-        async function hablarConSancho() {
-
-  if (pregunta.trim() === "") return;
-
-  setRespuesta("⏳ Pensando...");
-
-  try {
-
-    const res = await fetch("http://192.168.1.67:3001/sancho/chat", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        pregunta,
-      }),
-
-    });
-
-    const data = await res.json();
-
-    setRespuesta(data.respuesta);
-
-  } catch {
-
-    setRespuesta("❌ No puedo conectar con Sancho");
-
-  }
-
-}
 
     alert("Entré");
 
-    const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-        alert("No existe SpeechRecognition");
-        return;
-    }
-
-    const recognition = new SpeechRecognition();
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 
     recognition.lang = "es-ES";
 
     recognition.onstart = () => {
-        alert("Escuchando...");
+        alert("Escuchando");
     };
 
     recognition.onresult = (event) => {
-        const texto = event.results[0][0].transcript;
-        setTextoVoz(texto);
-        alert("Has dicho: " + texto);
-    };
+
+    const texto = event.results[0][0].transcript;
+
+    setTextoVoz(texto);
+
+    alert(event.results[0][0].transcript);
+
+};
+    
 
     recognition.onerror = (event) => {
         alert("ERROR = " + event.error);
@@ -171,62 +133,6 @@ export default function Sancho() {
   🎤 Escuchar
 </button>
 <div
-<div
-  style={{
-    background: "white",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 30,
-    boxShadow: "0 3px 10px rgba(0,0,0,.15)"
-  }}
->
-
-<h2>💬 Hablar con Sancho</h2>
-
-<input
-
-  value={pregunta}
-
-  onChange={(e)=>setPregunta(e.target.value)}
-
-  placeholder="Escribe una orden..."
-
-  style={{
-    width:"100%",
-    padding:15,
-    fontSize:18,
-    marginBottom:15
-  }}
-/>
-
-<button
-
-  onClick={hablarConSancho}
-
-  style={{
-    padding:"12px 20px",
-    fontSize:18
-  }}
-
->
-
-Enviar
-
-</button>
-
-<div
-  style={{
-    marginTop:20,
-    fontSize:22,
-    color:"#0a5"
-  }}
->
-
-{respuesta}
-
-</div>
-
-
     style={{
         marginBottom: "25px",
         fontSize: "22px",

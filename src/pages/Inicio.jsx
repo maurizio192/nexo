@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import Dashboard from "../components/Dashboard";
-
+import BotonVoz from "../components/BotonVoz";
 function Inicio() {
   const [stato, setStato] = useState("Connessione in corso...");
 
   useEffect(() => {
-    fetch("http://localhost:3001")
+    fetch("http://192.168.1.67:3001")
       .then((res) => res.json())
       .then((data) => {
         setStato("🟢 " + data.message);
@@ -18,7 +18,7 @@ function Inicio() {
   return (
     <div>
       <Dashboard />
-
+      <BotonVoz />
       <div
         style={{
           marginTop: "20px",

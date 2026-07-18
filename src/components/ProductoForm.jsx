@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Paper,
   Typography,
@@ -22,8 +23,19 @@ function ProductoForm({
   guardarProducto,
   modoEdicion,
 }) {
+
+  const [proveedores, setProveedores] = useState([]);
+
+  useEffect(() => {
+    fetch("http://192.168.1.67:3001/proveedores")
+      .then((res) => res.json())
+      .then((data) => setProveedores(data))
+      .catch((err) => console.log(err));
+  }, []);
+
   return (
     <Paper sx={{ p: 3, mt: 3 }}>
+
       <Typography variant="h5" gutterBottom>
         {modoEdicion ? "✏️ Editar Producto" : "➕ Nuevo Producto"}
       </Typography>
@@ -35,6 +47,21 @@ function ProductoForm({
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
       />
+
+      <TextField
+        select
+        fullWidth
+        label="Proveedor"
+        margin="normal"
+        value={proveedor}
+        onChange={(e) => setProveedor(e.target.value)}
+      >
+        {proveedores.map((p) => (
+          <MenuItem key={p.id} value={p.nombre}>
+            {p.nombre}
+          </MenuItem>
+        ))}
+      </TextField>
 
       <TextField
         select
@@ -78,14 +105,6 @@ function ProductoForm({
         onChange={(e) => setCategoria(e.target.value)}
       />
 
-      <TextField
-        fullWidth
-        label="Proveedor"
-        margin="normal"
-        value={proveedor}
-        onChange={(e) => setProveedor(e.target.value)}
-      />
-
       <Button
         variant="contained"
         fullWidth
@@ -94,6 +113,7 @@ function ProductoForm({
       >
         {modoEdicion ? "✏️ Actualizar Producto" : "💾 Guardar Producto"}
       </Button>
+
     </Paper>
   );
 }

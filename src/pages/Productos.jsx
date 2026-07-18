@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import {
   Paper,
@@ -26,16 +27,24 @@ function Productos() {
   const [stock, setStock] = useState("");
   const [categoria, setCategoria] = useState("");
   const [proveedor, setProveedor] = useState("");
-
+  const location = useLocation();
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
 
   useEffect(() => {
     cargarProductos();
   }, []);
+useEffect(() => {
 
+  if (location.state?.proveedor) {
+
+    setProveedor(location.state.proveedor);
+
+  }
+
+}, [location]);
   const cargarProductos = () => {
-    fetch("http://localhost:3001/prodotti")
+       fetch("http://192.168.1.67:3001/prodotti")
       .then((res) => res.json())
       .then((data) => setProductos(data))
       .catch((err) => console.error(err));
@@ -54,8 +63,8 @@ function Productos() {
 
     try {
       const url = modoEdicion
-        ? `http://localhost:3001/prodotti/${editandoId}`
-        : "http://localhost:3001/prodotti";
+        ? `http://192.168.1.67:3001/prodotti/${editandoId}`
+        : "http://192.168.1.67:3001/prodotti";
 
       const method = modoEdicion ? "PUT" : "POST";
 
@@ -107,7 +116,7 @@ function Productos() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/prodotti/${id}`,
+        `http://192.168.1.67:3001/prodotti/${id}`,
         {
           method: "DELETE",
         }

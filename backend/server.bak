@@ -1,5 +1,4 @@
 const sanchoRoutes = require("./routes/sancho");
-const proveedoresRoutes = require("./routes/proveedores");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
@@ -18,7 +17,7 @@ const pool = new Pool({
 
 });
 app.locals.pool = pool;
-app.use("/proveedores", proveedoresRoutes(pool));
+
 pool.connect()
   .then(() => {
     console.log("✅ Connesso a PostgreSQL");
@@ -33,8 +32,61 @@ app.get("/", (req, res) => {
     message: "NEXO Backend funzionante 🚀",
   });
 });
+app.get("/proveedores", async (req, res) => {
+app.post("/proveedores", async (req, res) => {
 
-    
+    const {
+        nombre,
+        contacto,
+        telefono,
+        email
+    } = req.body;
+
+    try {
+
+        const resultado = await pool.query(
+
+            `INSERT INTO proveedores
+            (nombre, contacto, telefono, email)
+            VALUES ($1,$2,$3,$4)
+            RETURNING *`,
+
+            [nombre, contacto, telefono, email]
+
+        );
+
+        res.json(resultado.rows[0]);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            error: "Errore database"
+        });
+
+    }
+
+});
+    try {
+
+        const resultado = await pool.query(
+            "SELECT * FROM proveedores ORDER BY nombre"
+        );
+
+        res.json(resultado.rows);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            error: "Errore database"
+        });
+
+    }
+
+});
 app.get("/prodotti", async (req, res) => {
   try {
     const result = await pool.query(
@@ -100,8 +152,26 @@ app.get("/categorias", async (req, res) => {
     });
   }
 });
+app.get("/proveedores", async (req, res) => {
+    try {
 
-  
+        const resultado = await pool.query(
+            "SELECT * FROM proveedores ORDER BY nombre"
+        );
+
+        res.json(resultado.rows);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            error: "Errore database"
+        });
+
+    }
+});
+
 app.post("/proveedores", async (req, res) => {
 
     const {
@@ -306,8 +376,8 @@ app.post("/consumir/:id", async (req, res) => {
 
 const PORT = 3001;
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server avviato su http://0.0.0.0:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Server avviato su http://localhost:${PORT}`);
 
-  motor.iniciarMotor(pool);
+ motor.iniciarMotor(pool);
 });
