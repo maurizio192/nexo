@@ -52,7 +52,14 @@ function Menu() {
 
       <hr />
 
-      <p>🚚 Proveedores</p>
+     <p>
+  <Link
+    to="/proveedores"
+    style={{ color: "white", textDecoration: "none" }}
+  >
+    🚚 Proveedores
+  </Link>
+</p>
       <p>📊 Stock</p>
       <p>🛒 Pedidos</p>
       <p>📉 Mermas</p>
