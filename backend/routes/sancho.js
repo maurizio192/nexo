@@ -5,29 +5,29 @@ const sancho = require("../motor/sancho");
 
 router.get("/", async (req, res) => {
 
-    console.log("👉 ENTRANDO EN ROUTE SANCHO");
+  console.log("👉 ENTRANDO EN ROUTE SANCHO");
 
-    try {
+  try {
 
-        const pool = req.app.locals.pool;
+    const pool = req.app.locals.pool;
 
-        if (!pool) {
-            throw new Error("Pool PostgreSQL no inicializado");
-        }
-
-        const resultado = await sancho.generarAvisos(pool);
-
-        res.json(resultado);
-
-    } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-            error: err.message
-        });
-
+    if (!pool) {
+      throw new Error("Pool PostgreSQL no inicializado");
     }
+
+    const resultado = await sancho.generarAvisos(pool);
+
+    res.json(resultado);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
 
 });
 
