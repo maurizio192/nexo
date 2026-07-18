@@ -5,6 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const motor = require("./motor");
+const memoria = require("./motor/memoria");
 const app = express();
 const consumos = require("./motor/consumos");
 app.use(cors());
@@ -183,7 +184,11 @@ app.post("/elaboraciones", async (req, res) => {
     );
 
     res.status(201).json(result.rows[0]);
-
+await memoria.guardar(
+  pool,
+  "producto",
+  `Se creó el producto "${nombre}"`
+);
   } catch (err) {
     console.error(err);
 
