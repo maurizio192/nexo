@@ -1,5 +1,6 @@
 const sanchoRoutes = require("./routes/sancho");
 const proveedoresRoutes = require("./routes/proveedores");
+const productosRoutes = require("./routes/productos");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
@@ -19,6 +20,7 @@ const pool = new Pool({
 });
 app.locals.pool = pool;
 app.use("/proveedores", proveedoresRoutes(pool));
+app.use("/productos", productosRoutes(pool));
 pool.connect()
   .then(() => {
     console.log("✅ Connesso a PostgreSQL");
@@ -35,22 +37,7 @@ app.get("/", (req, res) => {
 });
 
     
-app.get("/prodotti", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT * FROM productos ORDER BY id"
-    );
 
-    res.json(result.rows);
-
-  } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      errore: "Errore del database",
-    });
-  }
-});
 
 app.get("/producciones", async (req, res) => {
   try {
