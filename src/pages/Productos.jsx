@@ -43,13 +43,12 @@ useEffect(() => {
   }
 
 }, [location]);
-  const cargarProductos = () => {
-       fetch("http://192.168.1.67:3001/prodotti")
-      .then((res) => res.json())
-      .then((data) => setProductos(data))
-      .catch((err) => console.error(err));
-  };
-
+const cargarProductos = () => {
+  fetch("http://192.168.1.67:3001/productos")
+    .then((res) => res.json())
+    .then((data) => setProductos(data))
+    .catch((err) => console.error(err));
+};
   const guardarProducto = async () => {
     if (
       nombre.trim() === "" ||
@@ -62,9 +61,9 @@ useEffect(() => {
     }
 
     try {
-      const url = modoEdicion
-        ? `http://192.168.1.67:3001/prodotti/${editandoId}`
-        : "http://192.168.1.67:3001/prodotti";
+     const url = modoEdicion
+  ? `http://192.168.1.67:3001/productos/${editandoId}`
+  : "http://192.168.1.67:3001/productos";
 
       const method = modoEdicion ? "PUT" : "POST";
 
@@ -116,7 +115,7 @@ useEffect(() => {
 
     try {
       const response = await fetch(
-        `http://192.168.1.67:3001/prodotti/${id}`,
+        `http://192.168.1.67:3001/productos/${id}`,
         {
           method: "DELETE",
         }

@@ -1,388 +1,217 @@
 import { useEffect, useState } from "react";
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-function Tarjeta({ titulo, valor, color }) {
-    return (
-        <div
-            style={{
-                background: "#ffffff",
-                borderLeft: `8px solid ${color}`,
-                borderRadius: "12px",
-                padding: "20px",
-                boxShadow: "0 3px 10px rgba(0,0,0,.15)"
-            }}
-        >
-            <div
-                style={{
-                    color: "#666",
-                    fontSize: "14px"
-                }}
-            >
-                {titulo}
-            </div>
 
-            <div
-                style={{
-                    fontSize: "42px",
-                    fontWeight: "bold",
-                    marginTop: "10px"
-                }}
-            >
-                {valor}
-            </div>
-        </div>
-    );
+function Tarjeta({ titulo, valor, color }) {
+  return (
+    <div
+      style={{
+        background: "#fff",
+        borderLeft: `8px solid ${color}`,
+        borderRadius: 12,
+        padding: 20,
+        boxShadow: "0 3px 10px rgba(0,0,0,.15)",
+      }}
+    >
+      <div style={{ color: "#666", fontSize: 14 }}>
+        {titulo}
+      </div>
+
+      <div
+        style={{
+          fontSize: 40,
+          fontWeight: "bold",
+          marginTop: 10,
+        }}
+      >
+        {valor}
+      </div>
+    </div>
+  );
 }
 
 export default function Sancho() {
+  const [saludo, setSaludo] = useState("");
 
-    const [avisos, setAvisos] = useState([]);
-    const [recomendaciones, setRecomendaciones] = useState([]);
+  const [resumen, setResumen] = useState({
+    stockCritico: 0,
+    compras: 0,
+    producciones: 0,
+  });
 
-    const [resumen, setResumen] = useState({
-        stockCritico: 0,
-        compras: 0,
-        producciones: 0
-    });
+  const [avisos, setAvisos] = useState([]);
+  const [pregunta, setPregunta] = useState("");
+  const [respuesta, setRespuesta] = useState("");
+  const [textoVoz, setTextoVoz] = useState("");
 
-    const [saludo, setSaludo] = useState("");
-    const [error, setError] = useState("");
-    const [textoVoz, setTextoVoz] = useState("")
-    const [pregunta, setPregunta] = useState("");
-    const [respuesta, setRespuesta] = useState("");
+  useEffect(() => {
+    cargarSancho();
+  }, []);
 
-    function escuchar() {
-        async function hablarConSancho() {
+  async function cargarSancho() {
+    try {
+      const res = await fetch("http://192.168.1.67:3001/sancho");
+      const data = await res.json();
 
-  if (pregunta.trim() === "") return;
-
-  setRespuesta("⏳ Pensando...");
-
-  try {
-
-    const res = await fetch("http://192.168.1.67:3001/sancho/chat", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        pregunta,
-      }),
-
-    });
-
-    const data = await res.json();
-
-    setRespuesta(data.respuesta);
-
-  } catch {
-
-    setRespuesta("❌ No puedo conectar con Sancho");
-
+      setSaludo(data.saludo || "");
+      setResumen(data.resumen || {});
+      setAvisos(data.avisos || []);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
-}
+  async function hablarConSancho() {
+    if (!pregunta.trim()) return;
 
-    alert("Entré");
+    setRespuesta("⏳ Pensando...");
 
+    try {
+      const res = await fetch(
+        "http://192.168.1.67:3001/sancho/chat",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ pregunta }),
+        }
+      );
+
+      const data = await res.json();
+
+      setRespuesta(data.respuesta);
+    } catch {
+      setRespuesta("❌ No puedo conectar con Sancho");
+    }
+  }
+
+  function escuchar() {
     const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-        alert("No existe SpeechRecognition");
-        return;
+      alert("SpeechRecognition no disponible");
+      return;
     }
 
-    const recognition = new SpeechRecognition();
+    const rec = new SpeechRecognition();
 
-    recognition.lang = "es-ES";
+    rec.lang = "es-ES";
 
-    recognition.onstart = () => {
-        alert("Escuchando...");
+    rec.onresult = (e) => {
+      const texto = e.results[0][0].transcript;
+
+      setTextoVoz(texto);
+      setPregunta(texto);
     };
 
-    recognition.onresult = (event) => {
-        const texto = event.results[0][0].transcript;
-        setTextoVoz(texto);
-        alert("Has dicho: " + texto);
+    rec.onerror = (e) => {
+      alert(e.error);
     };
 
-    recognition.onerror = (event) => {
-        alert("ERROR = " + event.error);
-    };
+    rec.start();
+  }
 
-    recognition.start();
+  return (
+    <div
+      style={{
+        padding: 30,
+        background: "#f5f6fa",
+        minHeight: "100vh",
+      }}
+    >
+      <h1>🧠 SANCHO</h1>
 
-}
-   
+      <h2>{saludo}</h2>
 
+      <button
+        onClick={escuchar}
+        style={{
+          padding: 12,
+          fontSize: 18,
+          marginBottom: 20,
+        }}
+      >
+        🎤 Escuchar
+      </button>
 
-    useEffect(() => {
+      <div
+        style={{
+          background: "#fff",
+          padding: 20,
+          borderRadius: 12,
+          marginBottom: 25,
+        }}
+      >
+        <h2>💬 Hablar con Sancho</h2>
 
-        async function cargar() {
+        <input
+          value={pregunta}
+          onChange={(e) => setPregunta(e.target.value)}
+          placeholder="Escribe una pregunta..."
+          style={{
+            width: "100%",
+            padding: 12,
+            fontSize: 18,
+            marginBottom: 15,
+          }}
+        />
 
-            try {
+        <button onClick={hablarConSancho}>
+          Enviar
+        </button>
 
-                const res = await fetch("http://192.168.1.67:3001/sancho");
-                const data = await res.json();
+        <h3>{respuesta}</h3>
 
-                setAvisos(data.avisos || []);
-                setResumen(data.resumen || {});
-                setSaludo(data.saludo || "");
-                setRecomendaciones(data.recomendaciones || []);
+        <h4>{textoVoz}</h4>
+      </div>
 
-            } catch (err) {
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3,1fr)",
+          gap: 20,
+          marginBottom: 30,
+        }}
+      >
+        <Tarjeta
+          titulo="🔴 Stock crítico"
+          valor={resumen.stockCritico}
+          color="red"
+        />
 
-                console.error(err);
-                setError("No se puede conectar con SANCHO");
+        <Tarjeta
+          titulo="🟠 Compras"
+          valor={resumen.compras}
+          color="orange"
+        />
 
-            }
+        <Tarjeta
+          titulo="🟢 Producciones"
+          valor={resumen.producciones}
+          color="green"
+        />
+      </div>
 
-        }
+      <h2>🚨 Avisos</h2>
 
-        cargar();
-
-    }, []);
-
-    return (
-
-        <div
+      {avisos.length === 0 ? (
+        <p>No hay avisos.</p>
+      ) : (
+        avisos.map((a, i) => (
+          <div
+            key={i}
             style={{
-                padding: "30px",
-                background: "#f5f6fa",
-                minHeight: "100vh"
+              background: "#fff",
+              padding: 15,
+              borderRadius: 10,
+              marginBottom: 10,
             }}
-        >
-
-            <h1>🧠 SANCHO</h1>
-<button
-  onClick={escuchar}
-  style={{
-    padding: "12px 20px",
-    fontSize: "18px",
-    borderRadius: "10px",
-    cursor: "pointer",
-    marginBottom: "20px"
-  }}
->
-  🎤 Escuchar
-</button>
-<div
-<div
-  style={{
-    background: "white",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 30,
-    boxShadow: "0 3px 10px rgba(0,0,0,.15)"
-  }}
->
-
-<h2>💬 Hablar con Sancho</h2>
-
-<input
-
-  value={pregunta}
-
-  onChange={(e)=>setPregunta(e.target.value)}
-
-  placeholder="Escribe una orden..."
-
-  style={{
-    width:"100%",
-    padding:15,
-    fontSize:18,
-    marginBottom:15
-  }}
-/>
-
-<button
-
-  onClick={hablarConSancho}
-
-  style={{
-    padding:"12px 20px",
-    fontSize:18
-  }}
-
->
-
-Enviar
-
-</button>
-
-<div
-  style={{
-    marginTop:20,
-    fontSize:22,
-    color:"#0a5"
-  }}
->
-
-{respuesta}
-
-</div>
-
-
-    style={{
-        marginBottom: "25px",
-        fontSize: "22px",
-        color: "#0a5"
-    }}
->
-{textoVoz}
-</div>
-            <h3
-                style={{
-                    color: "#666",
-                    fontWeight: "normal"
-                }}
-            >
-                {saludo}
-            </h3>
-
-            {error && (
-
-                <div
-                    style={{
-                        background: "#ffe5e5",
-                        color: "#900",
-                        padding: "15px",
-                        borderRadius: "10px",
-                        marginBottom: "20px"
-                    }}
-                >
-                    {error}
-                </div>
-
-            )}
-
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(3,1fr)",
-                    gap: "20px",
-                    marginBottom: "30px"
-                }}
-            >
-
-                <Tarjeta
-                    titulo="🔴 Stock crítico"
-                    valor={resumen.stockCritico}
-                    color="red"
-                />
-
-                <Tarjeta
-                    titulo="🛒 Compras"
-                    valor={resumen.compras}
-                    color="orange"
-                />
-
-                <Tarjeta
-                    titulo="👨‍🍳 Producciones"
-                    valor={resumen.producciones}
-                    color="green"
-                />
-
-            </div>
-
-            {recomendaciones.length > 0 && (
-
-                <div
-                    style={{
-                        background: "#eef5ff",
-                        borderLeft: "8px solid #2d7ff9",
-                        borderRadius: "12px",
-                        padding: "20px",
-                        marginBottom: "30px",
-                        boxShadow: "0 3px 10px rgba(0,0,0,.15)"
-                    }}
-                >
-
-                    <h2 style={{ marginTop: 0 }}>
-                        🧠 Recomendaciones de Sancho
-                    </h2>
-
-                    {recomendaciones.map((r, i) => (
-
-                        <div
-                            key={i}
-                            style={{
-                                marginTop: "12px",
-                                fontSize: "18px"
-                            }}
-                        >
-                            {r}
-                        </div>
-
-                    ))}
-
-                </div>
-
-            )}
-
-            {avisos.length === 0 ? (
-
-                <div
-                    style={{
-                        background: "#e8ffe8",
-                        padding: "20px",
-                        borderRadius: "12px"
-                    }}
-                >
-                    ✅ Todo está bajo control
-                </div>
-
-            ) : (
-
-                avisos.map((a, i) => (
-
-                    <div
-                        key={i}
-                        style={{
-                            background: "#fff",
-                            borderLeft:
-                                a.tipo === "stock"
-                                    ? "8px solid red"
-                                    : a.tipo === "compra"
-                                    ? "8px solid orange"
-                                    : "8px solid green",
-                            borderRadius: "12px",
-                            padding: "20px",
-                            marginBottom: "15px",
-                            boxShadow: "0 2px 8px rgba(0,0,0,.12)"
-                        }}
-                    >
-
-                        <h3 style={{ marginTop: 0 }}>
-
-                            {a.tipo === "stock"
-                                ? "🔴 Stock crítico"
-                                : a.tipo === "compra"
-                                ? "🛒 Compra sugerida"
-                                : "👨‍🍳 Producción"}
-
-                        </h3>
-
-                        <div
-                            style={{
-                                fontSize: "20px"
-                            }}
-                        >
-                            {a.mensaje}
-                        </div>
-
-                    </div>
-
-                ))
-
-            )}
-
-        </div>
-
-    );
-
+          >
+            {a.mensaje}
+          </div>
+        ))
+      )}
+    </div>
+  );
 }
