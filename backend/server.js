@@ -8,8 +8,11 @@ const motor = require("./motor");
 const memoria = require("./motor/memoria");
 const app = express();
 const consumos = require("./motor/consumos");
+const ventasRoutes = require("./routes/ventas");
+
 app.use(cors());
 app.use(express.json());
+
 
 const pool = new Pool({
   user: "postgres",
@@ -22,6 +25,7 @@ const pool = new Pool({
 app.locals.pool = pool;
 app.use("/proveedores", proveedoresRoutes(pool));
 app.use("/productos", productosRoutes(pool));
+app.use("/ventas", ventasRoutes(pool));
 pool.connect()
   .then(() => {
     console.log("✅ Connesso a PostgreSQL");
