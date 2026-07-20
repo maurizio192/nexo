@@ -44,7 +44,7 @@ function Pedidos() {
 
             <div key={p.nombre}>
 
-             {true && (
+             {mostrarProveedor && (
 
                 <>
 
