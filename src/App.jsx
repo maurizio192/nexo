@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-
+import Servicio from "./pages/Servicio";
 import Menu from "./components/Menu";
 import Inicio from "./pages/Inicio";
 import Productos from "./pages/Productos";
@@ -10,6 +10,7 @@ import Sancho from "./pages/Sancho";
 import FichasTecnicas from "./pages/FichasTecnicas";
 import FichaDeliciaPollo from "./pages/FichaDeliciaPollo";
 import TestVoz from "./pages/TestVoz";
+import Pedidos from "./pages/Pedidos";
 
 function App() {
   return (
@@ -36,10 +37,14 @@ function App() {
           <Route path="/proveedores" element={<Proveedores />} />
 
           <Route path="/productos" element={<Productos />} />
+          
+          <Route path="/pedidos" element={<Pedidos />} />
 
           <Route path="/elaboraciones" element={<Elaboraciones />} />
 
           <Route path="/producciones" element={<Producciones />} />
+
+          <Route path="/servicio" element={<Servicio />} />
 
           <Route path="/sancho" element={<Sancho />} />
 

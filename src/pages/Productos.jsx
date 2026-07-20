@@ -17,31 +17,34 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 import ProductoForm from "../components/ProductoForm";
-
 function Productos() {
   const [productos, setProductos] = useState([]);
 
   const [nombre, setNombre] = useState("");
-  const [unidad, setUnidad] =useState("");
+  const [unidad, setUnidad] = useState("");
   const [precio, setPrecio] = useState("");
   const [stock, setStock] = useState("");
   const [categoria, setCategoria] = useState("");
   const [proveedor, setProveedor] = useState("");
-  const location = useLocation();
+
+  const [formatoCompra, setFormatoCompra] = useState("");
+  const [cantidadFormato, setCantidadFormato] = useState("");
+  const [stockMinimo, setStockMinimo] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
 
-  useEffect(() => {
-    cargarProductos();
-  }, []);
+  const location = useLocation();
+
 useEffect(() => {
+  cargarProductos();
+}, []);
 
+useEffect(() => {
   if (location.state?.proveedor) {
-
     setProveedor(location.state.proveedor);
-
   }
-
 }, [location]);
 const cargarProductos = () => {
   fetch("http://192.168.1.67:3001/productos")
@@ -73,13 +76,19 @@ const cargarProductos = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nombre,
-          unidad,
-          precio: Number(precio),
-          stock: Number(stock),
-          categoria,
-          proveedor,
-        }),
+  nombre,
+  unidad,
+
+  formatoCompra,
+  cantidadFormato: Number(cantidadFormato),
+  stockMinimo: Number(stockMinimo),
+  ubicacion,
+
+  precio: Number(precio),
+  stock: Number(stock),
+  categoria,
+  proveedor,
+}),
       });
 
       if (!response.ok) {
@@ -96,6 +105,10 @@ const cargarProductos = () => {
       setStock("");
       setCategoria("");
       setProveedor("");
+      setFormatoCompra("");
+      setCantidadFormato("");
+      setStockMinimo("");
+      setUbicacion("");
 
       setEditandoId(null);
       setModoEdicion(false);
@@ -139,22 +152,31 @@ const cargarProductos = () => {
   📦 Productos NUEVO
 </Typography>
 
-      <ProductoForm
-        nombre={nombre}
-        setNombre={setNombre}
-        unidad={unidad}
-        setUnidad={setUnidad}
-        precio={precio}
-        setPrecio={setPrecio}
-        stock={stock}
-        setStock={setStock}
-        categoria={categoria}
-        setCategoria={setCategoria}
-        proveedor={proveedor}
-        setProveedor={setProveedor}
-        guardarProducto={guardarProducto}
-        modoEdicion={modoEdicion}
-      />
+ <ProductoForm
+  nombre={nombre}
+  setNombre={setNombre}
+  unidad={unidad}
+  setUnidad={setUnidad}
+  formatoCompra={formatoCompra}
+  setFormatoCompra={setFormatoCompra}
+  cantidadFormato={cantidadFormato}
+  setCantidadFormato={setCantidadFormato}
+  stockMinimo={stockMinimo}
+  setStockMinimo={setStockMinimo}
+  ubicacion={ubicacion}
+  setUbicacion={setUbicacion}
+  precio={precio}
+  setPrecio={setPrecio}
+  stock={stock}
+  setStock={setStock}
+  categoria={categoria}
+  setCategoria={setCategoria}
+  proveedor={proveedor}
+  setProveedor={setProveedor}
+  guardarProducto={guardarProducto}
+  modoEdicion={modoEdicion}
+/>
+
 
       <TableContainer component={Paper} sx={{ mt: 3 }}>
         <Table>
