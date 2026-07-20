@@ -66,6 +66,36 @@ app.get("/elaboraciones", async (req, res) => {
       "SELECT * FROM elaboraciones ORDER BY nombre"
     );
 
+app.put("/elaboraciones/:id/descontar", async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+    const { cantidad } = req.body;
+
+    const result = await pool.query(
+      `
+      UPDATE elaboraciones
+      SET bolsas_actuales = bolsas_actuales - $1
+      WHERE id = $2
+      RETURNING *;
+      `,
+      [cantidad, id]
+    );
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+
+  }
+
+});
     res.json(result.rows);
 
   } catch (err) {
@@ -301,7 +331,34 @@ app.post("/consumir/:id", async (req, res) => {
 
 
 const PORT = 3001;
+app.get("/pedidos", async (req, res) => {
 
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        proveedor,
+        nombre,
+        stock_actual,
+        stock_minimo
+      FROM productos
+      WHERE stock_actual <= stock_minimo
+      ORDER BY proveedor, nombre
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+
+  }
+
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server avviato su http://0.0.0.0:${PORT}`);
 

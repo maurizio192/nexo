@@ -43,7 +43,14 @@ function Menu() {
           👨‍🍳 Producciones
         </Link>
       </p>
-
+<p>
+  <Link
+    to="/servicio"
+    style={{ color: "white", textDecoration: "none" }}
+  >
+    🍽 Servicio
+  </Link>
+</p>
       <p>
         <Link to="/sancho" style={{ color: "white", textDecoration: "none" }}>
           🧠 Sancho
@@ -61,7 +68,14 @@ function Menu() {
   </Link>
 </p>
       <p>📊 Stock</p>
-      <p>🛒 Pedidos</p>
+     <p>
+  <Link
+    to="/pedidos"
+    style={{ color: "white", textDecoration: "none" }}
+  >
+    🛒 Pedidos
+  </Link>
+</p>
       <p>📉 Mermas</p>
       <p>📜 Historial</p>
     </div>

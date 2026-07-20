@@ -6,8 +6,6 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
-
-function ProductoForm({
   nombre,
   setNombre,
   unidad,
@@ -20,17 +18,22 @@ function ProductoForm({
   setCategoria,
   proveedor,
   setProveedor,
-  guardarProducto,
-  modoEdicion,
-}) {
+function ProductoForm({
+  nombre,
+  setNombre,
 
-  const [proveedores, setProveedores] = useState([]);
+  unidad,
+  setUnidad,
 
-  useEffect(() => {
-    fetch("http://192.168.1.67:3001/proveedores")
-      .then((res) => res.json())
-      .then((data) => setProveedores(data))
-      .catch((err) => console.log(err));
+  formatoCompra,
+  setFormatoCompra,
+
+  cantidadFormato,
+  setCantidadFormato,
+
+  stockMinimo,
+  setStockMinimo,
+
   }, []);
 
   return (
@@ -101,45 +104,4 @@ function ProductoForm({
         <MenuItem value="ml">ml</MenuItem>
         <MenuItem value="ud">ud</MenuItem>
         <MenuItem value="caja">caja</MenuItem>
-      </TextField>
-
-      <TextField
-        fullWidth
-        label="Precio"
-        type="number"
-        margin="normal"
-        value={precio}
-        onChange={(e) => setPrecio(e.target.value)}
-      />
-
-      <TextField
-        fullWidth
-        label="Stock"
-        type="number"
-        margin="normal"
-        value={stock}
-        onChange={(e) => setStock(e.target.value)}
-      />
-
-      <TextField
-        fullWidth
-        label="Categoría"
-        margin="normal"
-        value={categoria}
-        onChange={(e) => setCategoria(e.target.value)}
-      />
-
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ mt: 3 }}
-        onClick={guardarProducto}
-      >
-        {modoEdicion ? "✏️ Actualizar Producto" : "💾 Guardar Producto"}
-      </Button>
-
-    </Paper>
-  );
-}
-
-export default ProductoForm;
+      </Text
