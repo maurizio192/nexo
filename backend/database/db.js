@@ -8,4 +8,12 @@ const pool = new Pool({
   port: 5432,
 });
 
+pool.connect()
+  .then(() => {
+    console.log("✅ PostgreSQL conectado");
+  })
+  .catch((err) => {
+    console.error("❌ Error PostgreSQL:", err.message);
+  });
+
 module.exports = pool;
