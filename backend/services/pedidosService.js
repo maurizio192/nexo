@@ -2,8 +2,6 @@ module.exports = {
 
   async generarPedido(pool, proveedor) {
 
-    // Buscar si ya existe un pedido pendiente
-
     const existente = await pool.query(
       `
       SELECT id
@@ -37,8 +35,6 @@ module.exports = {
 
     }
 
-    // Obtener productos pendientes
-
     const productos = await pool.query(
       `
       SELECT
@@ -51,8 +47,6 @@ module.exports = {
       `,
       [proveedor]
     );
-
-    // Añadir solo los productos que aún no estén en el pedido
 
     for (const p of productos.rows) {
 
@@ -68,7 +62,10 @@ module.exports = {
 
       if (existe.rows.length === 0) {
 
-        const cantidad = Number(p.stock_minimo) - Number(p.stock_actual) + 1;
+        const cantidad =
+          Number(p.stock_minimo) -
+          Number(p.stock_actual) +
+          1;
 
         await pool.query(
           `
@@ -76,7 +73,11 @@ module.exports = {
           (pedido_id, producto, cantidad)
           VALUES ($1, $2, $3)
           `,
-          [pedidoId, p.nombre, cantidad]
+          [
+            pedidoId,
+            p.nombre,
+            cantidad,
+          ]
         );
 
       }
@@ -84,6 +85,46 @@ module.exports = {
     }
 
     return pedidoId;
+
+  },
+
+  async recibirPedido(pool, pedidoId) {
+
+    const detalle = await pool.query(
+      `
+      SELECT producto, cantidad
+      FROM pedido_detalle
+      WHERE pedido_id = $1
+      `,
+      [pedidoId]
+    );
+
+    for (const linea of detalle.rows) {
+
+      await pool.query(
+        `
+        UPDATE productos
+        SET stock_actual = stock_actual + $1
+        WHERE nombre = $2
+        `,
+        [
+          linea.cantidad,
+          linea.producto,
+        ]
+      );
+
+    }
+
+    await pool.query(
+      `
+      UPDATE pedidos
+      SET estado = 'Recibido'
+      WHERE id = $1
+      `,
+      [pedidoId]
+    );
+
+    return true;
 
   }
 
