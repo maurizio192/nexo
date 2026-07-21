@@ -1,9 +1,10 @@
 const express = require("express");
-const pedidosService = require("../services/pedidosService");
+const NexoEngine = require("../engine/nexoEngine");
 
 module.exports = (pool) => {
 
   const router = express.Router();
+  const engine = new NexoEngine(pool);
 
   // Productos pendientes de pedir
   router.get("/", async (req, res) => {
@@ -71,64 +72,66 @@ module.exports = (pool) => {
   });
 
   // Generar pedido
- // Generar pedido
-router.post("/generar", async (req, res) => {
+  router.post("/generar", async (req, res) => {
 
-  try {
+    try {
 
-    const { proveedor } = req.body;
+      const { proveedor } = req.body;
 
-    const pedidoId = await pedidosService.generarPedido(
-      pool,
-      proveedor
-    );
+      const pedidoId = await engine.ejecutar(
+        "GENERAR_PEDIDO",
+        {
+          proveedor,
+        }
+      );
 
-    res.json({
-      ok: true,
-      pedido: pedidoId,
-    });
+      res.json({
+        ok: true,
+        pedido: pedidoId,
+      });
 
-  } catch (err) {
+    } catch (err) {
 
-    console.error(err);
+      console.error(err);
 
-    res.status(500).json({
-      error: err.message,
-    });
+      res.status(500).json({
+        error: err.message,
+      });
 
-  }
+    }
 
-});
+  });
 
-// ← PEGAR AQUÍ
+  // Recibir pedido
+  router.post("/recibir", async (req, res) => {
 
-router.post("/recibir", async (req, res) => {
+    try {
 
-  try {
+      const { pedidoId } = req.body;
 
-    const { pedidoId } = req.body;
+      await engine.ejecutar(
+        "RECIBIR_PEDIDO",
+        {
+          pedidoId,
+        }
+      );
 
-    await pedidosService.recibirPedido(
-      pool,
-      pedidoId
-    );
+      res.json({
+        ok: true,
+      });
 
-    res.json({
-      ok: true,
-    });
+    } catch (err) {
 
-  } catch (err) {
+      console.error(err);
 
-    console.error(err);
+      res.status(500).json({
+        error: err.message,
+      });
 
-    res.status(500).json({
-      error: err.message,
-    });
+    }
 
-  }
+  });
 
-});
-
-return router;
+  return router;
 
 };
