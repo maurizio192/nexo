@@ -71,34 +71,64 @@ module.exports = (pool) => {
   });
 
   // Generar pedido
-  router.post("/generar", async (req, res) => {
+ // Generar pedido
+router.post("/generar", async (req, res) => {
 
-    try {
+  try {
 
-      const { proveedor } = req.body;
+    const { proveedor } = req.body;
 
-      const pedidoId = await pedidosService.generarPedido(
-        pool,
-        proveedor
-      );
+    const pedidoId = await pedidosService.generarPedido(
+      pool,
+      proveedor
+    );
 
-      res.json({
-        ok: true,
-        pedido: pedidoId,
-      });
+    res.json({
+      ok: true,
+      pedido: pedidoId,
+    });
 
-    } catch (err) {
+  } catch (err) {
 
-      console.error(err);
+    console.error(err);
 
-      res.status(500).json({
-        error: err.message,
-      });
+    res.status(500).json({
+      error: err.message,
+    });
 
-    }
+  }
 
-  });
+});
 
-  return router;
+// ← PEGAR AQUÍ
+
+router.post("/recibir", async (req, res) => {
+
+  try {
+
+    const { pedidoId } = req.body;
+
+    await pedidosService.recibirPedido(
+      pool,
+      pedidoId
+    );
+
+    res.json({
+      ok: true,
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message,
+    });
+
+  }
+
+});
+
+return router;
 
 };
