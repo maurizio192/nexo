@@ -1,34 +1,65 @@
 const express = require("express");
-const router = express.Router();
+const NexoEngine = require("../engine/nexoEngine");
 
-const sancho = require("../motor/sancho");
+module.exports = (pool) => {
 
-router.get("/", async (req, res) => {
+  const router = express.Router();
+  const engine = new NexoEngine(pool);
 
-  console.log("👉 ENTRANDO EN ROUTE SANCHO");
+  router.get("/", async (req, res) => {
 
-  try {
+    try {
 
-    const pool = req.app.locals.pool;
+      const inicio = await engine.ejecutar("INICIO_JORNADA");
 
-    if (!pool) {
-      throw new Error("Pool PostgreSQL no inicializado");
-    }
+      const estado = await engine.ejecutar("ESTADO_GENERAL");
+      const incidencias = await engine.ejecutar(
+  "INCIDENCIAS_STOCK"
+);
 
-    const resultado = await sancho.generarAvisos(pool);
+  const recomendaciones = [];
 
-    res.json(resultado);
+if (incidencias.length > 0) {
 
-  } catch (err) {
+  recomendaciones.push(
+    `Tienes ${incidencias.length} productos por debajo del stock mínimo.`
+  );
 
-    console.error(err);
+  recomendaciones.push(
+    "Recomiendo generar el pedido."
+  );
 
-    res.status(500).json({
-      error: err.message
-    });
+}
 
-  }
+res.json({
+
+  saludo: "Oído.",
+
+  mensaje: "Buenos días Maurizio.",
+
+  estado,
+
+  incidencias,
+
+  recomendaciones,
+
+  inicio
 
 });
+    } catch (err) {
 
-module.exports = router;
+      console.error(err);
+
+      res.status(500).json({
+
+        error: err.message
+
+      });
+
+    }
+
+  });
+
+  return router;
+
+};
