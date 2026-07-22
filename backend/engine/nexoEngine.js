@@ -49,7 +49,11 @@ class NexoEngine {
         return await require("./incidenciasStock")(
           this.pool
         );
+      case "SERVICIO_HOY":
 
+      return await require("./servicioHoy")(
+      this.pool
+  );
       default:
 
         throw new Error(
