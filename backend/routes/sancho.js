@@ -10,13 +10,17 @@ module.exports = (pool) => {
 
     try {
 
-      const inicio = await engine.ejecutar("INICIO_JORNADA");
+const inicio = await engine.ejecutar("INICIO_JORNADA");
 
-      const estado = await engine.ejecutar("ESTADO_GENERAL");
-      const incidencias = await engine.ejecutar(
+const estado = await engine.ejecutar("ESTADO_GENERAL");
+
+const incidencias = await engine.ejecutar(
   "INCIDENCIAS_STOCK"
 );
 
+const servicioHoy = await engine.ejecutar(
+  "SERVICIO_HOY"
+);
   const recomendaciones = [];
 
 if (incidencias.length > 0) {
@@ -36,6 +40,8 @@ res.json({
   saludo: "Oído.",
 
   mensaje: "Buenos días Maurizio.",
+
+  servicioHoy,
 
   estado,
 

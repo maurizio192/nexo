@@ -1,4 +1,8 @@
+const obtenerTurno = require("./motorTurnos");
+
 module.exports = async function inicioJornada(pool) {
+
+  const turno = obtenerTurno();
 
   // Elaboraciones por debajo del mínimo
 
@@ -36,6 +40,8 @@ module.exports = async function inicioJornada(pool) {
   `);
 
   return {
+
+    turno,
 
     elaboraciones: elaboraciones.rows,
 
