@@ -12,6 +12,7 @@ const categoriasRoutes = require("./routes/categorias");
 const ventasRoutes = require("./routes/ventas");
 const consumosRoutes = require("./routes/consumos");
 const sanchoRoutes = require("./routes/sancho");
+const cartasRoutes = require("./routes/cartas");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/categorias", categoriasRoutes(pool));
 app.use("/ventas", ventasRoutes(pool));
 app.use("/consumos", consumosRoutes(pool));
 app.use("/sancho", sanchoRoutes(pool));
+app.use("/cartas", cartasRoutes(pool));
 
 /*
 |--------------------------------------------------------------------------
