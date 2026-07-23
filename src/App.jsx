@@ -11,6 +11,7 @@ import FichasTecnicas from "./pages/FichasTecnicas";
 import FichaDeliciaPollo from "./pages/FichaDeliciaPollo";
 import TestVoz from "./pages/TestVoz";
 import Pedidos from "./pages/Pedidos";
+import Cartas from "./pages/Cartas";
 
 function App() {
   return (
@@ -37,6 +38,8 @@ function App() {
           <Route path="/proveedores" element={<Proveedores />} />
 
           <Route path="/productos" element={<Productos />} />
+          
+          <Route path="/cartas" element={<Cartas />} />
           
           <Route path="/pedidos" element={<Pedidos />} />
 

@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import Dashboard from "../components/Dashboard";
 import BotonVoz from "../components/BotonVoz";
+import Cartas from "./Cartas";
 
 function Inicio() {
 
   const [estado, setEstado] = useState(null);
+  const [mensajeSancho, setMensajeSancho] = useState("");
+  const [panel, setPanel] = useState(null);
 
   useEffect(() => {
 
@@ -13,14 +16,7 @@ function Inicio() {
       .then(data => {
 
         setEstado(data);
-
-        const voz = new SpeechSynthesisUtterance("Oído.");
-
-        voz.lang = "es-ES";
-        voz.rate = 0.95;
-
-        speechSynthesis.cancel();
-        speechSynthesis.speak(voz);
+        setMensajeSancho(`${data.saludo} ${data.mensaje}`);
 
       })
       .catch(() => {
@@ -29,7 +25,51 @@ function Inicio() {
 
       });
 
+    fetch("http://192.168.1.67:3001/panel-operaciones")
+      .then(res => res.json())
+      .then(data => {
+
+        setPanel(data);
+
+      })
+      .catch(console.error);
+
   }, []);
+
+  const generarPedido = async () => {
+
+    try {
+
+      const res = await fetch(
+        "http://192.168.1.67:3001/pedidos/generar",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            proveedor: "Makro"
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      setMensajeSancho(
+        `✅ Pedido Makro generado correctamente.\nNúmero de pedido: ${data.pedido}.\n¿Qué hacemos ahora?`
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      setMensajeSancho(
+        "❌ No he podido generar el pedido."
+      );
+
+    }
+
+  };
 
   return (
 
@@ -53,9 +93,11 @@ function Inicio() {
 
           <>
 
-            <h3>Oído.</h3>
+            <h3>{estado.saludo}</h3>
 
-            <p>Buenos días Maurizio.</p>
+            <p style={{ whiteSpace: "pre-line" }}>
+              {mensajeSancho}
+            </p>
 
             <p>
               Producciones pendientes:
@@ -77,59 +119,6 @@ function Inicio() {
               <strong> {estado.estado?.ventasHoy ?? 0}</strong>
             </p>
 
-            <h3>¿Qué hacemos primero?</h3>
-{estado?.incidencias?.length > 0 && (
-
-  <div
-    style={{
-      marginTop: 20,
-      background: "#7f1d1d",
-      padding: 15,
-      borderRadius: 10
-    }}
-  >
-
-    <h3>⚠️ Incidencias</h3>
-{estado?.recomendaciones?.length > 0 && (
-
-  <div
-    style={{
-      marginTop: 20,
-      background: "#14532d",
-      color: "white",
-      padding: 15,
-      borderRadius: 10
-    }}
-  >
-
-    <h3>🤖 Recomendaciones</h3>
-
-    {estado.recomendaciones.map((texto, index) => (
-
-      <p key={index}>
-        • {texto}
-      </p>
-
-    ))}
-
-  </div>
-
-)}
-    {estado.incidencias.map((item, index) => (
-
-      <p key={index}>
-
-        • {item.nombre}
-        {" "}
-        ({item.stock_actual}/{item.stock_minimo})
-
-      </p>
-
-    ))}
-
-  </div>
-
-)}
           </>
 
         ) : (
@@ -140,9 +129,110 @@ function Inicio() {
 
       </div>
 
+      <div
+        style={{
+          background: "#2563eb",
+          color: "white",
+          padding: 20,
+          borderRadius: 12,
+          marginBottom: 20
+        }}
+      >
+
+        <h2>📋 Panel de Operaciones</h2>
+
+        {panel ? (
+
+          <>
+
+            <h3>{panel.titulo}</h3>
+
+            <p>
+              Estado actual:
+              <strong> {panel.modo}</strong>
+            </p>
+
+          </>
+
+        ) : (
+
+          <p>Cargando Panel...</p>
+
+        )}
+
+      </div>
+
+      {estado?.incidencias?.length > 0 && (
+
+        <div
+          style={{
+            marginTop: 20,
+            background: "#7f1d1d",
+            color: "white",
+            padding: 15,
+            borderRadius: 10
+          }}
+        >
+
+          <h3>⚠ Incidencias</h3>
+
+          {estado.incidencias.map((item, index) => (
+
+            <p key={index}>
+              • {item.nombre} ({item.stock_actual}/{item.stock_minimo})
+            </p>
+
+          ))}
+
+        </div>
+
+      )}
+
+      {estado?.recomendaciones?.length > 0 && (
+
+        <div
+          style={{
+            marginTop: 20,
+            background: "#14532d",
+            color: "white",
+            padding: 15,
+            borderRadius: 10
+          }}
+        >
+
+          <h3>🤖 Recomendaciones</h3>
+
+          {estado.recomendaciones.map((texto, index) => (
+
+            <p key={index}>
+              • {texto}
+            </p>
+
+          ))}
+
+          <button
+            onClick={generarPedido}
+            style={{
+              marginTop: 15,
+              padding: "12px 20px",
+              borderRadius: 10,
+              border: "none",
+              cursor: "pointer",
+              fontSize: "16px"
+            }}
+          >
+            📦 Generar pedido
+          </button>
+
+        </div>
+
+      )}
+
       <BotonVoz />
 
       <Dashboard />
+
+      <Cartas />
 
     </div>
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const produccionService = require("../services/produccionService");
+const consumirReceta = require("../engine/consumirReceta");
 
 module.exports = (pool) => {
 
@@ -28,7 +29,11 @@ module.exports = (pool) => {
     }
 
   });
-
+await consumirReceta(
+    pool,
+    elaboracion_id,
+    cantidad
+);
   // Ejecutar producción
 
   router.post("/producir", async (req, res) => {
