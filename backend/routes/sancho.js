@@ -1,5 +1,6 @@
 const express = require("express");
 const NexoEngine = require("../engine/nexoEngine");
+const sanchoProduccion = require("../engine/sanchoProduccion");
 
 module.exports = (pool) => {
 
@@ -10,48 +11,49 @@ module.exports = (pool) => {
 
     try {
 
-const inicio = await engine.ejecutar("INICIO_JORNADA");
+      const inicio = await engine.ejecutar("INICIO_JORNADA");
+      const estado = await engine.ejecutar("ESTADO_GENERAL");
+      const incidencias = await engine.ejecutar("INCIDENCIAS_STOCK");
+      const servicioHoy = await engine.ejecutar("SERVICIO_HOY");
 
-const estado = await engine.ejecutar("ESTADO_GENERAL");
+      const produccion = await pool.query(`
+        SELECT nombre,categoria
+        FROM tareas_produccion
+        WHERE fecha = CURRENT_DATE
+        AND estado='PENDIENTE'
+        ORDER BY categoria,nombre
+      `);
 
-const incidencias = await engine.ejecutar(
-  "INCIDENCIAS_STOCK"
-);
+      const mensaje = sanchoProduccion(produccion.rows);
 
-const servicioHoy = await engine.ejecutar(
-  "SERVICIO_HOY"
-);
-  const recomendaciones = [];
+      const recomendaciones = [];
 
-if (incidencias.length > 0) {
+      if (incidencias.length > 0) {
 
-  recomendaciones.push(
-    `Tienes ${incidencias.length} productos por debajo del stock mínimo.`
-  );
+        recomendaciones.push(
+          `Tienes ${incidencias.length} productos por debajo del stock mínimo.`
+        );
 
-  recomendaciones.push(
-    "Recomiendo generar el pedido."
-  );
+      }
 
-}
+      res.json({
 
-res.json({
+        saludo: "Hola.",
 
-  saludo: "Oído.",
+        mensaje,
 
-  mensaje: "Buenos días Maurizio.",
+        servicioHoy,
 
-  servicioHoy,
+        estado,
 
-  estado,
+        incidencias,
 
-  incidencias,
+        recomendaciones,
 
-  recomendaciones,
+        inicio
 
-  inicio
+      });
 
-});
     } catch (err) {
 
       console.error(err);

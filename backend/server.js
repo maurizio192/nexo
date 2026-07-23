@@ -11,12 +11,15 @@ const elaboracionesRoutes = require("./routes/elaboraciones");
 const categoriasRoutes = require("./routes/categorias");
 const ventasRoutes = require("./routes/ventas");
 const consumosRoutes = require("./routes/consumos");
+const tareasPendientesRoutes = require("./routes/tareasPendientes");
+const finalizarTareaRoutes = require("./routes/finalizarTarea");
 const sanchoRoutes = require("./routes/sancho");
 const cartasRoutes = require("./routes/cartas");
 const restauranteRoutes = require("./routes/restaurante");
 const panelOperacionesRoutes = require("./routes/panelOperaciones");
-
+const produccionHoyRoutes = require("./routes/produccionHoy");
 const app = express();
+
 
 app.use(cors());
 app.use(express.json());
@@ -34,8 +37,11 @@ app.use("/productos", productosRoutes(pool));
 app.use("/pedidos", pedidosRoutes(pool));
 app.use("/producciones", produccionesRoutes(pool));
 app.use("/elaboraciones", elaboracionesRoutes(pool));
+app.use("/finalizar-tarea", finalizarTareaRoutes(pool));
 app.use("/categorias", categoriasRoutes(pool));
 app.use("/ventas", ventasRoutes(pool));
+app.use("/tareas-pendientes", tareasPendientesRoutes(pool));
+app.use("/produccion-hoy", produccionHoyRoutes(pool));
 app.use("/consumos", consumosRoutes(pool));
 app.use("/sancho", sanchoRoutes(pool));
 app.use(
