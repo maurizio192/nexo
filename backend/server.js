@@ -16,9 +16,11 @@ const finalizarTareaRoutes = require("./routes/finalizarTarea");
 const sanchoRoutes = require("./routes/sancho");
 const cartasRoutes = require("./routes/cartas");
 const recetasRoutes = require("./routes/recetas");
+const categoriasRecetasRoutes = require("./routes/categoriasRecetas");
 const restauranteRoutes = require("./routes/restaurante");
 const panelOperacionesRoutes = require("./routes/panelOperaciones");
 const produccionHoyRoutes = require("./routes/produccionHoy");
+
 const app = express();
 
 
@@ -37,7 +39,10 @@ app.use("/proveedores", proveedoresRoutes(pool));
 app.use("/productos", productosRoutes(pool));
 app.use("/pedidos", pedidosRoutes(pool));
 app.use("/producciones", produccionesRoutes(pool));
+
 app.use("/api/recetas", recetasRoutes(pool));
+app.use("/api/categorias-recetas", categoriasRecetasRoutes(pool));
+
 app.use("/elaboraciones", elaboracionesRoutes(pool));
 app.use("/finalizar-tarea", finalizarTareaRoutes(pool));
 app.use("/categorias", categoriasRoutes(pool));
@@ -46,10 +51,12 @@ app.use("/tareas-pendientes", tareasPendientesRoutes(pool));
 app.use("/produccion-hoy", produccionHoyRoutes(pool));
 app.use("/consumos", consumosRoutes(pool));
 app.use("/sancho", sanchoRoutes(pool));
+
 app.use(
   "/servicio-carta",
   require("./routes/servicioCarta")(pool)
 );
+
 app.use("/cartas", cartasRoutes(pool));
 app.use("/restaurante", restauranteRoutes(pool));
 app.use("/panel-operaciones", panelOperacionesRoutes(pool));
