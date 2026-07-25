@@ -90,13 +90,16 @@ const cargarProductos = () => {
   proveedor,
 }),
       });
+const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error("Errore durante il salvataggio");
-      }
+if (!response.ok) {
+  console.error(data);
+  alert(JSON.stringify(data));
+  return;
+}
 
-      await response.json();
-
+cargarProductos();
+     
       cargarProductos();
 
       setNombre("");

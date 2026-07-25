@@ -158,7 +158,82 @@ router.get("/categoria/:categoria", async (req, res) => {
     }
 
   });
+/*
+|--------------------------------------------------------------------------
+| PRODUCIR RECETA
+|--------------------------------------------------------------------------
+*/
 
+router.post("/:id/producir", async (req, res) => {
+
+  const { cantidad, responsable } = req.body;
+
+  try {
+
+    await pool.query("BEGIN");
+
+    // Registrar la producción
+    await pool.query(
+      `
+      INSERT INTO producciones
+      (
+        elaboracion,
+        fecha,
+        responsable,
+        cantidad_bolsas,
+        estado,
+        elaboracion_id
+      )
+      VALUES
+      (
+        (SELECT nombre FROM recetas WHERE id = $1),
+        NOW(),
+        $2,
+        $3,
+        'COMPLETADA',
+        $1
+      )
+      `,
+      [
+        req.params.id,
+        responsable,
+        cantidad
+      ]
+    );
+
+    // Actualizar stock producido
+    await pool.query(
+      `
+      UPDATE recetas
+      SET unidades_producidas =
+          COALESCE(unidades_producidas,0) + $1
+      WHERE id = $2
+      `,
+      [
+        cantidad,
+        req.params.id
+      ]
+    );
+
+    await pool.query("COMMIT");
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    await pool.query("ROLLBACK");
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
   return router;
 
 };
