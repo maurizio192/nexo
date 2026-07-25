@@ -20,7 +20,8 @@ export default function PestanasReceta({ pestana, setPestana }) {
 
       <button onClick={() => setPestana("observaciones")}>📝 Observaciones</button>
 
-      <button>📧 Compartir</button>
+      <button onClick={() => setPestana("compartir")}>📧 Compartir</button>
+
     </div>
   );
 }

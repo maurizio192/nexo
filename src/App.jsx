@@ -7,6 +7,7 @@ import Productos from "./pages/Productos";
 import Proveedores from "./pages/Proveedores";
 import Pedidos from "./pages/Pedidos";
 import Cartas from "./pages/Cartas";
+import NuevaReceta from "./pages/NuevaReceta";
 
 import LibroRecetas from "./pages/LibroRecetas";
 import CategoriaRecetas from "./pages/CategoriaRecetas";
@@ -66,6 +67,10 @@ function App() {
           <Route
             path="/recetas/:id"
             element={<RecetaDetalle />}
+          />
+          <Route
+            path="/recetas/nueva"
+            element={<NuevaReceta />}
           />
 
           <Route

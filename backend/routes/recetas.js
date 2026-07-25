@@ -1,5 +1,5 @@
 const express = require("express");
-
+const recetasService = require("../services/recetasService");
 module.exports = (pool) => {
 
   const router = express.Router();
@@ -224,6 +224,37 @@ router.post("/:id/producir", async (req, res) => {
   } catch (err) {
 
     await pool.query("ROLLBACK");
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+/*
+|--------------------------------------------------------------------------
+| NUEVA RECETA
+|--------------------------------------------------------------------------
+*/
+
+router.post("/", async (req, res) => {
+
+  try {
+
+    const receta = await recetasService.crear(
+      pool,
+      req.body
+    );
+
+    res.json({
+      ok: true,
+      receta
+    });
+
+  } catch (err) {
 
     console.error(err);
 
