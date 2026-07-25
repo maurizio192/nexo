@@ -9,7 +9,7 @@ export default function LibroRecetas() {
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:3001/api/categorias-recetas")
+   fetch("http://127.0.0.1:3001/api/recetas/categorias/lista")
       .then(res => res.json())
       .then(data => setCategorias(data))
       .catch(console.error);
@@ -30,61 +30,38 @@ export default function LibroRecetas() {
         📖 Libro de Recetas
       </h1>
 
-      {categorias.map((categoria) => (
+  {categorias.map((categoria) => (
 
-        <div
-          key={categoria.id}
-          onClick={() =>
-            navigate(`/categoria/${encodeURIComponent(categoria.nombre)}`)
-          }
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "white",
-            padding: "18px 22px",
-            marginBottom: "12px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-            cursor: "pointer",
-            transition: ".2s"
-          }}
-        >
+  <div
+    key={categoria.categoria}
+    onClick={() =>
+      navigate(`/categoria/${encodeURIComponent(categoria.categoria)}`)
+    }
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      background: "white",
+      padding: "18px 22px",
+      marginBottom: "12px",
+      borderRadius: "12px",
+      boxShadow: "0 2px 8px rgba(0,0,0,.08)",
+      cursor: "pointer"
+    }}
+  >
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "15px"
-            }}
-          >
+    <h2 style={{ margin: 0 }}>
+      {categoria.categoria}
+    </h2>
 
-            <span style={{ fontSize: "30px" }}>
-              {categoria.icono}
-            </span>
+    <span>
+      {categoria.total} recetas ▶
+    </span>
 
-            <h2
-              style={{
-                margin: 0
-              }}
-            >
-              {categoria.nombre}
-            </h2>
+  </div>
 
-          </div>
+))}
 
-          <span
-            style={{
-              fontSize: "20px",
-              color: "#999"
-            }}
-          >
-            ▶
-          </span>
-
-        </div>
-
-      ))}
 
       <div
         onClick={() => navigate("/recetas/nueva")}

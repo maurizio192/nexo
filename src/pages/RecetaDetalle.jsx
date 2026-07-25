@@ -131,6 +131,30 @@ export default function RecetaDetalle() {
     <p>{receta.observaciones}</p>
   </>
 )}
+
+{pestana === "alergenos" && (
+  <>
+    <h2>⚠️ Alérgenos</h2>
+
+    {receta.alergenos ? (
+      <div
+        style={{
+          background: "#fff8e1",
+          padding: "20px",
+          borderRadius: "10px",
+          border: "1px solid #facc15"
+        }}
+      >
+        <p style={{ whiteSpace: "pre-line" }}>
+          {receta.alergenos}
+        </p>
+      </div>
+    ) : (
+      <p>No hay alérgenos registrados.</p>
+    )}
+  </>
+)}
+
 </div>
 
 );
