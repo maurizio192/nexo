@@ -48,7 +48,7 @@ export default function Sancho() {
 
   async function cargarSancho() {
     try {
-      const res = await fetch("http://192.168.1.67:3001/sancho");
+      const res = await fetch("http://192.168.1.67:3001/api/sancho")
       const data = await res.json();
 
       setSaludo(data.saludo || "");

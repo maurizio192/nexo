@@ -11,7 +11,7 @@ function Inicio() {
 
   useEffect(() => {
 
-    fetch("http://192.168.1.67:3001/sancho")
+     fetch("http://192.168.1.67:3001/api/sancho")
       .then(res => res.json())
       .then(data => {
 
@@ -25,7 +25,7 @@ function Inicio() {
 
       });
 
-    fetch("http://192.168.1.67:3001/panel-operaciones")
+      fetch("http://192.168.1.67:3001/api/panel-operaciones")
       .then(res => res.json())
       .then(data => {
 

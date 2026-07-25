@@ -35,32 +35,24 @@ app.locals.pool = pool;
 |--------------------------------------------------------------------------
 */
 
-app.use("/proveedores", proveedoresRoutes(pool));
-app.use("/productos", productosRoutes(pool));
-app.use("/pedidos", pedidosRoutes(pool));
-app.use("/producciones", produccionesRoutes(pool));
-
+app.use("/api/proveedores", proveedoresRoutes(pool));
+app.use("/api/productos", productosRoutes(pool));
+app.use("/api/pedidos", pedidosRoutes(pool));
+app.use("/api/producciones", produccionesRoutes(pool));
+app.use("/api/elaboraciones", elaboracionesRoutes(pool));
+app.use("/api/categorias", categoriasRoutes(pool));
+app.use("/api/ventas", ventasRoutes(pool));
+app.use("/api/consumos", consumosRoutes(pool));
+app.use("/api/tareas-pendientes", tareasPendientesRoutes(pool));
+app.use("/api/finalizar-tarea", finalizarTareaRoutes(pool));
+app.use("/api/sancho", sanchoRoutes(pool));
+app.use("/api/cartas", cartasRoutes(pool));
+app.use("/api/restaurante", restauranteRoutes(pool));
+app.use("/api/panel-operaciones", panelOperacionesRoutes(pool));
+app.use("/api/produccion-hoy", produccionHoyRoutes(pool));
 app.use("/api/recetas", recetasRoutes(pool));
 app.use("/api/categorias-recetas", categoriasRecetasRoutes(pool));
-
-app.use("/elaboraciones", elaboracionesRoutes(pool));
-app.use("/finalizar-tarea", finalizarTareaRoutes(pool));
-app.use("/categorias", categoriasRoutes(pool));
-app.use("/ventas", ventasRoutes(pool));
-app.use("/tareas-pendientes", tareasPendientesRoutes(pool));
-app.use("/produccion-hoy", produccionHoyRoutes(pool));
-app.use("/consumos", consumosRoutes(pool));
-app.use("/sancho", sanchoRoutes(pool));
-
-app.use(
-  "/servicio-carta",
-  require("./routes/servicioCarta")(pool)
-);
-
-app.use("/cartas", cartasRoutes(pool));
-app.use("/restaurante", restauranteRoutes(pool));
-app.use("/panel-operaciones", panelOperacionesRoutes(pool));
-
+app.use("/api/servicio-carta", require("./routes/servicioCarta")(pool));
 /*
 |--------------------------------------------------------------------------
 | HOME

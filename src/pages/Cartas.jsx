@@ -6,7 +6,7 @@ function Cartas() {
 
   useEffect(() => {
 
-    fetch("http://192.168.1.67:3001/cartas")
+   fetch("http://192.168.1.67:3001/api/cartas")
       .then(res => res.json())
       .then(data => setCartas(data));
 
