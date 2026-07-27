@@ -295,6 +295,91 @@ router.post("/", async (req, res) => {
   }
 
 });
+/*
+|--------------------------------------------------------------------------
+| AGREGAR INGREDIENTE A RECETA
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/ingredientes", async (req, res) => {
+
+  try {
+
+    const {
+      producto_id,
+      cantidad,
+      unidad,
+      merma,
+      descontar
+    } = req.body;
+
+    // Obtener nombre del producto
+
+    const producto = await pool.query(
+      `
+      SELECT nombre
+      FROM productos
+      WHERE id = $1
+      `,
+      [producto_id]
+    );
+
+    await pool.query(
+      `
+      INSERT INTO receta_ingredientes
+      (
+        receta_id,
+        ingrediente,
+        cantidad,
+        unidad,
+        producto_id,
+        merma,
+        descontar,
+        orden
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        (
+          SELECT
+          COALESCE(MAX(orden),0)+1
+          FROM receta_ingredientes
+          WHERE receta_id=$1
+        )
+      )
+      `,
+      [
+        req.params.id,
+        producto.rows[0].nombre,
+        cantidad,
+        unidad,
+        producto_id,
+        merma,
+        descontar
+      ]
+    );
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
   return router;
 
 };
