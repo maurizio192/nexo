@@ -1,4 +1,4 @@
-import Produccion from "../components/recetas/Produccion";
+
 export default function Produccion({
   codigo,
   setCodigo,
@@ -63,6 +63,9 @@ export default function Produccion({
           <option>⚖️ Kilogramo</option>
           <option>⚖️ Gramo</option>
           <option>🥛 Litro</option>
+          <option>🎂 Manga pastelera</option>
+          <option>🍰 Bandeja</option>
+          <option>🧁 Molde</option>
         </select>
       </div>
 

@@ -55,7 +55,13 @@ export default function RecetaDetalle() {
     <p><b>Estado:</b> {receta.estado}</p>
 
     <p><b>Categoría:</b> {receta.categoria}</p>
+    <p><b>Unidad de producción:</b> {receta.unidad_produccion}</p>
 
+    <p><b>Cantidad producida:</b> {receta.unidades_producidas || 0}</p>
+
+   <p><b>Raciones por unidad:</b> {receta.raciones_por_unidad}</p>
+
+   <p><b>Consumo por servicio:</b> {receta.consumo_servicio} {receta.unidad_consumo}</p>
     <hr />
   </>
 )}
