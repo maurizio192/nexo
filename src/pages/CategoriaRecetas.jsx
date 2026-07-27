@@ -22,68 +22,94 @@ export default function CategoriaRecetas() {
     r.nombre.toLowerCase().includes(buscar.toLowerCase())
   );
 
-  return (
+ return (
 
-    <div style={{ padding: "20px", maxWidth: "900px" }}>
+  <div
+    style={{
+      padding: "20px",
+      maxWidth: "900px",
+      margin: "0 auto"
+    }}
+  >
 
-      <h1>📖 {categoria}</h1>
+    <h1>📚 {categoria}</h1>
 
-      <br />
+    <br />
 
-      <input
-        type="text"
-        value={buscar}
-        onChange={(e) => setBuscar(e.target.value)}
-        placeholder="🔍 Buscar receta..."
+    <input
+      type="text"
+      value={buscar}
+      onChange={(e) => setBuscar(e.target.value)}
+      placeholder="🔍 Buscar receta..."
+      style={{
+        width: "100%",
+        padding: "12px",
+        marginBottom: "20px",
+        borderRadius: "8px",
+        border: "1px solid #ccc",
+        fontSize: "16px"
+      }}
+    />
+
+    {recetasFiltradas.length === 0 ? (
+
+      <div
         style={{
-          width: "100%",
-          padding: "12px",
-          marginBottom: "20px",
-          borderRadius: "8px",
-          border: "1px solid #ccc",
-          fontSize: "16px"
+          background: "white",
+          padding: "20px",
+          borderRadius: "10px",
+          textAlign: "center"
         }}
-      />
+      >
+        No hay recetas.
+      </div>
 
-      {recetasFiltradas.length === 0 ? (
+    ) : (
+
+      recetasFiltradas.map((receta) => (
 
         <div
+          key={receta.id}
+          onClick={() => navigate(`/recetas/${receta.id}`)}
           style={{
             background: "white",
-            padding: "20px",
+            padding: "18px",
+            marginBottom: "10px",
             borderRadius: "10px",
-            textAlign: "center"
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,.08)"
           }}
         >
-          No hay recetas.
+          {receta.nombre}
         </div>
 
-      ) : (
+      ))
 
-        recetasFiltradas.map((receta) => (
+    )}
 
-          <div
-            key={receta.id}
-            onClick={() => navigate(`/recetas/${receta.id}`)}
-            style={{
-              background: "white",
-              padding: "18px",
-              marginBottom: "10px",
-              borderRadius: "10px",
-              cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,.08)",
-              transition: ".2s"
-            }}
-          >
-            {receta.nombre}
-          </div>
-
-        ))
-
-      )}
+    <div
+      onClick={() =>
+        navigate(
+          `/recetas/nueva?categoria=${encodeURIComponent(categoria)}`
+        )
+      }
+      style={{
+        marginTop: "30px",
+        background: "#0ea5e9",
+        color: "white",
+        padding: "18px",
+        borderRadius: "12px",
+        textAlign: "center",
+        cursor: "pointer",
+        fontWeight: "bold",
+        fontSize: "18px"
+      }}
+    >
+      ➕ Añadir receta
+    </div>
 
     </div>
 
-  );
+);
 
 }
