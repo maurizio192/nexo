@@ -128,17 +128,19 @@ function Productos() {
 
 
 
-    const datos = {
+   const datos = {
 
-      nombre,
-      unidad,
-      categoria,
-      proveedor,
-      stockMinimo: Number(stockMinimo) || 0,
-      ubicacion
+  nombre,
+  unidad,
+  categoria,
 
-    };
+  proveedor_id: Number(proveedor),
 
+  stockMinimo: Number(stockMinimo) || 0,
+
+  ubicacion
+
+};
 
 
     console.log("DATOS ENVIADOS:", datos);
