@@ -117,38 +117,34 @@ function ProductoForm({
 
 
 
-        <TextField
+       <TextField
 
-          select
+  select
 
-          fullWidth
+  fullWidth
 
-          label="Proveedor"
+  label="Proveedor"
 
-          value={proveedor}
+  value={proveedor}
 
-          onChange={(e)=>
-            setProveedor(e.target.value)
-          }
+  onChange={(e)=>
+    setProveedor(e.target.value)
+  }
 
-        >
+>
 
-          {proveedores.map((p)=>(
+  {proveedores.map((p)=>(
 
-            <MenuItem
-              key={p.id}
-              value={p.nombre}
-            >
+    <MenuItem
+      key={p.id}
+      value={p.id}
+    >
+      {p.nombre}
+    </MenuItem>
 
-              {p.nombre}
+  ))}
 
-            </MenuItem>
-
-          ))}
-
-
-        </TextField>
-
+</TextField>
 
 
 

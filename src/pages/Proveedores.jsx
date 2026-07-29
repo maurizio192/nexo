@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API } from "../config/api";
@@ -14,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
 } from "@mui/material";
 
 
@@ -28,6 +30,7 @@ export default function Proveedores() {
 
   const [proveedorAbierto, setProveedorAbierto] = useState(null);
 
+  const [buscarProducto, setBuscarProducto] = useState("");
 
 
   const cargarProveedores = async () => {
@@ -248,22 +251,24 @@ const eliminarProducto = async(id)=>{
 
 
             {
-              proveedorAbierto === p.nombre && (
+  proveedorAbierto === p.nombre && (
 
+    <div style={{ marginTop: 25 }}>
 
-                <div style={{marginTop:25}}>
+      <Typography variant="h6">
+        Productos de {p.nombre}
+      </Typography>
 
+      <TextField
+        fullWidth
+        size="small"
+        label="🔍 Buscar producto..."
+        value={buscarProducto}
+        onChange={(e) => setBuscarProducto(e.target.value)}
+        sx={{ mb: 2 }}
+      />
 
-                  <Typography variant="h6">
-
-                    Productos de {p.nombre}
-
-                  </Typography>
-
-
-
-
-                  <TableContainer component={Paper}>
+      <TableContainer component={Paper}>
 
 
                     <Table size="small">
