@@ -1,3 +1,39 @@
+function generarPrioridades(incidencias) {
+
+  if (!incidencias || incidencias.length === 0) {
+    return [];
+  }
+
+  const prioridades = [];
+
+  incidencias.forEach(producto => {
+
+    const stock = Number(producto.stock_actual);
+    const minimo = Number(producto.stock_minimo);
+
+    if (stock === 0 && minimo > 0) {
+
+      prioridades.push({
+        nivel: "URGENTE",
+        producto: producto.nombre,
+        mensaje: `${producto.nombre} está sin stock`
+      });
+
+    } else if (stock < minimo) {
+
+      prioridades.push({
+        nivel: "ATENCION",
+        producto: producto.nombre,
+        mensaje: `${producto.nombre} está bajo mínimo`
+      });
+
+    }
+
+  });
+
+  return prioridades;
+
+}
 function generarRespuestaSancho({
   estado,
   incidencias,
@@ -13,7 +49,7 @@ function generarRespuestaSancho({
 
   mensaje += "Ho controllato la situazione della cucina. ";
 
-
+const prioridades = generarPrioridades(incidencias);
   // ORDINI
   if (estado.pedidos > 0) {
 
@@ -53,7 +89,21 @@ function generarRespuestaSancho({
 
   }
 
+  if (prioridades.length > 0) {
 
+    const urgentes = prioridades
+      .filter(p => p.nivel === "URGENTE")
+      .slice(0,3)
+      .map(p => p.producto)
+      .join(", ");
+
+    if (urgentes) {
+
+      mensaje += `Priorità urgente: ${urgentes}. `;
+
+    }
+
+  }
 
   // EVENTI
   if (eventos && eventos.length > 0) {
