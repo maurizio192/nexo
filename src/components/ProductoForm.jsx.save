@@ -1,24 +1,15 @@
 import { useEffect, useState } from "react";
+import { API } from "../config/api";
 import {
   Paper,
   Typography,
   TextField,
   Button,
-  MenuItem,
+  MenuItem
 } from "@mui/material";
-  nombre,
-  setNombre,
-  unidad,
-  setUnidad,
-  precio,
-  setPrecio,
-  stock,
-  setStock,
-  categoria,
-  setCategoria,
-  proveedor,
-  setProveedor,
-function ProductoForm({
+
+export default function ProductoForm({
+
   nombre,
   setNombre,
 
@@ -34,9 +25,115 @@ function ProductoForm({
   stockMinimo,
   setStockMinimo,
 
+  ubicacion,
+  setUbicacion,
+
+  proveedor,
+  setProveedor,
+
+  categoria,
+  setCategoria,
+
+  precio,
+  setPrecio,
+
+  stock,
+  setStock,
+
+  actualizar,
+
+  modoEdicion = false
+
+}) {
+
+  const [proveedores, setProveedores] = useState([]);
+
+  useEffect(() => {
+
+    fetch(`${API}/proveedores`)
+      .then(res => res.json())
+      .then(data => setProveedores(data))
+      .catch(console.error);
+
   }, []);
 
-  return (
+  async function guardar() {
+
+    try {
+
+      const res = await fetch(
+        const res = await fetch(
+  `${API}/productos`,
+        {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+
+            nombre,
+
+            unidad,
+
+            formatoCompra,
+
+            cantidadFormato,
+
+            stockMinimo,
+
+            ubicacion,
+
+            proveedor,
+
+            categoria,
+
+            precio,
+
+            stock
+
+          })
+
+        }
+      );
+
+      if (!res.ok) {
+
+        const err = await res.text();
+
+        throw new Error(err);
+
+      }
+
+      actualizar();
+
+      alert("✅ Producto guardado");
+
+      setNombre("");
+      setUnidad("kg");
+      setFormatoCompra("");
+      setCantidadFormato("");
+      setStockMinimo("");
+      setUbicacion("");
+      setProveedor("");
+      setCategoria("");
+      setPrecio("");
+      setStock("");
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert("❌ " + err.message);
+
+    }
+
+  }
+
+    return (
+
     <Paper sx={{ p: 3, mt: 3 }}>
 
       <Typography variant="h5" gutterBottom>
@@ -50,31 +147,15 @@ function ProductoForm({
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
       />
-<TextField
-  fullWidth
-  label="Formato de compra"
-  margin="normal"
-/>
 
-<TextField
-  fullWidth
-  label="Cantidad por formato"
-  type="number"
-  margin="normal"
-/>
+      <TextField
+        fullWidth
+        label="Categoría"
+        margin="normal"
+        value={categoria}
+        onChange={(e) => setCategoria(e.target.value)}
+      />
 
-<TextField
-  fullWidth
-  label="Stock mínimo"
-  type="number"
-  margin="normal"
-/>
-
-<TextField
-  fullWidth
-  label="Ubicación"
-  margin="normal"
-/>
       <TextField
         select
         fullWidth
@@ -84,9 +165,14 @@ function ProductoForm({
         onChange={(e) => setProveedor(e.target.value)}
       >
         {proveedores.map((p) => (
-          <MenuItem key={p.id} value={p.nombre}>
+
+          <MenuItem
+            key={p.id}
+            value={p.nombre}
+          >
             {p.nombre}
           </MenuItem>
+
         ))}
       </TextField>
 
@@ -104,4 +190,71 @@ function ProductoForm({
         <MenuItem value="ml">ml</MenuItem>
         <MenuItem value="ud">ud</MenuItem>
         <MenuItem value="caja">caja</MenuItem>
-      </Text
+      </TextField>
+
+      <TextField
+        fullWidth
+        label="Formato de compra"
+        margin="normal"
+        value={formatoCompra}
+        onChange={(e) => setFormatoCompra(e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        type="number"
+        label="Cantidad por formato"
+        margin="normal"
+        value={cantidadFormato}
+        onChange={(e) => setCantidadFormato(e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        type="number"
+        label="Stock mínimo"
+        margin="normal"
+        value={stockMinimo}
+        onChange={(e) => setStockMinimo(e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        label="Ubicación"
+        margin="normal"
+        value={ubicacion}
+        onChange={(e) => setUbicacion(e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        type="number"
+        label="Precio"
+        margin="normal"
+        value={precio}
+        onChange={(e) => setPrecio(e.target.value)}
+      />
+
+      <TextField
+        fullWidth
+        type="number"
+        label="Stock actual"
+        margin="normal"
+        value={stock}
+        onChange={(e) => setStock(e.target.value)}
+      />
+
+      <Button
+        variant="contained"
+        color="success"
+        sx={{ mt: 3 }}
+        onClick={guardar}
+      >
+        💾 Guardar producto
+      </Button>
+
+    </Paper>
+
+  );
+
+}

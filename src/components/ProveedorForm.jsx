@@ -13,7 +13,7 @@ export default function ProveedorForm({ actualizar }) {
 
   try {
 
-    const res = await fetch("http://192.168.1.67:3001/proveedores", {
+   const res = await fetch("http://192.168.1.67:3001/api/proveedores", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

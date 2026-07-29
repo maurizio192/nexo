@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { API } from "../config/api";
 export default function Recetas() {
 
   const [recetas, setRecetas] = useState([]);
@@ -8,7 +8,7 @@ export default function Recetas() {
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:3001/api/recetas")
+    fetch(`${API}/recetas`)
       .then(res => res.json())
       .then(data => setRecetas(data))
       .catch(err => console.error(err));

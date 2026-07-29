@@ -31,3 +31,5 @@ export async function generarPedido(proveedor = "Makro") {
   return await res.json();
 
 }
+
+export { API };

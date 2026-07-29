@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-
+import { API } from "../config/api";
 import DatosBasicos from "../components/recetas/DatosBasicos";
 import Produccion from "../components/recetas/Produccion";
 import EditorIngredientes from "../components/recetas/EditorIngredientes";
@@ -45,7 +45,7 @@ export default function NuevaReceta() {
 
   useEffect(() => {
 
-    fetch("http://127.0.0.1:3001/api/productos")
+    fetch(`${API}/productos`)
       .then(res => res.json())
       .then(data => setProductos(data))
       .catch(console.error);
@@ -55,95 +55,78 @@ async function guardarReceta() {
 
   try {
 
-    const respuesta = await fetch(
-      "http://127.0.0.1:3001/api/recetas",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+    const respuesta = await fetch(`${API}/recetas`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
 
-          codigo,
-          nombre,
-          categoria,
+        codigo,
+        nombre,
+        categoria,
 
-          unidadProduccion,
+        unidadProduccion,
 
-          racionesPorUnidad: raciones === "" ? null : Number(raciones),
-          consumoServicio: consumo === "" ? null : Number(consumo),
-          unidadConsumo,
+        racionesPorUnidad: raciones === "" ? null : Number(raciones),
+        consumoServicio: consumo === "" ? null : Number(consumo),
+        unidadConsumo,
 
-          procedimiento,
-          emplatado: presentacion,
-          alergenos,
-          observaciones,
+        procedimiento,
+        emplatado: presentacion,
+        alergenos,
+        observaciones,
 
-          tiempoPreparacion: 15,
-          tiempoCoccion: 8,
-          temperatura: "70 °C"
+        tiempoPreparacion: 15,
+        tiempoCoccion: 8,
+        temperatura: "70 °C"
 
-        })
-
-      }
-    );
+      })
+    });
 
     const datos = await respuesta.json();
-
-const recetaId = datos.receta.id;
-
-// Guardar ingredientes
-
-for (const fila of filas) {
-
-  if (!fila.productoId) continue;
-
-  await fetch(
-    `http://127.0.0.1:3001/api/recetas/${recetaId}/ingredientes`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        producto_id: fila.productoId,
-        cantidad: Number(fila.cantidad),
-        unidad: fila.unidad,
-        merma: Number(fila.merma),
-        descontar: fila.descontar
-      })
-    }
-  );
-
-}
-    // Guardar ingredientes
-
-for (const fila of filas) {
-
-  if (!fila.productoId) continue;
-
-  await fetch(
-    `http://127.0.0.1:3001/api/recetas/${datos.id}/ingredientes`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        producto_id: fila.productoId,
-        cantidad: Number(fila.cantidad),
-        unidad: fila.unidad,
-        merma: Number(fila.merma),
-        descontar: fila.descontar
-      })
-    }
-  );
-
-}
 
     if (!respuesta.ok) {
       throw new Error(datos.error || "Error al guardar");
     }
+
+    const recetaId = datos.receta.id;
+
+// Guardar ingredientes
+for (const fila of filas) {
+
+  if (!fila.productoId) continue;
+
+  console.log("Enviando ingrediente", {
+    producto_id: Number(fila.productoId),
+    cantidad: Number(fila.cantidad),
+    unidad: fila.unidad,
+    merma: Number(fila.merma),
+    descontar: fila.descontar
+  });
+
+ const resIng = await fetch(
+  `${API}/recetas/${recetaId}/ingredientes`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      producto_id: Number(fila.productoId),
+      cantidad: Number(fila.cantidad),
+      unidad: fila.unidad,
+      merma: Number(fila.merma),
+      descontar: fila.descontar
+    })
+  }
+);
+
+const jsonIng = await resIng.json();
+
+console.log("Respuesta ingrediente:", jsonIng);
+
+}
 
     alert("✅ Receta guardada correctamente");
 
@@ -158,6 +141,8 @@ for (const fila of filas) {
   }
 
 }
+
+
   return (
 
     <div

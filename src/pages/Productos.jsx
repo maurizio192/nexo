@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-
+import { API } from "../config/api";
 import {
   Paper,
   Typography,
@@ -47,107 +47,82 @@ useEffect(() => {
   }
 }, [location]);
 const cargarProductos = () => {
-  fetch("http://192.168.1.67:3001/productos")
+  fetch(`${API}/productos`)
     .then((res) => res.json())
     .then((data) => setProductos(data))
     .catch((err) => console.error(err));
 };
-  const guardarProducto = async () => {
-    if (
-      nombre.trim() === "" ||
-      unidad.trim() === "" ||
-      Number(precio) <= 0 ||
-      Number(stock) < 0
-    ) {
-      alert("Completa correctamente todos los campos.");
+const guardarProducto = async () => {
+
+  if (
+    nombre.trim() === "" ||
+    unidad.trim() === "" ||
+    Number(precio) <= 0 ||
+    Number(stock) < 0
+  ) {
+    alert("Completa correctamente todos los campos.");
+    return;
+  }
+
+  try {
+
+    const method = modoEdicion ? "PUT" : "POST";
+
+    const url = modoEdicion
+      ? `${API}/productos/${editandoId}`
+      : `${API}/productos`;
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nombre,
+        unidad,
+        formatoCompra,
+        cantidadFormato: Number(cantidadFormato),
+        stockMinimo: Number(stockMinimo),
+        ubicacion,
+        precio: Number(precio),
+        stock: Number(stock),
+        categoria,
+        proveedor,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error(data);
+      alert(JSON.stringify(data));
       return;
     }
 
-    try {
-     const url = modoEdicion
-  ? `http://192.168.1.67:3001/productos/${editandoId}`
-  : "http://192.168.1.67:3001/productos";
+    cargarProductos();
 
-      const method = modoEdicion ? "PUT" : "POST";
+    setNombre("");
+    setUnidad("");
+    setPrecio("");
+    setStock("");
+    setCategoria("");
+    setProveedor("");
+    setFormatoCompra("");
+    setCantidadFormato("");
+    setStockMinimo("");
+    setUbicacion("");
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-  nombre,
-  unidad,
+    setEditandoId(null);
+    setModoEdicion(false);
 
-  formatoCompra,
-  cantidadFormato: Number(cantidadFormato),
-  stockMinimo: Number(stockMinimo),
-  ubicacion,
+  } catch (err) {
 
-  precio: Number(precio),
-  stock: Number(stock),
-  categoria,
-  proveedor,
-}),
-      });
-const data = await response.json();
+    console.error(err);
+    alert("Errore nel salvataggio");
 
-if (!response.ok) {
-  console.error(data);
-  alert(JSON.stringify(data));
-  return;
-}
+  }
 
-cargarProductos();
-     
-      cargarProductos();
-
-      setNombre("");
-      setUnidad("");
-      setPrecio("");
-      setStock("");
-      setCategoria("");
-      setProveedor("");
-      setFormatoCompra("");
-      setCantidadFormato("");
-      setStockMinimo("");
-      setUbicacion("");
-
-      setEditandoId(null);
-      setModoEdicion(false);
-
-    } catch (err) {
-      console.error(err);
-      alert("Errore nel salvataggio");
-    }
-  };
-
-  const eliminarProducto = async (id) => {
-    const confirmar = window.confirm(
-      "¿Seguro que quieres eliminar este producto?"
-    );
-
-    if (!confirmar) return;
-
-    try {
-      const response = await fetch(
-        `http://192.168.1.67:3001/productos/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Errore durante l'eliminazione");
-      }
-
-      cargarProductos();
-
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo eliminar el producto.");
-    }
-  };
+};
 
   return (
     <>
@@ -224,19 +199,26 @@ cargarProductos();
                     onClick={() => {
                    alert("CLICK");
                    eliminarProducto(producto.id);
-                 }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
+                     }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </TableCell>
 
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </>
+          </TableRow>
+
+        ))}
+
+      </TableBody>
+
+    </Table>
+
+  </TableContainer>
+
+</>
+
   );
+
 }
 
 export default Productos;

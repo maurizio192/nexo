@@ -306,13 +306,12 @@ router.post("/:id/ingredientes", async (req, res) => {
   try {
 
     const {
-      producto_id,
-      cantidad,
-      unidad,
-      merma,
-      descontar
-    } = req.body;
-
+  productoId,
+  cantidad,
+  unidad,
+  merma,
+  descontar
+} = req.body;
     // Obtener nombre del producto
 
     const producto = await pool.query(
@@ -321,7 +320,7 @@ router.post("/:id/ingredientes", async (req, res) => {
       FROM productos
       WHERE id = $1
       `,
-      [producto_id]
+      [productoId]
     );
 
     await pool.query(
@@ -368,6 +367,32 @@ router.post("/:id/ingredientes", async (req, res) => {
     res.json({
       ok: true
     });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+router.put("/:id/archivar", async (req, res) => {
+
+  try {
+
+    await pool.query(
+      `
+      UPDATE recetas
+      SET activa = FALSE
+      WHERE id = $1
+      `,
+      [req.params.id]
+    );
+
+    res.json({ ok: true });
 
   } catch (err) {
 
