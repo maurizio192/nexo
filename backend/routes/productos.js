@@ -42,49 +42,49 @@ module.exports = (pool) => {
 
     try {
 
+      
       const {
         nombre,
         unidad,
         stockMinimo,
         ubicacion,
         categoria,
-        proveedor
+        proveedor_id
       } = req.body;
 
        console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
 
 
       const resultado = await pool.query(
-        `
-        INSERT INTO productos
-        (
-          nombre,
-          unidad,
-          categoria,
-          proveedor,
-          stock_actual,
-          stock_minimo,
-          ubicacion,
-          precio
-        )
-        VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8)
-        RETURNING *
-        `,
-        [
-          nombre,
-          unidad,
-          categoria,
-          proveedor,
-          0,
-          Number(stockMinimo) || 0,
-          ubicacion,
-          0
-        ]
-      );
+  `
+  INSERT INTO productos
+  (
+    nombre,
+    unidad,
+    categoria,
+    proveedor_id,
+    stock_actual,
+    stock_minimo,
+    ubicacion,
+    precio
+  )
+  VALUES
+  ($1,$2,$3,$4,$5,$6,$7,$8)
+  RETURNING *
+  `,
+  [
+    nombre,
+    unidad,
+    categoria,
+    Number(proveedor_id),
+    0,
+    Number(stockMinimo) || 0,
+    ubicacion,
+    0
+  ]
+);
 
-
-      res.json(resultado.rows[0]);
+res.json(resultado.rows[0]);
 
 
     } catch (err) {
@@ -106,14 +106,14 @@ router.put("/:id", async (req, res) => {
 
   const { id } = req.params;
 
-  const {
-    nombre,
-    unidad,
-    categoria,
-    proveedor,
-    stockMinimo,
-    ubicacion
-  } = req.body;
+const {
+  nombre,
+  unidad,
+  categoria,
+  proveedor_id,
+  stockMinimo,
+  ubicacion
+} = req.body;
 
 
   try {
@@ -122,23 +122,22 @@ router.put("/:id", async (req, res) => {
       `
       UPDATE productos
       SET
-        nombre=$1,
-        unidad=$2,
-        categoria=$3,
-        proveedor=$4,
-        stock_minimo=$5,
-        ubicacion=$6
+       categoria=$3,
+      proveedor_id=$4,
+      stock_minimo=$5,
+      ubicacion=$6
       WHERE id=$7
       RETURNING *
       `,
+      
       [
-        nombre,
-        unidad,
-        categoria,
-        proveedor,
-        Number(stockMinimo),
-        ubicacion,
-        id
+       nombre,
+       unidad,
+       categoria,
+       Number(proveedor_id),
+       Number(stockMinimo),
+       ubicacion,
+       id
       ]
     );
 
