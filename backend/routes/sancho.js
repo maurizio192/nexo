@@ -1,62 +1,93 @@
 const express = require("express");
 const NexoEngine = require("../engine/nexoEngine");
 const sanchoProduccion = require("../engine/sanchoProduccion");
+const generarRespuestaSancho = require("../engine/sanchoRespuesta");
+
 
 module.exports = (pool) => {
 
   const router = express.Router();
   const engine = new NexoEngine(pool);
 
+
   router.get("/", async (req, res) => {
 
     try {
 
+
       const inicio = await engine.ejecutar("INICIO_JORNADA");
+
       const estado = await engine.ejecutar("ESTADO_GENERAL");
+
       const incidencias = await engine.ejecutar("INCIDENCIAS_STOCK");
+
       const servicioHoy = await engine.ejecutar("SERVICIO_HOY");
 
+
       const produccion = await pool.query(`
-        SELECT nombre,categoria
+        SELECT 
+          nombre,
+          categoria
         FROM tareas_produccion
         WHERE fecha = CURRENT_DATE
         AND estado='PENDIENTE'
         ORDER BY categoria,nombre
       `);
-         const eventos = await pool.query(`
-  SELECT
-    fecha,
-    usuario,
-    accion,
-    detalle
-  FROM eventos_nexo
-  ORDER BY fecha DESC
-  LIMIT 10
-`);
-      const mensaje = sanchoProduccion(produccion.rows);
 
-      const recomendaciones = [];
 
-      if (incidencias.length > 0) {
 
-        recomendaciones.push(
-          `Tienes ${incidencias.length} productos por debajo del stock mínimo.`
-        );
+      const eventos = await pool.query(`
+        SELECT
+          fecha,
+          usuario,
+          accion,
+          detalle
+        FROM eventos_nexo
+        ORDER BY fecha DESC
+        LIMIT 5
+      `);
 
-      }
+
+
+      const respuestaSancho = generarRespuestaSancho({
+
+        estado,
+
+        incidencias,
+
+        eventos: eventos.rows,
+
+        inicio
+
+      });
+
+
 
       res.json({
-  inicio,
-  estado,
-  incidencias,
-  servicioHoy,
-  produccion: produccion.rows,
-  eventos: eventos.rows
-});
+
+        respuestaSancho,
+
+        inicio,
+
+        estado,
+
+        incidencias,
+
+        servicioHoy,
+
+        produccion: produccion.rows,
+
+        eventos: eventos.rows
+
+      });
+
+
 
     } catch (err) {
 
+
       console.error(err);
+
 
       res.status(500).json({
 
@@ -64,10 +95,15 @@ module.exports = (pool) => {
 
       });
 
+
     }
+
 
   });
 
+
+
   return router;
+
 
 };

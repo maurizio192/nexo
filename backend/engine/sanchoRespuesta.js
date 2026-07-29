@@ -5,6 +5,10 @@ function generarRespuestaSancho({
   inicio
 }) {
 
+
+  console.log("SANCHO V2 CARICATO");
+  console.log("SANCHO FILE NUOVO ATTIVO 123");
+
   let mensaje = "Oído chef Maurizio. ";
 
   mensaje += "Ho controllato la situazione della cucina. ";
