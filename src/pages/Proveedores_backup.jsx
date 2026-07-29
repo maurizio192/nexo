@@ -1,0 +1,199 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { API } from "../config/api";
+import ProveedorForm from "../components/ProveedorForm";
+
+export default function Proveedores() {
+
+  const navigate = useNavigate();
+
+  const [proveedores, setProveedores] = useState([]);
+  const [productosProveedor, setProductosProveedor] = useState([]);
+  const [proveedorAbierto, setProveedorAbierto] = useState(null);
+
+  const cargarProveedores = () => {
+    fetch(`${API}/proveedores`)
+      .then((res) => res.json())
+      .then((data) => setProveedores(data))
+      .catch(console.error);
+  };
+
+  useEffect(() => {
+    cargarProveedores();
+  }, []);
+
+  async function verProductos(nombre) {
+
+    const res = await fetch(
+      `${API}/proveedores/${encodeURIComponent(nombre)}/productos`
+    );
+
+    const datos = await res.json();
+
+    setProveedorAbierto(nombre);
+    setProductosProveedor(datos);
+
+  }
+  async function eliminarProveedor(id) {
+
+  if (!window.confirm("Eliminare questo fornitore?")) return;
+
+  try {
+
+    const res = await fetch(`${API}/proveedores/${id}`, {
+      method: "DELETE"
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      cargarProveedores();
+    } else {
+      alert("❌ Impossibile eliminare il fornitore");
+    }
+
+  } catch (err) {
+
+    console.error(err);
+    alert("❌ Errore di connessione");
+
+  }
+
+}
+
+  return (
+
+    <div>
+
+      <h1>🚚 Proveedores</h1>
+
+      <ProveedorForm actualizar={cargarProveedores} />
+
+      <p>
+        Total proveedores: <strong>{proveedores.length}</strong>
+      </p>
+
+      {proveedores.map((p) => (
+
+        <div
+          key={p.id}
+          style={{
+            background: "white",
+            padding: 20,
+            marginBottom: 15,
+            borderRadius: 12,
+            boxShadow: "0 2px 8px rgba(0,0,0,.15)"
+          }}
+        >
+
+          <h3>{p.nombre}</h3>
+
+          <p>👤 Contacto: {p.contacto || "No definido"}</p>
+
+          <p>📞 Teléfono: {p.telefono || "No definido"}</p>
+
+          <p>📧 Email: {p.email || "No definido"}</p>
+
+         <button onClick={() => verProductos(p.nombre)}>
+  📦 Ver productos
+</button>
+
+<button
+  onClick={() => eliminarProveedor(p.id)}
+  style={{
+    marginLeft: 10,
+    background: "#d32f2f",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: 6,
+    cursor: "pointer"
+  }}
+>
+  🗑 Eliminar
+</button>
+          {proveedorAbierto === p.nombre && (
+
+            <div
+              style={{
+                marginTop: 15,
+                background: "#f8f8f8",
+                padding: 15,
+                borderRadius: 10
+              }}
+            >
+
+              <h4>Productos</h4>
+
+              {productosProveedor.length === 0 ? (
+
+                <p>No hay productos para este proveedor.</p>
+
+              ) : (
+
+               productosProveedor.map((prod) => (
+
+  <div
+    key={prod.id}
+    style={{
+      padding: "10px 0",
+      borderBottom: "1px solid #ddd"
+    }}
+  >
+
+    📦 <strong>{prod.nombre}</strong>
+
+    <br />
+
+    📊 Stock: {prod.stock_actual} {prod.unidad}
+
+    <br />
+
+    ⚠️ Mínimo: {prod.stock_minimo} {prod.unidad}
+
+    <br />
+
+    <button
+      style={{ marginTop: 5 }}
+      onClick={() =>
+        navigate("/productos", {
+          state: {
+            producto: prod
+          }
+        })
+      }
+    >
+      ✏️ Modificar
+    </button>
+
+  </div>
+
+))
+              )}
+
+              <button
+                style={{ marginTop: 15 }}
+                onClick={() =>
+                  navigate("/productos", {
+                    state: {
+                      proveedor: p.nombre
+                    }
+                  })
+                }
+              >
+                ➕ Añadir producto
+              </button>
+
+            </div>
+
+          )}
+
+        </div>
+
+      ))}
+
+    </div>
+
+  );
+
+}

@@ -1,24 +1,43 @@
 const express = require("express");
-const router = express.Router();
 
 module.exports = (pool) => {
 
+  const router = express.Router();
+
+
+  // ==========================
+  // LISTAR PROVEEDORES
+  // ==========================
+
   router.get("/", async (req, res) => {
+
     try {
+
       const resultado = await pool.query(
-        "SELECT * FROM proveedores ORDER BY nombre"
+        `
+        SELECT *
+        FROM proveedores
+        ORDER BY nombre
+        `
       );
 
       res.json(resultado.rows);
 
     } catch (err) {
+
       console.error(err);
 
       res.status(500).json({
-        error: "Errore database"
+        error: err.message
       });
+
     }
+
   });
+
+  // ==========================
+  // CREAR PROVEEDOR
+  // ==========================
 
   router.post("/", async (req, res) => {
 
@@ -32,29 +51,30 @@ module.exports = (pool) => {
     try {
 
       const resultado = await pool.query(
-
-        `INSERT INTO proveedores
-        (nombre, contacto, telefono, email)
-        VALUES ($1,$2,$3,$4)
-        RETURNING *`,
-
-        [nombre, contacto, telefono, email]
-
+        `
+        INSERT INTO proveedores
+        (
+          nombre,
+          contacto,
+          telefono,
+          email
+        )
+        VALUES
+        ($1,$2,$3,$4)
+        RETURNING *
+        `,
+        [
+          nombre,
+          contacto,
+          telefono,
+          email
+        ]
       );
 
-      res.json(resultado.rows[0]);
+  // ==========================
+  // PRODUCTOS DE UN PROVEEDOR
+  // ==========================
 
-    } catch (err) {
-
-      console.error(err);
-
-      res.status(500).json({
-        error: "Errore database"
-      });
-
-    }
-
-  });
   router.get("/:nombre/productos", async (req, res) => {
 
     try {
@@ -62,14 +82,13 @@ module.exports = (pool) => {
       const { nombre } = req.params;
 
       const resultado = await pool.query(
-
-        `SELECT *
-         FROM productos
-         WHERE proveedor = $1
-         ORDER BY nombre`,
-
+        `
+        SELECT *
+        FROM productos
+        WHERE proveedor = $1
+        ORDER BY nombre
+        `,
         [nombre]
-
       );
 
       res.json(resultado.rows);
@@ -79,38 +98,26 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: "Errore database"
+        error: err.message
       });
 
     }
 
   });
-  router.delete("/:id", async (req, res) => {
 
-  try {
+      res.json(resultado.rows[0]);
 
-    const { id } = req.params;
+    } catch (err) {
 
-    await pool.query(
-      "DELETE FROM proveedores WHERE id = $1",
-      [id]
-    );
+      console.error(err);
 
-    res.json({
-      ok: true
-    });
+      res.status(500).json({
+        error: err.message
+      });
 
-  } catch (err) {
+    }
 
-    console.error(err);
+  });
+  return router;
 
-res.status(500).json({
-  ok: false,
-  error: "Errore database"
-});
-  }
-
-});
-
-return router;
 };

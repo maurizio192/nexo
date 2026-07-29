@@ -123,39 +123,7 @@ export default function Proveedores() {
 
   };
 
-const eliminarProducto = async(id)=>{
 
-  if(!window.confirm("¿Eliminar producto?"))
-    return;
-
-
-  try{
-
-    const res = await fetch(
-      `${API}/productos/${id}`,
-      {
-        method:"DELETE"
-      }
-    );
-
-
-    const data = await res.json();
-
-
-    if(data.ok){
-
-      verProductos(proveedorAbierto);
-
-    }
-
-
-  }catch(err){
-
-    console.error(err);
-
-  }
-
-};
 
 
   return (
@@ -351,35 +319,26 @@ const eliminarProducto = async(id)=>{
 
                             <TableCell>
 
-  <Button
-    size="small"
-    onClick={()=>navigate(
-      "/productos",
-      {
-        state:{
-          producto:prod
-        }
-      }
-    )}
-  >
-    ✏️
-  </Button>
+
+                              <Button
+
+                                size="small"
+
+                                onClick={()=>navigate(
+                                  "/productos",
+                                  {
+                                    state:{
+                                      producto:prod
+                                    }
+                                  }
+                                )}
+
+                              >
+                                ✏️
+                              </Button>
 
 
-  <Button
-
-    size="small"
-
-    color="error"
-
-    onClick={()=>eliminarProducto(prod.id)}
-
-  >
-    🗑
-  </Button>
-
-
-</TableCell>
+                            </TableCell>
 
 
 

@@ -4,6 +4,7 @@ module.exports = (pool) => {
 
   const router = express.Router();
 
+
   // ==========================
   // LISTAR PRODUCTOS
   // ==========================
@@ -32,6 +33,7 @@ module.exports = (pool) => {
 
   });
 
+
   // ==========================
   // CREAR PRODUCTO
   // ==========================
@@ -43,117 +45,47 @@ module.exports = (pool) => {
       const {
         nombre,
         unidad,
-        formatoCompra,
-        cantidadFormato,
         stockMinimo,
         ubicacion,
-        precio,
-        stock,
         categoria,
         proveedor
       } = req.body;
 
-      const result = await pool.query(
+       console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
+
+
+      const resultado = await pool.query(
         `
         INSERT INTO productos
         (
           nombre,
           unidad,
-          formato_compra,
-          cantidad_formato,
-          stock_minimo,
-          ubicacion,
-          precio,
-          stock,
-          categoria,
-          proveedor
-        )
-        VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-        RETURNING *
-        `,
-        [
-          nombre,
-          unidad,
-          formatoCompra,
-          cantidadFormato,
-          stockMinimo,
-          ubicacion,
-          precio,
-          stock,
-          categoria,
-          proveedor
-        ]
-      );
-
-      res.json(result.rows[0]);
-
-    } catch (err) {
-
-      console.error(err);
-
-      res.status(500).json({
-        error: err.message
-      });
-
-    }
-
-  });
-
-  // ==========================
-  // MODIFICAR PRODUCTO
-  // ==========================
-
-  router.put("/:id", async (req, res) => {
-
-    try {
-
-      const {
-        nombre,
-        unidad,
-        formatoCompra,
-        cantidadFormato,
-        stockMinimo,
-        ubicacion,
-        precio,
-        stock,
-        categoria,
-        proveedor
-      } = req.body;
-
-      const result = await pool.query(
-        `
-        UPDATE productos
-        SET
-          nombre=$1,
-          unidad=$2,
-          formato_compra=$3,
-          cantidad_formato=$4,
-          stock_minimo=$5,
-          ubicacion=$6,
-          precio=$7,
-          stock=$8,
-          categoria=$9,
-          proveedor=$10
-        WHERE id=$11
-        RETURNING *
-        `,
-        [
-          nombre,
-          unidad,
-          formatoCompra,
-          cantidadFormato,
-          stockMinimo,
-          ubicacion,
-          precio,
-          stock,
           categoria,
           proveedor,
-          req.params.id
+          stock_actual,
+          stock_minimo,
+          ubicacion,
+          precio
+        )
+        VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8)
+        RETURNING *
+        `,
+        [
+          nombre,
+          unidad,
+          categoria,
+          proveedor,
+          0,
+          Number(stockMinimo) || 0,
+          ubicacion,
+          0
         ]
       );
 
-      res.json(result.rows[0]);
+
+      res.json(resultado.rows[0]);
+
 
     } catch (err) {
 
@@ -166,35 +98,100 @@ module.exports = (pool) => {
     }
 
   });
+// ==========================
+// MODIFICAR PRODUCTO
+// ==========================
 
-  // ==========================
-  // ELIMINAR PRODUCTO
-  // ==========================
+router.put("/:id", async (req, res) => {
 
-  router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
 
-    try {
+  const {
+    nombre,
+    unidad,
+    categoria,
+    proveedor,
+    stockMinimo,
+    ubicacion
+  } = req.body;
 
-      await pool.query(
-        "DELETE FROM productos WHERE id=$1",
-        [req.params.id]
-      );
 
-      res.json({
-        ok: true
-      });
+  try {
 
-    } catch (err) {
+    const result = await pool.query(
+      `
+      UPDATE productos
+      SET
+        nombre=$1,
+        unidad=$2,
+        categoria=$3,
+        proveedor=$4,
+        stock_minimo=$5,
+        ubicacion=$6
+      WHERE id=$7
+      RETURNING *
+      `,
+      [
+        nombre,
+        unidad,
+        categoria,
+        proveedor,
+        Number(stockMinimo),
+        ubicacion,
+        id
+      ]
+    );
 
-      console.error(err);
 
-      res.status(500).json({
-        error: err.message
-      });
+    res.json(result.rows[0]);
 
-    }
 
-  });
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
+// ==========================
+// ELIMINAR PRODUCTO
+// ==========================
+
+router.delete("/:id", async (req, res) => {
+
+  const { id } = req.params;
+
+
+  try {
+
+    await pool.query(
+      "DELETE FROM productos WHERE id = $1",
+      [id]
+    );
+
+
+    res.json({
+      ok:true
+    });
+
+
+  } catch(err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      ok:false,
+      error:err.message
+    });
+
+  }
+
+});
 
   return router;
 

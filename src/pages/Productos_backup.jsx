@@ -22,12 +22,8 @@ import ProductoForm from "../components/ProductoForm";
 
 function Productos() {
 
-
   const [productos, setProductos] = useState([]);
-
   const location = useLocation();
-
-
   const [nombre, setNombre] = useState("");
   const [unidad, setUnidad] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -35,60 +31,44 @@ function Productos() {
   const [stockMinimo, setStockMinimo] = useState("");
   const [ubicacion, setUbicacion] = useState("");
 
-
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
 
 
 
   useEffect(() => {
-
     cargarProductos();
-
   }, []);
 
+useEffect(() => {
 
+  if (location.state?.producto) {
 
-  useEffect(() => {
+    const producto = location.state.producto;
 
-    if (location.state?.producto) {
+    editarProducto(producto);
 
-      editarProducto(location.state.producto);
+  }
 
-    }
-
-  }, [location]);
-
-
-
-  // ==========================
-  // CARGAR PRODUCTOS
-  // ==========================
+}, [location]);
 
   const cargarProductos = async () => {
 
-    try {
+  try {
 
-      const res = await fetch(`${API}/productos`);
+    const res = await fetch(`${API}/productos`);
+    const data = await res.json();
 
-      const data = await res.json();
+    setProductos(data);
 
-      setProductos(data);
+  } catch(error) {
 
+    console.error("ERRORE COMPLETO:", error);
+    alert(error.message);
 
-    } catch(error) {
+  }
 
-      console.error("Error cargando productos:", error);
-
-    }
-
-  };
-
-
-
-  // ==========================
-  // LIMPIAR FORMULARIO
-  // ==========================
+};
 
   const limpiarFormulario = () => {
 
@@ -106,10 +86,6 @@ function Productos() {
 
 
 
-  // ==========================
-  // GUARDAR / MODIFICAR
-  // ==========================
-
   const guardarProducto = async () => {
 
 
@@ -121,27 +97,9 @@ function Productos() {
     ) {
 
       alert("Completa los campos obligatorios");
-
       return;
 
     }
-
-
-
-    const datos = {
-
-      nombre,
-      unidad,
-      categoria,
-      proveedor,
-      stockMinimo: Number(stockMinimo) || 0,
-      ubicacion
-
-    };
-
-
-
-    console.log("DATOS ENVIADOS:", datos);
 
 
 
@@ -149,9 +107,7 @@ function Productos() {
 
 
     const url = modoEdicion
-
       ? `${API}/productos/${editandoId}`
-
       : `${API}/productos`;
 
 
@@ -163,13 +119,21 @@ function Productos() {
 
         method,
 
-        headers: {
-
-          "Content-Type": "application/json"
-
+        headers:{
+          "Content-Type":"application/json"
         },
 
-        body: JSON.stringify(datos)
+
+        body: JSON.stringify({
+
+          nombre,
+          unidad,
+          categoria,
+          proveedor,
+          stockMinimo: Number(stockMinimo),
+          ubicacion
+
+        })
 
       });
 
@@ -179,12 +143,10 @@ function Productos() {
 
 
 
-      if (!response.ok) {
+      if(!response.ok){
 
         console.error(data);
-
-        alert(data.error || "Error guardando producto");
-
+        alert(data.error);
         return;
 
       }
@@ -192,49 +154,34 @@ function Productos() {
 
 
       cargarProductos();
-
       limpiarFormulario();
 
 
 
-    } catch(error) {
+    } catch(error){
 
-      console.error("Error completo:", error);
-
-      alert(error.message);
+      console.error(error);
+      alert("Error guardando producto");
 
     }
+
 
   };
 
 
 
-  // ==========================
-  // EDITAR PRODUCTO
-  // ==========================
 
-  const editarProducto = (producto) => {
+  const editarProducto = (producto)=>{
 
 
     setEditandoId(producto.id);
-
     setModoEdicion(true);
 
-
-    setNombre(producto.nombre || "");
-
-    setUnidad(producto.unidad || "");
-
-    setCategoria(producto.categoria || "");
-
-    setProveedor(producto.proveedor || "");
-
-
-    setStockMinimo(
-      String(producto.stock_minimo ?? "")
-    );
-
-
+    setNombre(producto.nombre);
+    setUnidad(producto.unidad);
+    setCategoria(producto.categoria);
+    setProveedor(producto.proveedor);
+    setStockMinimo(producto.stock_minimo || "");
     setUbicacion(producto.ubicacion || "");
 
 
@@ -242,15 +189,13 @@ function Productos() {
 
 
 
+
   return (
 
     <>
 
-
       <Typography variant="h4" gutterBottom>
-
         📦 Productos
-
       </Typography>
 
 
@@ -283,12 +228,7 @@ function Productos() {
 
 
 
-
-      <TableContainer
-        component={Paper}
-        sx={{ mt: 3 }}
-      >
-
+      <TableContainer component={Paper} sx={{mt:3}}>
 
         <Table>
 
@@ -298,23 +238,15 @@ function Productos() {
             <TableRow>
 
               <TableCell>Nombre</TableCell>
-
               <TableCell>Categoría</TableCell>
-
               <TableCell>Proveedor</TableCell>
-
               <TableCell>Stock</TableCell>
-
               <TableCell>Mínimo</TableCell>
-
               <TableCell>Acciones</TableCell>
-
 
             </TableRow>
 
-
           </TableHead>
-
 
 
 
@@ -357,36 +289,22 @@ function Productos() {
 
 
                 <IconButton
-
                   color="primary"
-
-                  onClick={() =>
-                    editarProducto(producto)
-                  }
-
+                  onClick={()=>editarProducto(producto)}
                 >
-
-                  <EditIcon />
-
+                  <EditIcon/>
                 </IconButton>
-
 
 
 
                 <IconButton
-
                   color="error"
-
                 >
-
-                  <DeleteIcon />
-
+                  <DeleteIcon/>
                 </IconButton>
 
 
-
               </TableCell>
-
 
 
             </TableRow>
@@ -402,7 +320,6 @@ function Productos() {
 
 
       </TableContainer>
-
 
 
     </>
