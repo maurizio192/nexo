@@ -6,21 +6,29 @@ module.exports = (pool) => {
   const router = express.Router();
   const engine = new NexoEngine(pool);
 
-  // Productos pendientes de pedir
+
+  // ======================================
+  // PRODUCTOS PENDIENTES DE PEDIR
+  // ======================================
+
   router.get("/", async (req, res) => {
 
     try {
 
       const result = await pool.query(`
         SELECT
-          proveedor,
-          nombre,
-          stock_actual,
-          stock_minimo
-        FROM productos
-        WHERE stock_actual <= stock_minimo
-          AND proveedor IS NOT NULL
-        ORDER BY proveedor, nombre
+          pr.id AS proveedor_id,
+          pr.nombre AS proveedor,
+          p.nombre,
+          p.stock_actual,
+          p.stock_minimo,
+          p.stock_garantizado,
+          (p.stock_garantizado - p.stock_actual) AS cantidad_pedir
+        FROM productos p
+        JOIN proveedores pr
+          ON p.proveedor_id = pr.id
+        WHERE p.stock_actual < p.stock_garantizado
+        ORDER BY pr.nombre, p.nombre
       `);
 
       res.json(result.rows);
@@ -37,7 +45,12 @@ module.exports = (pool) => {
 
   });
 
-  // Pedidos pendientes
+
+
+  // ======================================
+  // PEDIDOS PENDIENTES
+  // ======================================
+
   router.get("/pendientes", async (req, res) => {
 
     try {
@@ -48,13 +61,23 @@ module.exports = (pool) => {
           p.fecha,
           p.proveedor,
           p.estado,
-          d.producto,
-          d.cantidad
+          json_agg(
+            json_build_object(
+              'producto', d.producto,
+              'cantidad', d.cantidad
+            )
+            ORDER BY d.producto
+          ) AS productos
         FROM pedidos p
         JOIN pedido_detalle d
           ON p.id = d.pedido_id
         WHERE p.estado = 'Pendiente'
-        ORDER BY p.id, d.producto
+        GROUP BY
+          p.id,
+          p.fecha,
+          p.proveedor,
+          p.estado
+        ORDER BY p.id
       `);
 
       res.json(result.rows);
@@ -71,38 +94,12 @@ module.exports = (pool) => {
 
   });
 
-  // Generar pedido
-  router.post("/generar", async (req, res) => {
 
-    try {
 
-      const { proveedor } = req.body;
+  // ======================================
+  // RECIBIR PEDIDO
+  // ======================================
 
-      const pedidoId = await engine.ejecutar(
-        "GENERAR_PEDIDO",
-        {
-          proveedor,
-        }
-      );
-
-      res.json({
-        ok: true,
-        pedido: pedidoId,
-      });
-
-    } catch (err) {
-
-      console.error(err);
-
-      res.status(500).json({
-        error: err.message,
-      });
-
-    }
-
-  });
-
-  // Recibir pedido
   router.post("/recibir", async (req, res) => {
 
     try {
@@ -132,6 +129,220 @@ module.exports = (pool) => {
 
   });
 
-  return router;
+
+
+ // ======================================
+// CREAR PEDIDOS AUTOMÁTICOS
+// ======================================
+
+router.post("/generar", async (req, res) => {
+
+  const client = await pool.connect();
+
+  try {
+
+    await client.query("BEGIN");
+
+
+    const productos = await client.query(`
+      SELECT
+        pr.id AS proveedor_id,
+        pr.nombre AS proveedor,
+        p.nombre,
+        (p.stock_garantizado - p.stock_actual) AS cantidad
+      FROM productos p
+      JOIN proveedores pr
+        ON pr.id = p.proveedor_id
+      WHERE p.stock_actual < p.stock_garantizado
+      ORDER BY pr.nombre, p.nombre
+    `);
+
+
+    const grupos = {};
+
+
+    productos.rows.forEach((producto) => {
+
+      if (!grupos[producto.proveedor_id]) {
+
+        grupos[producto.proveedor_id] = [];
+
+      }
+
+      grupos[producto.proveedor_id].push(producto);
+
+    });
+
+
+    const pedidosCreados = [];
+
+
+    for (const proveedor_id of Object.keys(grupos)) {
+
+
+      const proveedor = grupos[proveedor_id][0].proveedor;
+
+
+      // controlla se esiste già un ordine pendente
+      const existente = await client.query(
+        `
+        SELECT id
+        FROM pedidos
+        WHERE proveedor_id = $1
+          AND estado = 'Pendiente'
+        LIMIT 1
+        `,
+        [
+          proveedor_id
+        ]
+      );
+
+
+      let pedidoId;
+
+
+      if (existente.rows.length > 0) {
+
+        pedidoId = existente.rows[0].id;
+
+
+      } else {
+
+
+        const pedido = await client.query(
+          `
+          INSERT INTO pedidos
+          (
+            fecha,
+            proveedor,
+            proveedor_id,
+            estado
+          )
+          VALUES
+          (
+            CURRENT_DATE,
+            $1,
+            $2,
+            'Pendiente'
+          )
+          RETURNING id
+          `,
+          [
+            proveedor,
+            proveedor_id
+          ]
+        );
+
+
+        pedidoId = pedido.rows[0].id;
+
+
+      }
+
+
+      for (const producto of grupos[proveedor_id]) {
+
+
+        const existeProducto = await client.query(
+          `
+          SELECT id
+          FROM pedido_detalle
+          WHERE pedido_id = $1
+            AND producto = $2
+          LIMIT 1
+          `,
+          [
+            pedidoId,
+            producto.nombre
+          ]
+        );
+
+
+        if (existeProducto.rows.length === 0) {
+
+
+          await client.query(
+            `
+            INSERT INTO pedido_detalle
+            (
+              pedido_id,
+              producto,
+              cantidad
+            )
+            VALUES
+            ($1,$2,$3)
+            `,
+            [
+              pedidoId,
+              producto.nombre,
+              producto.cantidad
+            ]
+          );
+
+
+        }
+
+      }
+
+
+      pedidosCreados.push({
+
+        id: pedidoId,
+        proveedor
+
+      });
+
+
+    }
+
+
+  await client.query(
+  `
+  INSERT INTO eventos_nexo
+  (
+    usuario,
+    accion,
+    detalle
+  )
+  VALUES
+  ($1,$2,$3)
+  `,
+  [
+    "Maurizio",
+    "GENERAR_PEDIDOS",
+    JSON.stringify(pedidosCreados)
+  ]
+);
+
+
+await client.query("COMMIT");
+
+
+res.json({
+  ok: true,
+  pedidos: pedidosCreados
+});
+
+
+    } catch (err) {
+
+    await client.query("ROLLBACK");
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  } finally {
+
+    client.release();
+
+  }
+
+});
+
+
+return router;
 
 };

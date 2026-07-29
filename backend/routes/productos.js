@@ -49,7 +49,8 @@ module.exports = (pool) => {
         stockMinimo,
         ubicacion,
         categoria,
-        proveedor_id
+         proveedor_id,
+        stockGarantizado
       } = req.body;
 
        console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
@@ -67,21 +68,23 @@ module.exports = (pool) => {
     stock_minimo,
     ubicacion,
     precio
+    stock_garantizado.
   )
   VALUES
-  ($1,$2,$3,$4,$5,$6,$7,$8)
-  RETURNING *
-  `,
-  [
-    nombre,
-    unidad,
-    categoria,
-    Number(proveedor_id),
-    0,
-    Number(stockMinimo) || 0,
-    ubicacion,
-    0
-  ]
+  ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+RETURNING *
+`,
+[
+  nombre,
+  unidad,
+  categoria,
+  Number(proveedor_id),
+  0,
+  Number(stockMinimo) || 0,
+  ubicacion,
+  0,
+  Number(stockGarantizado) || 0
+]
 );
 
 res.json(resultado.rows[0]);

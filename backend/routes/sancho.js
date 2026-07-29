@@ -23,7 +23,16 @@ module.exports = (pool) => {
         AND estado='PENDIENTE'
         ORDER BY categoria,nombre
       `);
-
+         const eventos = await pool.query(`
+  SELECT
+    fecha,
+    usuario,
+    accion,
+    detalle
+  FROM eventos_nexo
+  ORDER BY fecha DESC
+  LIMIT 10
+`);
       const mensaje = sanchoProduccion(produccion.rows);
 
       const recomendaciones = [];
@@ -37,22 +46,13 @@ module.exports = (pool) => {
       }
 
       res.json({
-
-        saludo: "Hola.",
-
-        mensaje,
-
-        servicioHoy,
-
-        estado,
-
-        incidencias,
-
-        recomendaciones,
-
-        inicio
-
-      });
+  inicio,
+  estado,
+  incidencias,
+  servicioHoy,
+  produccion: produccion.rows,
+  eventos: eventos.rows
+});
 
     } catch (err) {
 
