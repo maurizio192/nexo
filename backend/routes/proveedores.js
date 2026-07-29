@@ -4,7 +4,6 @@ module.exports = (pool) => {
 
   const router = express.Router();
 
-
   // ==========================
   // LISTAR PROVEEDORES
   // ==========================
@@ -71,25 +70,126 @@ module.exports = (pool) => {
         ]
       );
 
+      res.json(resultado.rows[0]);
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+  });
+
   // ==========================
-  // PRODUCTOS DE UN PROVEEDOR
+  // MODIFICAR PROVEEDOR
+  // ==========================
+
+  router.put("/:id", async (req, res) => {
+
+    const { id } = req.params;
+
+    const {
+      nombre,
+      contacto,
+      telefono,
+      email
+    } = req.body;
+
+    try {
+
+      const resultado = await pool.query(
+        `
+        UPDATE proveedores
+        SET
+          nombre = $1,
+          contacto = $2,
+          telefono = $3,
+          email = $4
+        WHERE id = $5
+        RETURNING *
+        `,
+        [
+          nombre,
+          contacto,
+          telefono,
+          email,
+          id
+        ]
+      );
+
+      res.json(resultado.rows[0]);
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+  });
+
+  // ==========================
+  // ELIMINAR PROVEEDOR
+  // ==========================
+
+  router.delete("/:id", async (req, res) => {
+
+    const { id } = req.params;
+
+    try {
+
+      await pool.query(
+        "DELETE FROM proveedores WHERE id = $1",
+        [id]
+      );
+
+      res.json({
+        ok: true
+      });
+
+    } catch (err) {
+
+      console.error(err);
+
+      res.status(500).json({
+        ok: false,
+        error: err.message
+      });
+
+    }
+
+  });
+
+  // ==========================
+  // PRODUCTOS DEL PROVEEDOR
   // ==========================
 
   router.get("/:nombre/productos", async (req, res) => {
 
+    const { nombre } = req.params;
+
     try {
 
-      const { nombre } = req.params;
-
-      const resultado = await pool.query(
-        `
-        SELECT *
-        FROM productos
-        WHERE proveedor = $1
-        ORDER BY nombre
-        `,
-        [nombre]
-      );
+     const resultado = await pool.query(
+  `
+  SELECT 
+    productos.*,
+    proveedores.nombre AS proveedor_nombre
+  FROM productos
+  JOIN proveedores
+    ON productos.proveedor_id = proveedores.id
+  WHERE proveedores.nombre = $1
+  ORDER BY productos.nombre
+  `,
+  [nombre]
+);
 
       res.json(resultado.rows);
 
@@ -105,102 +205,6 @@ module.exports = (pool) => {
 
   });
 
-// ==========================
-// MODIFICAR PROVEEDOR
-// ==========================
-
-router.put("/:id", async (req, res) => {
-
-  const { id } = req.params;
-
-  const {
-    nombre,
-    contacto,
-    telefono,
-    email
-  } = req.body;
-
-  try {
-
-    const resultado = await pool.query(
-      `
-      UPDATE proveedores
-      SET
-        nombre = $1,
-        contacto = $2,
-        telefono = $3,
-        email = $4
-      WHERE id = $5
-      RETURNING *
-      `,
-      [
-        nombre,
-        contacto,
-        telefono,
-        email,
-        id
-      ]
-    );
-
-    res.json(resultado.rows[0]);
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      error: err.message
-    });
-
-  }
-
-});
-
-// ==========================
-// ELIMINAR PROVEEDOR
-// ==========================
-
-router.delete("/:id", async (req, res) => {
-
-  const { id } = req.params;
-
-  try {
-
-    await pool.query(
-      "DELETE FROM proveedores WHERE id = $1",
-      [id]
-    );
-
-    res.json({
-      ok: true
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      ok: false,
-      error: err.message
-    });
-
-  }
-
-});
-
-      res.json(resultado.rows[0]);
-
-    } catch (err) {
-
-      console.error(err);
-
-      res.status(500).json({
-        error: err.message
-      });
-
-    }
-
-  });
   return router;
 
 };
