@@ -34,7 +34,7 @@ function Productos() {
   const [proveedor, setProveedor] = useState("");
   const [stockMinimo, setStockMinimo] = useState("");
   const [ubicacion, setUbicacion] = useState("");
-
+  const [stockGarantizado, setStockGarantizado] = useState(0);
 
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -135,9 +135,8 @@ function Productos() {
   categoria,
 
   proveedor_id: Number(proveedor),
-
+  stockGarantizado: Number(stockGarantizado) || 0,
   stockMinimo: Number(stockMinimo) || 0,
-
   ubicacion
 
 };
@@ -273,6 +272,9 @@ function Productos() {
 
         stockMinimo={stockMinimo}
         setStockMinimo={setStockMinimo}
+
+        stockGarantizado={stockGarantizado}
+        setStockGarantizado={setStockGarantizado}
 
         ubicacion={ubicacion}
         setUbicacion={setUbicacion}

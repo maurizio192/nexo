@@ -28,6 +28,9 @@ function ProductoForm({
   stockMinimo,
   setStockMinimo,
 
+  stockGarantizado,
+  setStockGarantizado,
+
   ubicacion,
   setUbicacion,
 
@@ -36,6 +39,24 @@ function ProductoForm({
   modoEdicion,
 
 }) {
+
+  <TextField
+
+  fullWidth
+
+  label="Stock garantizado"
+
+  type="number"
+
+  value={stockGarantizado}
+
+  onChange={(e)=>
+    setStockGarantizado(e.target.value)
+  }
+
+  helperText="Cantidad que Sancho debe mantener siempre disponible"
+
+/>
 
 
   const [proveedores, setProveedores] = useState([]);
@@ -234,7 +255,23 @@ function ProductoForm({
 
         />
 
+<TextField
 
+  fullWidth
+
+  label="Stock garantizado"
+
+  type="number"
+
+  value={stockGarantizado}
+
+  onChange={(e)=>
+    setStockGarantizado(e.target.value)
+  }
+
+  helperText="Cantidad que Sancho debe mantener siempre disponible"
+
+/>
 
 
 
