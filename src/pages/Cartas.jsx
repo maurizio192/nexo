@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "../config/api";
 
 function Cartas() {
 
@@ -6,9 +7,10 @@ function Cartas() {
 
   useEffect(() => {
 
-   fetch("http://192.168.1.67:3001/api/cartas")
+    fetch(`${API}/cartas`)
       .then(res => res.json())
-      .then(data => setCartas(data));
+      .then(data => setCartas(data))
+      .catch(console.error);
 
   }, []);
 

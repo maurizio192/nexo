@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "../config/api";
 import {
   Typography,
   Paper,
@@ -18,15 +19,14 @@ function Servicio() {
   const [turno, setTurno] = useState("Mediodía");
   const [guardando, setGuardando] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetch("http://192.168.1.67:3001/elaboraciones")
-      .then((res) => res.json())
-      .then((data) => setElaboraciones(data))
-      .catch((err) => console.error(err));
+  fetch(`${API}/elaboraciones`)
+    .then((res) => res.json())
+    .then((data) => setElaboraciones(data))
+    .catch(console.error);
 
-  }, []);
-
+}, []);
   const guardarServicio = async () => {
 
     setGuardando(true);
@@ -41,7 +41,7 @@ function Servicio() {
 
         if (cantidad === 0) continue;
 
-        await fetch("http://192.168.1.67:3001/ventas", {
+        await fetch(`${API}/ventas`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -85,5 +85,32 @@ module.exports = (pool) => {
     }
 
   });
-  return router;
+  router.delete("/:id", async (req, res) => {
+
+  try {
+
+    const { id } = req.params;
+
+    await pool.query(
+      "DELETE FROM proveedores WHERE id = $1",
+      [id]
+    );
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+res.status(500).json({
+  ok: false,
+  error: "Errore database"
+});
+  }
+
+});
+
+return router;
 };

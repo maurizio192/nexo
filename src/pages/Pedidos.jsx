@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { API } from "../config/api";
 import {
   Paper,
   Typography,
@@ -16,7 +16,7 @@ function Pedidos() {
 
   useEffect(() => {
 
-    fetch("http://192.168.1.67:3001/pedidos")
+    fetch(`${API}/pedidos`)
       .then((res) => res.json())
       .then((data) => setProductos(data))
       .catch((err) => console.error(err));
@@ -63,18 +63,18 @@ function Pedidos() {
 
                       try {
 
-                        const res = await fetch(
-                          "http://192.168.1.67:3001/pedidos/generar",
-                          {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({
-                              proveedor: p.proveedor,
-                            }),
-                          }
-                        );
+                           const res = await fetch(
+  `${API}/pedidos/generar`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proveedor: p.proveedor,
+    }),
+  }
+);
 
                         const data = await res.json();
 

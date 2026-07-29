@@ -1,21 +1,17 @@
-import { useState, useEffect } from "react";
-
-export default function EditorIngredientes({
-  filas,
-  setFilas
-}) {
+import { useEffect, useState } from "react";
+import { API } from "../../config/api";
+export default function EditorIngredientes({ filas, setFilas }) {
 
   const [productos, setProductos] = useState([]);
 
+useEffect(() => {
 
-  useEffect(() => {
+  fetch(`${API}/productos`)
+    .then(res => res.json())
+    .then(data => setProductos(data))
+    .catch(console.error);
 
-    fetch("http://127.0.0.1:3001/api/productos")
-      .then(res => res.json())
-      .then(data => setProductos(data))
-      .catch(console.error);
-
-  }, []);
+}, []);
 
   function agregarFila() {
 
@@ -29,6 +25,20 @@ export default function EditorIngredientes({
         descontar: true
       }
     ]);
+
+  }
+
+  function actualizarFila(index, campo, valor) {
+
+    const nuevasFilas = [...filas];
+    nuevasFilas[index][campo] = valor;
+    setFilas(nuevasFilas);
+
+  }
+
+  function eliminarFila(index) {
+
+    setFilas(filas.filter((_, i) => i !== index));
 
   }
 
@@ -58,8 +68,8 @@ export default function EditorIngredientes({
             <th align="left">Producto</th>
             <th>Cantidad</th>
             <th>Unidad</th>
-            <th>Merma</th>
-            <th>Stock</th>
+            <th>Merma %</th>
+            <th>Descontar</th>
             <th></th>
           </tr>
 
@@ -73,23 +83,15 @@ export default function EditorIngredientes({
 
               <td>
 
-               <select
-  style={{ width: "250px" }}
-  value={fila.productoId}
-  onChange={(e) => {
+                <select
+                  style={{ width: "260px" }}
+                  value={fila.productoId}
+                  onChange={(e) =>
+                    actualizarFila(index, "productoId", e.target.value)
+                  }
+                >
 
-    const nuevasFilas = [...filas];
-
-    nuevasFilas[index].productoId = e.target.value;
-
-    setFilas(nuevasFilas);
-
-  }}
->
-
-                  <option value="">
-                    Selecciona...
-                  </option>
+                  <option value="">Selecciona...</option>
 
                   {productos.map((p) => (
 
@@ -109,63 +111,65 @@ export default function EditorIngredientes({
               <td>
 
                 <input
-  type="number"
-  style={{ width: "80px" }}
-  value={fila.cantidad}
-  onChange={(e) => {
+                  type="number"
+                  style={{ width: "90px" }}
+                  value={fila.cantidad}
+                  onChange={(e) =>
+                    actualizarFila(index, "cantidad", e.target.value)
+                  }
+                />
 
-    const nuevasFilas = [...filas];
-
-    nuevasFilas[index].cantidad = e.target.value;
-
-    setFilas(nuevasFilas);
-
-  }}
-/>
               </td>
 
               <td>
 
-        <input
-  style={{ width: "70px" }}
-  value={fila.unidad}
-  onChange={(e) => {
+                <select
+                  value={fila.unidad}
+                  onChange={(e) =>
+                    actualizarFila(index, "unidad", e.target.value)
+                  }
+                >
 
-    const nuevasFilas = [...filas];
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="l">l</option>
+                  <option value="ud">ud</option>
 
-    nuevasFilas[index].unidad = e.target.value;
+                </select>
 
-    setFilas(nuevasFilas);
-
-  }}
-/>
               </td>
 
               <td>
 
-              <input
-  type="number"
-  style={{ width: "60px" }}
-  value={fila.merma}
-  onChange={(e) => {
+                <input
+                  type="number"
+                  style={{ width: "70px" }}
+                  value={fila.merma}
+                  onChange={(e) =>
+                    actualizarFila(index, "merma", e.target.value)
+                  }
+                />
 
-    const nuevasFilas = [...filas];
-
-    nuevasFilas[index].merma = e.target.value;
-
-    setFilas(nuevasFilas);
-
-  }}
-/>
               </td>
 
               <td align="center">
-                ✅
+
+                <input
+                  type="checkbox"
+                  checked={fila.descontar}
+                  onChange={(e) =>
+                    actualizarFila(index, "descontar", e.target.checked)
+                  }
+                />
+
               </td>
 
               <td>
 
-                <button>
+                <button
+                  onClick={() => eliminarFila(index)}
+                >
                   ❌
                 </button>
 
@@ -181,9 +185,7 @@ export default function EditorIngredientes({
 
       <br />
 
-      <button
-        onClick={agregarFila}
-      >
+      <button onClick={agregarFila}>
         ➕ Añadir ingrediente
       </button>
 
@@ -192,4 +194,3 @@ export default function EditorIngredientes({
   );
 
 }
-

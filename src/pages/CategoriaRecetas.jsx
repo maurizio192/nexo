@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { API } from "../config/api";
 
 export default function CategoriaRecetas() {
 
@@ -9,21 +10,20 @@ export default function CategoriaRecetas() {
   const [recetas, setRecetas] = useState([]);
   const [buscar, setBuscar] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetch(`http://127.0.0.1:3001/api/recetas/categoria/${encodeURIComponent(categoria)}`)
-      .then(res => res.json())
-      .then(data => setRecetas(data))
-      .catch(console.error);
+  fetch(`${API}/recetas/categoria/${encodeURIComponent(categoria)}`)
+    .then(res => res.json())
+    .then(data => setRecetas(data))
+    .catch(console.error);
 
-  }, [categoria]);
+}, [categoria]);
 
-  const recetasFiltradas = recetas.filter((r) =>
-    r.nombre.toLowerCase().includes(buscar.toLowerCase())
-  );
+const recetasFiltradas = recetas.filter((r) =>
+  r.nombre.toLowerCase().includes(buscar.toLowerCase())
+);
 
- return (
-
+return (
   <div
     style={{
       padding: "20px",
@@ -87,7 +87,7 @@ export default function CategoriaRecetas() {
 
     )}
 
-    <div
+        <div
       onClick={() =>
         navigate(
           `/recetas/nueva?categoria=${encodeURIComponent(categoria)}`
@@ -108,8 +108,8 @@ export default function CategoriaRecetas() {
       ➕ Añadir receta
     </div>
 
-    </div>
+  </div>
 
-);
+  );
 
 }

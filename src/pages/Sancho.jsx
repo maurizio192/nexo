@@ -41,48 +41,62 @@ export default function Sancho() {
   const [pregunta, setPregunta] = useState("");
   const [respuesta, setRespuesta] = useState("");
   const [textoVoz, setTextoVoz] = useState("");
-
+const API = "http://localhost:3001";
   useEffect(() => {
     cargarSancho();
   }, []);
+async function cargarSancho() {
 
-  async function cargarSancho() {
-    try {
-      const res = await fetch("http://192.168.1.67:3001/api/sancho")
-      const data = await res.json();
+  try {
 
-      setSaludo(data.saludo || "");
-      setResumen(data.resumen || {});
-      setAvisos(data.avisos || []);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await fetch(`${API}/sancho`);
+
+    const data = await res.json();
+
+    setSaludo(data.saludo || "");
+    setResumen(data.resumen || {});
+    setAvisos(data.avisos || []);
+
+  } catch (err) {
+
+    console.error(err);
+
   }
 
-  async function hablarConSancho() {
-    if (!pregunta.trim()) return;
+}
 
-    setRespuesta("⏳ Pensando...");
+async function hablarConSancho() {
 
-    try {
-      const res = await fetch(
-        "http://192.168.1.67:3001/sancho/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ pregunta }),
-        }
-      );
+  if (!pregunta.trim()) return;
 
-      const data = await res.json();
+  setRespuesta("⏳ Pensando...");
 
-      setRespuesta(data.respuesta);
-    } catch {
-      setRespuesta("❌ No puedo conectar con Sancho");
-    }
+  try {
+
+    const res = await fetch(
+      `${API}/sancho/chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pregunta
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    setRespuesta(data.respuesta);
+
+  } catch {
+
+    setRespuesta("❌ No puedo conectar con Sancho");
+
   }
+
+}
 
   function escuchar() {
     const SpeechRecognition =

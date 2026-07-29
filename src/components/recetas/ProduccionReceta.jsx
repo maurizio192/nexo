@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API } from "../../config/api";
 
 export default function ProduccionReceta({
   unidades,
@@ -6,37 +7,36 @@ export default function ProduccionReceta({
   receta
 }) {
 
-  const [cantidad, setCantidad] = useState(1);
+ const [cantidad, setCantidad] = useState(1);
 
-  async function producir() {
+async function producir() {
 
-    const res = await fetch(
-      `http://127.0.0.1:3001/api/recetas/${receta.id}/producir`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          cantidad,
-          responsable: "Maurizio"
-        })
-      }
-    );
-
-    const data = await res.json();
-
-    if (data.ok) {
-      alert("✅ Producción registrada correctamente");
-      window.location.reload();
-    } else {
-      alert("Error al producir");
+  const res = await fetch(
+    `${API}/recetas/${receta.id}/producir`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        cantidad,
+        responsable: "Maurizio"
+      })
     }
+  );
 
+  const data = await res.json();
+
+  if (data.ok) {
+    alert("✅ Producción registrada correctamente");
+    window.location.reload();
+  } else {
+    alert("❌ Error al producir");
   }
 
-  return (
+}
 
+   return (
     <>
       <div
         style={{
@@ -119,11 +119,9 @@ export default function ProduccionReceta({
           <p>{receta.unidad_consumo} / plato</p>
 
         </div>
-
       </div>
 
     </>
 
   );
-
 }

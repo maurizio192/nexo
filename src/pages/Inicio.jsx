@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Dashboard from "../components/Dashboard";
 import BotonVoz from "../components/BotonVoz";
 import Cartas from "./Cartas";
-
+import { API } from "../config/api";
 function Inicio() {
 
   const [estado, setEstado] = useState(null);
@@ -11,7 +11,7 @@ function Inicio() {
 
   useEffect(() => {
 
-     fetch("http://192.168.1.67:3001/api/sancho")
+     fetch(`${API}/sancho`)
       .then(res => res.json())
       .then(data => {
 
@@ -25,7 +25,7 @@ function Inicio() {
 
       });
 
-      fetch("http://192.168.1.67:3001/api/panel-operaciones")
+      fetch(`${API}/panel-operaciones`)
       .then(res => res.json())
       .then(data => {
 
@@ -41,7 +41,8 @@ function Inicio() {
     try {
 
       const res = await fetch(
-        "http://192.168.1.67:3001/pedidos/generar",
+      
+  `${API}/pedidos/generar`,
         {
           method: "POST",
           headers: {

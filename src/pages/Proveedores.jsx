@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API } from "../config/api";
 import ProveedorForm from "../components/ProveedorForm";
 
 export default function Proveedores() {
@@ -11,7 +12,7 @@ export default function Proveedores() {
   const [proveedorAbierto, setProveedorAbierto] = useState(null);
 
   const cargarProveedores = () => {
-    fetch("http://192.168.1.67:3001/proveedores")
+    fetch(`${API}/proveedores`)
       .then((res) => res.json())
       .then((data) => setProveedores(data))
       .catch(console.error);
@@ -22,17 +23,46 @@ export default function Proveedores() {
   }, []);
 
   async function verProductos(nombre) {
+
     const res = await fetch(
-      `http://192.168.1.67:3001/proveedores/${encodeURIComponent(nombre)}/productos`
+      `${API}/proveedores/${encodeURIComponent(nombre)}/productos`
     );
 
     const datos = await res.json();
 
     setProveedorAbierto(nombre);
     setProductosProveedor(datos);
+
+  }
+  async function eliminarProveedor(id) {
+
+  if (!window.confirm("Eliminare questo fornitore?")) return;
+
+  try {
+
+    const res = await fetch(`${API}/proveedores/${id}`, {
+      method: "DELETE"
+    });
+
+    const data = await res.json();
+
+    if (data.ok) {
+      cargarProveedores();
+    } else {
+      alert("❌ Impossibile eliminare il fornitore");
+    }
+
+  } catch (err) {
+
+    console.error(err);
+    alert("❌ Errore di connessione");
+
   }
 
+}
+
   return (
+
     <div>
 
       <h1>🚚 Proveedores</h1>
@@ -64,10 +94,24 @@ export default function Proveedores() {
 
           <p>📧 Email: {p.email || "No definido"}</p>
 
-          <button onClick={() => verProductos(p.nombre)}>
-            📦 Ver productos
-          </button>
+         <button onClick={() => verProductos(p.nombre)}>
+  📦 Ver productos
+</button>
 
+<button
+  onClick={() => eliminarProveedor(p.id)}
+  style={{
+    marginLeft: 10,
+    background: "#d32f2f",
+    color: "white",
+    border: "none",
+    padding: "8px 12px",
+    borderRadius: 6,
+    cursor: "pointer"
+  }}
+>
+  🗑 Eliminar
+</button>
           {proveedorAbierto === p.nombre && (
 
             <div
@@ -82,9 +126,13 @@ export default function Proveedores() {
               <h4>Productos</h4>
 
               {productosProveedor.length === 0 ? (
+
                 <p>No hay productos para este proveedor.</p>
+
               ) : (
+
                 productosProveedor.map((prod) => (
+
                   <div
                     key={prod.id}
                     style={{
@@ -94,7 +142,9 @@ export default function Proveedores() {
                   >
                     📦 {prod.nombre}
                   </div>
+
                 ))
+
               )}
 
               <button
@@ -119,5 +169,7 @@ export default function Proveedores() {
       ))}
 
     </div>
+
   );
+
 }
