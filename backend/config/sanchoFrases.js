@@ -50,6 +50,23 @@ const sanchoFrases = {
     generado:
       "Pedidos preparados y organizados por proveedor."
 
+  },
+
+
+  saludoActual: function() {
+
+    const hora = new Date().getHours();
+
+    if (hora < 14) {
+      return this.saludos.manana;
+    }
+
+    if (hora < 21) {
+      return this.saludos.tarde;
+    }
+
+    return this.saludos.noche;
+
   }
 
 };

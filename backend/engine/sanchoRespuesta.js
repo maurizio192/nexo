@@ -50,7 +50,7 @@ function generarRespuestaSancho({
   console.log("SANCHO FILE NUOVO ATTIVO 123");
   console.log("MOTOR ESTADO:", motorEstado);
   console.log("SANCHO RECIBE MOTOR:", motorEstado);
-  let mensaje = sanchoFrases.confirmaciones.recibido + " ";
+ let mensaje = sanchoFrases.saludoActual() + " " + sanchoFrases.confirmaciones.recibido + " ";
 
   if (motorEstado) {
 
