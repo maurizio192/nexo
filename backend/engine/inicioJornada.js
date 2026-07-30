@@ -1,8 +1,11 @@
 const obtenerTurno = require("./motorTurnos");
+const normalizarTurno = require("./normalizarTurno");
 
 module.exports = async function inicioJornada(pool) {
 
   const turno = obtenerTurno();
+  const modoSancho = normalizarTurno(turno);
+
 
   // Elaboraciones por debajo del mínimo
 
@@ -39,9 +42,11 @@ module.exports = async function inicioJornada(pool) {
     ORDER BY proveedor
   `);
 
-  return {
+ return {
 
     turno,
+
+    modoSancho,
 
     elaboraciones: elaboraciones.rows,
 

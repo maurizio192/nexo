@@ -63,21 +63,23 @@ async function ejecutarDecisiones(decisiones, contexto) {
 
     // Registro automático de la decisión
 
-    if (contexto && contexto.pool) {
+if (contexto && contexto.pool) {
 
-      await registrarEvento(
-        contexto.pool,
-        "Sancho",
-        decision.accion,
-        decision.motivo
-      );
-
+  await registrarEvento(
+    contexto.pool,
+    {
+      usuario: "Sancho",
+      accion: decision.accion,
+      detalle: {
+        prioridad: decision.prioridad,
+        motivo: decision.motivo
+      }
     }
+  );
 
+}
 
-  }
-
-
+}
   return acciones;
 
 }
