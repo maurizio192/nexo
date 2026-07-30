@@ -1,13 +1,11 @@
 const express = require("express");
 
 const NexoEngine = require("../engine/nexoEngine");
-const sanchoProduccion = require("../engine/sanchoProduccion");
 const generarRespuestaSancho = require("../engine/sanchoRespuesta");
 const evaluarEstadoCocina = require("../engine/motorEstadoCocina");
 const generarDecisionesSancho = require("../engine/sanchoDecisiones");
 const ejecutarDecisiones = require("../engine/ejecutorDecisiones");
 const generarPedidoPropuesto = require("../engine/generarPedidoPropuesto");
-const crearPedidoAutomatico = require("../engine/crearPedidoAutomatico");
 
 
 module.exports = (pool) => {
@@ -23,29 +21,26 @@ module.exports = (pool) => {
     try {
 
 
-      // ESTADO INICIAL DE LA JORNADA
-
-      const inicio = await engine.ejecutar("INICIO_JORNADA");
-
-
-      // ESTADO GENERAL
-
-      const estado = await engine.ejecutar("ESTADO_GENERAL");
+      const inicio = await engine.ejecutar(
+        "INICIO_JORNADA"
+      );
 
 
-      // INCIDENCIAS STOCK
-
-      const incidencias = await engine.ejecutar("INCIDENCIAS_STOCK");
-
-
-
-      // SERVICIO ACTUAL
-
-      const servicioHoy = await engine.ejecutar("SERVICIO_HOY");
+      const estado = await engine.ejecutar(
+        "ESTADO_GENERAL"
+      );
 
 
+      const incidencias = await engine.ejecutar(
+        "INCIDENCIAS_STOCK"
+      );
 
-      // PRODUCCIÓN PENDIENTE
+
+      const servicioHoy = await engine.ejecutar(
+        "SERVICIO_HOY"
+      );
+
+
 
       const produccion = await pool.query(`
         SELECT 
@@ -59,8 +54,6 @@ module.exports = (pool) => {
 
 
 
-      // PRODUCTOS CRÍTICOS + PROVEEDOR
-
       const proveedoresCriticos = await pool.query(`
         SELECT
           p.nombre,
@@ -69,12 +62,10 @@ module.exports = (pool) => {
         LEFT JOIN proveedores pr
           ON p.proveedor_id = pr.id
         WHERE p.stock_actual <= p.stock_minimo
-        ORDER BY pr.nombre, p.nombre
+        ORDER BY pr.nombre,p.nombre
       `);
 
 
-
-      // EVENTOS RECIENTES
 
       const eventos = await pool.query(`
         SELECT
@@ -89,151 +80,178 @@ module.exports = (pool) => {
 
 
 
-      // PEDIDOS PENDIENTES
-
       const pedidosPendientes = await pool.query(`
         SELECT
+          id,
           proveedor,
           estado
         FROM pedidos
-        WHERE estado = 'Pendiente'
+        WHERE estado='Pendiente'
       `);
 
-// PEDIDOS PROPUESTOS
-
-console.log("INCIDENCIAS");
-console.log(incidencias);
-
-console.log("INCIDENCIAS.ROWS");
-console.log(incidencias.rows);
-
-console.log("PROVEEDORES");
-console.log(proveedoresCriticos.rows);
-
-const productosCriticos = incidencias.rows || incidencias;
-
-console.log(productosCriticos);
-console.log(proveedoresCriticos.rows);
-
-const pedidosPropuestos = generarPedidoPropuesto(
-  productosCriticos,
-  proveedoresCriticos.rows
-);
-
-console.log("RESULTADO:");
-console.log(JSON.stringify(pedidosPropuestos, null, 2));
 
 
-// CREAR PEDIDOS AUTOMÁTICOS
+      /*
+        MOTOR PROPUESTA PEDIDO
 
-const pedidosGenerados = await crearPedidoAutomatico(
-  pool,
-  pedidosPropuestos
-);
+        Sancho analiza.
+        Sancho propone.
+        NO ENVÍA PEDIDOS.
+      */
 
 
-      // MOTOR DE ESTADO COCINA
-
-      const motorEstado = evaluarEstadoCocina({
-
-        estado,
-
-        incidencias,
-
-        inicio,
-
-        eventos: eventos.rows,
-
-        proveedoresCriticos: proveedoresCriticos.rows,
-
-        pedidosPendientes: pedidosPendientes.rows
-
-      });
+      const productosCriticos =
+        incidencias.rows || incidencias;
 
 
 
+      const pedidosPropuestos =
+        generarPedidoPropuesto(
+          productosCriticos,
+          proveedoresCriticos.rows
+        );
 
-      // MOTOR DE DECISIONES SANCHO
 
-     const decisiones = generarDecisionesSancho({
 
-  estado,
+      /*
+        PEDIDOS GENERADOS
 
-  incidencias,
+        Vacío hasta que el usuario diga:
 
-  inicio,
+        "Sancho manda pedido"
 
-  pedidosPendientes: pedidosPendientes.rows,
+      */
 
-  proveedoresCriticos: proveedoresCriticos.rows
 
-});
-
-      const acciones = await ejecutarDecisiones(
-  decisiones,
-  {
-    pool
-  }
-);
+      const pedidosGenerados = [];
 
 
 
 
 
-      // RESPUESTA HUMANA DE SANCHO
+      const motorEstado =
+        evaluarEstadoCocina({
 
-      const respuestaSancho = generarRespuestaSancho({
+          estado,
+
+          incidencias,
+
+          inicio,
+
+          eventos:eventos.rows,
+
+          proveedoresCriticos:
+            proveedoresCriticos.rows,
+
+          pedidosPendientes:
+            pedidosPendientes.rows
+
+        });
+
+
+
+
+
+
+      const decisiones =
+        generarDecisionesSancho({
+
+          estado,
+
+          incidencias,
+
+          inicio,
+
+          pedidosPendientes:
+            pedidosPendientes.rows,
+
+          proveedoresCriticos:
+            proveedoresCriticos.rows
+
+        });
+
+
+
+
+
+      const acciones =
+        await ejecutarDecisiones(
+
+          decisiones,
+
+          {
+            pool
+          }
+
+        );
+
+
+
+
+
+
+      const respuestaSancho =
+        generarRespuestaSancho({
+
+          motorEstado,
+
+          decisiones,
+
+          estado,
+
+          incidencias,
+
+          eventos:eventos.rows,
+
+          inicio,
+
+          proveedoresCriticos:
+            proveedoresCriticos.rows,
+
+          pedidosPendientes:
+            pedidosPendientes.rows
+
+        });
+
+
+
+
+
+
+
+      res.json({
+
+        respuestaSancho,
+
+        pedidosPropuestos,
+
+        pedidosGenerados,
 
         motorEstado,
 
         decisiones,
 
+        acciones,
+
+        inicio,
+
         estado,
 
         incidencias,
 
-        eventos: eventos.rows,
+        servicioHoy,
 
-        inicio,
+        produccion:
+          produccion.rows,
 
-        proveedoresCriticos: proveedoresCriticos.rows,
-
-        pedidosPendientes: pedidosPendientes.rows
+        eventos:
+          eventos.rows
 
       });
 
 
-res.json({
 
-
-  respuestaSancho,
-
-  pedidosPropuestos,
-
-  pedidosGenerados,
-
-  motorEstado,
-
-  decisiones,
-
-  acciones,
-
-  inicio,
-
-  estado,
-
-  incidencias,
-
-  servicioHoy,
-
-  produccion: produccion.rows,
-
-  eventos: eventos.rows
-
-});
-
-
-    } catch (err) {
+    } catch(err){
 
 
       console.error(err);
@@ -241,7 +259,7 @@ res.json({
 
       res.status(500).json({
 
-        error: err.message
+        error:err.message
 
       });
 
@@ -254,6 +272,5 @@ res.json({
 
 
   return router;
-
 
 };
