@@ -6,6 +6,8 @@ const generarRespuestaSancho = require("../engine/sanchoRespuesta");
 const evaluarEstadoCocina = require("../engine/motorEstadoCocina");
 const generarDecisionesSancho = require("../engine/sanchoDecisiones");
 const ejecutarDecisiones = require("../engine/ejecutorDecisiones");
+const generarPedidoPropuesto = require("../engine/generarPedidoPropuesto");
+const crearPedidoAutomatico = require("../engine/crearPedidoAutomatico");
 
 
 module.exports = (pool) => {
@@ -97,7 +99,37 @@ module.exports = (pool) => {
         WHERE estado = 'Pendiente'
       `);
 
+// PEDIDOS PROPUESTOS
 
+console.log("INCIDENCIAS");
+console.log(incidencias);
+
+console.log("INCIDENCIAS.ROWS");
+console.log(incidencias.rows);
+
+console.log("PROVEEDORES");
+console.log(proveedoresCriticos.rows);
+
+const productosCriticos = incidencias.rows || incidencias;
+
+console.log(productosCriticos);
+console.log(proveedoresCriticos.rows);
+
+const pedidosPropuestos = generarPedidoPropuesto(
+  productosCriticos,
+  proveedoresCriticos.rows
+);
+
+console.log("RESULTADO:");
+console.log(JSON.stringify(pedidosPropuestos, null, 2));
+
+
+// CREAR PEDIDOS AUTOMÁTICOS
+
+const pedidosGenerados = await crearPedidoAutomatico(
+  pool,
+  pedidosPropuestos
+);
 
 
       // MOTOR DE ESTADO COCINA
@@ -171,12 +203,14 @@ module.exports = (pool) => {
       });
 
 
-
-
-
 res.json({
 
+
   respuestaSancho,
+
+  pedidosPropuestos,
+
+  pedidosGenerados,
 
   motorEstado,
 
