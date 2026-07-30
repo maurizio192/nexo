@@ -37,6 +37,7 @@ function generarPrioridades(incidencias) {
 
 
 function generarRespuestaSancho({
+  motorEstado,
   estado,
   incidencias,
   eventos,
@@ -47,10 +48,19 @@ function generarRespuestaSancho({
 
   console.log("SANCHO V2 CARICATO");
   console.log("SANCHO FILE NUOVO ATTIVO 123");
-
+  console.log("MOTOR ESTADO:", motorEstado);
+  console.log("SANCHO RECIBE MOTOR:", motorEstado);
   let mensaje = "Oído, chef Maurizio. ";
 
-  mensaje += "He revisado la situación de la cocina. ";
+if (motorEstado) {
+
+  mensaje += `Estamos en modo ${motorEstado.modo}. `;
+
+  mensaje += `${motorEstado.mensaje} `;
+
+}
+
+mensaje += "He revisado la situación de la cocina. ";
 
   const prioridades = generarPrioridades(incidencias);
 

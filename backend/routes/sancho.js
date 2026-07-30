@@ -2,7 +2,7 @@ const express = require("express");
 const NexoEngine = require("../engine/nexoEngine");
 const sanchoProduccion = require("../engine/sanchoProduccion");
 const generarRespuestaSancho = require("../engine/sanchoRespuesta");
-
+const evaluarEstadoCocina = require("../engine/motorEstadoCocina");
 
 module.exports = (pool) => {
 
@@ -65,9 +65,25 @@ const proveedoresCriticos = await pool.query(`
   WHERE estado = 'Pendiente'
 `);
 
+const motorEstado = evaluarEstadoCocina({
 
+  estado,
+
+  incidencias,
+
+  inicio,
+
+  eventos: eventos.rows,
+
+  proveedoresCriticos: proveedoresCriticos.rows,
+
+  pedidosPendientes: pedidosPendientes.rows
+
+});
 
 const respuestaSancho = generarRespuestaSancho({
+
+  motorEstado,
 
   estado,
 
@@ -85,6 +101,8 @@ const respuestaSancho = generarRespuestaSancho({
       res.json({
 
         respuestaSancho,
+
+        motorEstado,
 
         inicio,
 
