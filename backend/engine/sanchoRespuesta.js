@@ -1,3 +1,6 @@
+const sanchoPersonalidad = require("../config/sanchoPersonalidad");
+
+
 function generarPrioridades(incidencias) {
 
   if (!incidencias || incidencias.length === 0) {
@@ -52,9 +55,15 @@ function generarRespuestaSancho({
   console.log("SANCHO RECIBE MOTOR:", motorEstado);
   let mensaje = "Oído, chef Maurizio. ";
 
-if (motorEstado) {
+  if (motorEstado) {
 
-  mensaje += `Estamos en modo ${motorEstado.modo}. `;
+  mensaje += `Estado actual: ${motorEstado.modo}. `;
+
+  if (motorEstado.nivel) {
+
+    mensaje += sanchoPersonalidad.estados[motorEstado.nivel] + " ";
+
+  }
 
   mensaje += `${motorEstado.mensaje} `;
 
