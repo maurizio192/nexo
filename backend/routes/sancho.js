@@ -123,17 +123,19 @@ module.exports = (pool) => {
 
       // MOTOR DE DECISIONES SANCHO
 
-      const decisiones = generarDecisionesSancho({
+     const decisiones = generarDecisionesSancho({
 
-        estado,
+  estado,
 
-        incidencias,
+  incidencias,
 
-        inicio,
+  inicio,
 
-        pedidosPendientes: pedidosPendientes.rows
+  pedidosPendientes: pedidosPendientes.rows,
 
-      });
+  proveedoresCriticos: proveedoresCriticos.rows
+
+});
 
       const acciones = await ejecutarDecisiones(
   decisiones,
