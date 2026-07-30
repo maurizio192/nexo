@@ -54,7 +54,11 @@ function generarRespuestaSancho({
 
   if (motorEstado) {
 
-  mensaje += `Estado actual: ${motorEstado.modo}. `;
+  if (sanchoPersonalidad.modos[motorEstado.modo]) {
+
+  mensaje += sanchoPersonalidad.modos[motorEstado.modo] + " ";
+
+}
 
   if (motorEstado.nivel) {
 
