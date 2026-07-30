@@ -34,90 +34,143 @@ function generarPrioridades(incidencias) {
   return prioridades;
 
 }
+
+
 function generarRespuestaSancho({
   estado,
   incidencias,
   eventos,
-  inicio
+  inicio,
+  proveedoresCriticos,
+  pedidosPendientes
 }) {
-
 
   console.log("SANCHO V2 CARICATO");
   console.log("SANCHO FILE NUOVO ATTIVO 123");
 
-  let mensaje = "Oído chef Maurizio. ";
+  let mensaje = "Oído, chef Maurizio. ";
 
-  mensaje += "Ho controllato la situazione della cucina. ";
+  mensaje += "He revisado la situación de la cocina. ";
 
-const prioridades = generarPrioridades(incidencias);
-  // ORDINI
+  const prioridades = generarPrioridades(incidencias);
+
+  // PEDIDOS
   if (estado.pedidos > 0) {
 
-    mensaje += `Ci sono ${estado.pedidos} ordini pendenti da gestire. `;
+    mensaje += `Hay ${estado.pedidos} pedidos pendientes por gestionar. `;
 
   } else {
 
-    mensaje += "Non ci sono ordini pendenti. ";
+    mensaje += "No hay pedidos pendientes. ";
 
   }
-
 
 
   // STOCK
   if (estado.stockCritico > 0) {
 
-    mensaje += `Attenzione: ${estado.stockCritico} prodotti sono sotto il livello minimo. `;
+    mensaje += `Atención: ${estado.stockCritico} productos están por debajo del stock mínimo. `;
 
   } else {
 
-    mensaje += "Lo stock è sotto controllo. ";
+    mensaje += "El stock está bajo control. ";
 
   }
 
 
-
-  // PRIORITÀ
+   // PRIORIDADES
   if (incidencias && incidencias.length > 0) {
 
-    const prodotti = incidencias
+    const productos = incidencias
       .slice(0, 3)
       .map(p => p.nombre)
       .join(", ");
 
-
-    mensaje += `Le priorità da controllare sono: ${prodotti}. `;
+    mensaje += `Las prioridades que requieren atención son: ${productos}. `;
 
   }
 
-  if (prioridades.length > 0) {
+ if (prioridades.length > 0) {
 
-    const urgentes = prioridades
-      .filter(p => p.nivel === "URGENTE")
-      .slice(0,3)
-      .map(p => p.producto)
+  const urgentes = prioridades
+    .filter(p => p.nivel === "URGENTE")
+    .slice(0, 3)
+    .map(p => p.producto)
+    .join(", ");
+
+  if (urgentes) {
+
+    mensaje += `Prioridad urgente: ${urgentes}. `;
+
+  }
+
+}
+// PROVEEDORES DE LOS PRODUCTOS CRÍTICOS
+if (proveedoresCriticos && proveedoresCriticos.length > 0) {
+
+  const grupos = {};
+
+  proveedoresCriticos.forEach(p => {
+
+    if (!p.proveedor) return;
+
+    if (!grupos[p.proveedor]) {
+      grupos[p.proveedor] = [];
+    }
+
+    grupos[p.proveedor].push(p.nombre);
+
+  });
+
+  const primerProveedor = Object.keys(grupos)[0];
+
+  if (primerProveedor) {
+
+    const productos = grupos[primerProveedor]
+      .slice(0, 3)
       .join(", ");
 
-    if (urgentes) {
+    mensaje += `El proveedor ${primerProveedor} debe suministrar: ${productos}. `;
 
-      mensaje += `Priorità urgente: ${urgentes}. `;
+  }
+
+}
+
+// PEDIDOS YA EXISTENTES
+if (proveedoresCriticos && pedidosPendientes) {
+
+  const proveedoresConPedido = pedidosPendientes.map(p => p.proveedor);
+
+  const primerProveedor = proveedoresCriticos[0]?.proveedor;
+
+  if (primerProveedor) {
+
+    if (proveedoresConPedido.includes(primerProveedor)) {
+
+      mensaje += `El proveedor ${primerProveedor} ya tiene un pedido pendiente. `;
+
+    } else {
+
+      mensaje += `El proveedor ${primerProveedor} no tiene pedidos pendientes. Se recomienda crear uno. `;
 
     }
 
   }
 
-  // EVENTI
-  if (eventos && eventos.length > 0) {
+}
 
+// EVENTOS
+if (eventos && eventos.length > 0) {
     const ultimo = eventos[0];
 
-    const ora = new Date(ultimo.fecha)
-      .toLocaleTimeString("it-IT", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
+   const hora = new Date(ultimo.fecha)
+  .toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
 
 
-    mensaje += `L'ultima operazione registrata è ${ultimo.accion} alle ore ${ora}. `;
+   mensaje += `La última operación registrada es ${ultimo.accion} a las ${hora}. `;
 
   }
 
@@ -126,7 +179,7 @@ const prioridades = generarPrioridades(incidencias);
   // TURNO
   if (inicio && inicio.turno) {
 
-    mensaje += `Turno attuale: ${inicio.turno}.`;
+   mensaje += `Turno actual: ${inicio.turno}.`;
 
   }
 

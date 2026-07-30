@@ -23,17 +23,27 @@ module.exports = (pool) => {
 
       const servicioHoy = await engine.ejecutar("SERVICIO_HOY");
 
+const produccion = await pool.query(`
+  SELECT 
+    nombre,
+    categoria
+  FROM tareas_produccion
+  WHERE fecha = CURRENT_DATE
+  AND estado='PENDIENTE'
+  ORDER BY categoria,nombre
+`);
 
-      const produccion = await pool.query(`
-        SELECT 
-          nombre,
-          categoria
-        FROM tareas_produccion
-        WHERE fecha = CURRENT_DATE
-        AND estado='PENDIENTE'
-        ORDER BY categoria,nombre
-      `);
 
+const proveedoresCriticos = await pool.query(`
+  SELECT
+    p.nombre,
+    pr.nombre AS proveedor
+  FROM productos p
+  LEFT JOIN proveedores pr
+    ON p.proveedor_id = pr.id
+  WHERE p.stock_actual <= p.stock_minimo
+  ORDER BY pr.nombre, p.nombre
+`);
 
 
       const eventos = await pool.query(`
@@ -47,22 +57,31 @@ module.exports = (pool) => {
         LIMIT 5
       `);
 
-
-
-      const respuestaSancho = generarRespuestaSancho({
-
-        estado,
-
-        incidencias,
-
-        eventos: eventos.rows,
-
-        inicio
-
-      });
+      const pedidosPendientes = await pool.query(`
+  SELECT
+    proveedor,
+    estado
+  FROM pedidos
+  WHERE estado = 'Pendiente'
+`);
 
 
 
+const respuestaSancho = generarRespuestaSancho({
+
+  estado,
+
+  incidencias,
+
+  eventos: eventos.rows,
+
+  inicio,
+
+  proveedoresCriticos: proveedoresCriticos.rows,
+
+  pedidosPendientes: pedidosPendientes.rows
+
+});
       res.json({
 
         respuestaSancho,
