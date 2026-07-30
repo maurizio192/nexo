@@ -1,11 +1,8 @@
 const sanchoPersonalidad = require("../config/sanchoPersonalidad");
+const sanchoFrases = require("../config/sanchoFrases");
 
 
 function generarPrioridades(incidencias) {
-
-  if (!incidencias || incidencias.length === 0) {
-    return [];
-  }
 
   const prioridades = [];
 
@@ -53,7 +50,7 @@ function generarRespuestaSancho({
   console.log("SANCHO FILE NUOVO ATTIVO 123");
   console.log("MOTOR ESTADO:", motorEstado);
   console.log("SANCHO RECIBE MOTOR:", motorEstado);
-  let mensaje = "Oído, chef Maurizio. ";
+  let mensaje = sanchoFrases.confirmaciones.recibido + " ";
 
   if (motorEstado) {
 
