@@ -166,16 +166,33 @@ router.get("/categoria/:categoria", async (req, res) => {
         `,
         [req.params.id]
       );
+const alergenos = await pool.query(
+  `
+  SELECT
+    a.id,
+    a.nombre,
+    a.icono,
+    a.codigo
+  FROM receta_alergenos ra
+  JOIN alergenos a
+    ON a.id = ra.alergeno_id
+  WHERE ra.receta_id = $1
+  ORDER BY a.id
+  `,
+  [req.params.id]
+);
+     
+res.json({
 
-      res.json({
+  receta: receta.rows[0],
 
-        receta: receta.rows[0],
+  ingredientes: ingredientes.rows,
 
-        ingredientes: ingredientes.rows,
+  pasos: pasos.rows,
 
-        pasos: pasos.rows
+  alergenos: alergenos.rows
 
-      });
+});
 
     } catch (err) {
 

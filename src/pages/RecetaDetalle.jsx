@@ -56,13 +56,12 @@ fetch(`${API}/recetas/${id}`)
   }
 
   if (!datos) return <h2>Cargando receta...</h2>;
-
-  const { receta, ingredientes, pasos } = datos;
+  const { receta, ingredientes, pasos, alergenos } = datos;
 
   const unidades = Number(receta.unidades_producidas || 0);
   const platosPorUnidad = Number(receta.raciones_por_unidad || 0);
   const platosDisponibles = unidades * platosPorUnidad;
-const estiloMenu = {
+  const estiloMenu = {
   display: "block",
   width: "100%",
   textAlign: "left",
@@ -72,133 +71,107 @@ const estiloMenu = {
   cursor: "pointer",
   fontSize: "15px"
 };
+return (
 
-  return (
+  <div
 
-    <div
-      style={{
-        padding: "20px",
-        maxWidth: "1100px",
-        margin: "0 auto"
-      }}
-    >
+    style={{
+      padding:"20px",
+      maxWidth:"1100px",
+      margin:"0 auto"
+    }}
+  >
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px"
-        }}
-      >
+    <PestanasReceta
+      pestana={pestana}
+      setPestana={setPestana}
+    />
 
-        <div>
 
-          <h1 style={{ margin: 0 }}>
-            {receta.nombre}
-          </h1>
+    {pestana === "informacion" && (
 
-          <h3
-            style={{
-              marginTop: "5px",
-              color: "#666"
-            }}
-          >
-            {receta.categoria}
+  <>
+
+    <h2>📋 Información</h2>
+
+    <p><b>Código:</b> {receta.codigo}</p>
+    <p><b>Estado:</b> {receta.estado}</p>
+    <p><b>Categoría:</b> {receta.categoria}</p>
+    <p><b>Unidad de producción:</b> {receta.unidad_produccion}</p>
+    <p><b>Cantidad producida:</b> {receta.unidades_producidas || 0}</p>
+    <p><b>Raciones por unidad:</b> {receta.raciones_por_unidad}</p>
+    <p>
+      <b>Consumo por servicio:</b> {receta.consumo_servicio} {receta.unidad_consumo}
+    </p>
+
+    <hr />
+
+  </>
+
+)}
+
+
+{pestana === "ingredientes" && (
+
+  <>
+
+    <IngredientesReceta
+      ingredientes={ingredientes || []}
+    />
+
+    <hr />
+
+  </>
+
+)}
+
+
+{pestana === "procedimiento" && (
+
+  <>
+
+    <h2>👨‍🍳 Procedimiento</h2>
+
+    {pasos && pasos.length > 0 ? (
+
+      pasos.map((paso) => (
+
+        <div
+          key={paso.id}
+          style={{
+            background:"#ffffff",
+            border:"1px solid #e5e7eb",
+            borderRadius:"10px",
+            padding:"15px",
+            marginBottom:"15px"
+          }}
+        >
+
+          <h3>
+            {paso.orden}. {paso.titulo}
           </h3>
+
+          <p>
+            {paso.descripcion}
+          </p>
 
         </div>
 
-        <button
-          onClick={archivarReceta}
-          style={{
-            background: "#dc2626",
-            color: "#fff",
-            border: "none",
-            padding: "12px 20px",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontWeight: "bold"
-          }}
-        >
-          🗑 Archivar receta
-        </button>
+      ))
 
-      </div>
+    ) : (
 
-      <PestanasReceta
-        pestana={pestana}
-        setPestana={setPestana}
-      />
+      <p>No hay procedimiento registrado.</p>
 
-      {pestana === "informacion" && (
+    )}
 
-        <>
+    <hr />
 
-          <h2>📋 Información</h2>
+  </>
 
-          <p><b>Código:</b> {receta.codigo}</p>
-          <p><b>Estado:</b> {receta.estado}</p>
-          <p><b>Categoría:</b> {receta.categoria}</p>
-          <p><b>Unidad de producción:</b> {receta.unidad_produccion}</p>
-          <p><b>Cantidad producida:</b> {receta.unidades_producidas || 0}</p>
-          <p><b>Raciones por unidad:</b> {receta.raciones_por_unidad}</p>
-          <p><b>Consumo por servicio:</b> {receta.consumo_servicio} {receta.unidad_consumo}</p>
+)}
 
-          <hr />
 
-        </>
-
-      )}
-
-            {pestana === "ingredientes" && (
-
-        <>
-
-          <IngredientesReceta
-            ingredientes={ingredientes}
-          />
-
-          <hr />
-
-        </>
-
-      )}
-
-      {pestana === "procedimiento" && (
-
-        <>
-
-          <h2>👨‍🍳 Procedimiento</h2>
-
-          {pasos.map((paso) => (
-
-            <div
-              key={paso.id}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
-                padding: "15px",
-                marginBottom: "15px"
-              }}
-            >
-
-              <h3>
-                {paso.orden}. {paso.titulo}
-              </h3>
-
-              <p>{paso.descripcion}</p>
-
-            </div>
-
-          ))}
-
-          <hr />
-
-        </>
-
-      )}
 
 {pestana === "produccion" && (
 
@@ -214,9 +187,11 @@ const estiloMenu = {
       <b>Raciones por unidad:</b> {receta.raciones_por_unidad}
     </p>
 
+
     <ProduccionReceta
       receta={receta}
     />
+
 
     <hr />
 
@@ -224,11 +199,14 @@ const estiloMenu = {
 
 )}
 
+
+
 {pestana === "compartir" && (
 
   <>
 
     <h2>📧 Compartir receta</h2>
+
 
     <button
       style={{
@@ -236,84 +214,117 @@ const estiloMenu = {
         borderRadius:"10px",
         cursor:"pointer"
       }}
+
       onClick={() => {
 
-        navigator.share
-        ? navigator.share({
+        if (navigator.share) {
+
+          navigator.share({
             title: receta.nombre,
-            text: `Receta NEXO: ${receta.nombre}`
-          })
-        : alert("Compartir no disponible en este dispositivo");
+            text:`Receta NEXO: ${receta.nombre}`
+          });
+
+        } else {
+
+          alert("Compartir no disponible en este dispositivo");
+
+        }
 
       }}
+
     >
       📤 Compartir
+
     </button>
+
 
   </>
 
 )}
 
-      {pestana === "observaciones" && (
 
-        <>
 
-          <h2>📝 Observaciones</h2>
+{pestana === "observaciones" && (
 
-          {receta.emplatado && (
+  <>
 
-            <>
+    <h2>📝 Observaciones</h2>
 
-              <h3>🍽 Presentación</h3>
 
-              <p>{receta.emplatado}</p>
+    {receta.emplatado && (
 
-              <br />
+      <>
 
-            </>
+        <h3>🍽 Presentación</h3>
 
-          )}
+        <p>
+          {receta.emplatado}
+        </p>
 
-          <p>{receta.observaciones}</p>
+      </>
 
-          <hr />
+    )}
 
-        </>
 
-      )}
+    <p>
+      {receta.observaciones || "Sin observaciones"}
+    </p>
 
-      {pestana === "alergenos" && (
 
-        <>
+    <hr />
 
-          <h2>⚠️ Alérgenos</h2>
+  </>
 
-          {receta.alergenos ? (
+)}
 
-            <div
-              style={{
-                background: "#fff8e1",
-                padding: "20px",
-                borderRadius: "10px",
-                border: "1px solid #facc15"
-              }}
-            >
 
-              <p style={{ whiteSpace: "pre-line" }}>
-                {receta.alergenos}
-              </p>
 
-            </div>
+{pestana === "alergenos" && (
 
-          ) : (
+  <>
 
-            <p>No hay alérgenos registrados.</p>
+    <h2>⚠️ Alérgenos</h2>
 
-          )}
+    {alergenos && alergenos.length > 0 ? (
 
-        </>
+      <div
+        style={{
+          background:"#fff8e1",
+          padding:"20px",
+          borderRadius:"10px",
+          border:"1px solid #facc15"
+        }}
+      >
 
-      )}
+        {alergenos.map((a)=>(
+
+          <div
+            key={a.id}
+            style={{
+              fontSize:"20px",
+              marginBottom:"12px"
+            }}
+          >
+
+            {a.icono} {a.nombre}
+
+          </div>
+
+        ))}
+
+      </div>
+
+    ) : (
+
+      <p>
+        No hay alérgenos registrados.
+      </p>
+
+    )}
+
+  </>
+
+)}
 
     </div>
 
