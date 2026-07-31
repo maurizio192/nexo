@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { API } from "../config/api";
 import DatosBasicos from "../components/recetas/DatosBasicos";
 import Produccion from "../components/recetas/Produccion";
@@ -8,6 +8,7 @@ import EditorIngredientes from "../components/recetas/EditorIngredientes";
 export default function NuevaReceta() {
 
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const categoriaInicial =
     searchParams.get("categoria") || "";
@@ -24,7 +25,8 @@ export default function NuevaReceta() {
 
   const [procedimiento, setProcedimiento] = useState("");
   const [presentacion, setPresentacion] = useState("");
-  const [alergenos, setAlergenos] = useState("");
+  const [listaAlergenos, setListaAlergenos] = useState([]);
+  const [alergenosSeleccionados, setAlergenosSeleccionados] = useState([]);
   const [observaciones, setObservaciones] = useState("");
 
   const [producto, setProducto] = useState("");
@@ -43,16 +45,38 @@ export default function NuevaReceta() {
   }
 ]);
 
-  useEffect(() => {
+useEffect(() => {
 
-    fetch(`${API}/productos`)
-      .then(res => res.json())
-      .then(data => setProductos(data))
-      .catch(console.error);
+  fetch(`${API}/productos`)
+    .then(res => res.json())
+    .then(data => setProductos(data))
+    .catch(console.error);
 
-  }, []);
+
+  fetch(`${API}/recetas/alergenos/lista`)
+    .then(res => res.json())
+    .then(data => setListaAlergenos(data))
+    .catch(console.error);
+
+}, []);
+
+
+function cambiarAlergeno(id) {
+
+  setAlergenosSeleccionados(prev =>
+
+    prev.includes(id)
+
+      ? prev.filter(x => x !== id)
+
+      : [...prev, id]
+
+  );
+
+}
+
+
 async function guardarReceta() {
-
   try {
 
     const respuesta = await fetch(`${API}/recetas`, {
@@ -74,7 +98,6 @@ async function guardarReceta() {
 
         procedimiento,
         emplatado: presentacion,
-        alergenos,
         observaciones,
 
         tiempoPreparacion: 15,
@@ -126,11 +149,59 @@ const jsonIng = await resIng.json();
 
 console.log("Respuesta ingrediente:", jsonIng);
 
+
+
+// Guardar alérgenos
+for (const alergenoId of alergenosSeleccionados) {
+
+  const resAlergeno = await fetch(
+    `${API}/recetas/${recetaId}/alergenos`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        alergeno_id: alergenoId
+      })
+    }
+  );
+
+  const jsonAlergeno = await resAlergeno.json();
+
+  console.log("Respuesta alergeno:", jsonAlergeno);
+
+}
+
+}
+
+// Guardar procedimiento como primer paso
+if (procedimiento.trim() !== "") {
+
+  const resPaso = await fetch(
+    `${API}/recetas/${recetaId}/pasos`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        orden: 1,
+        titulo: "Preparación",
+        descripcion: procedimiento
+      })
+    }
+  );
+
+  const jsonPaso = await resPaso.json();
+
+  console.log("Respuesta paso:", jsonPaso);
+
 }
 
     alert("✅ Receta guardada correctamente");
 
-    console.log(datos);
+    navigate(`/recetas/${recetaId}`);
 
   } catch (err) {
 
@@ -200,13 +271,42 @@ console.log("Respuesta ingrediente:", jsonIng);
         onChange={(e) => setPresentacion(e.target.value)}
       />
 
-      <textarea
-        rows="3"
-        style={{ width: "100%", marginBottom: "20px" }}
-        placeholder="Alérgenos"
-        value={alergenos}
-        onChange={(e) => setAlergenos(e.target.value)}
-      />
+     <h3>⚠️ Alérgenos</h3>
+
+<div
+  style={{
+    display:"flex",
+    flexWrap:"wrap",
+    gap:"10px",
+    marginBottom:"20px"
+  }}
+>
+
+{listaAlergenos.map((a)=>(
+
+  <button
+    key={a.id}
+    type="button"
+    onClick={() => cambiarAlergeno(a.id)}
+    style={{
+      padding:"10px 15px",
+      borderRadius:"12px",
+      border:"1px solid #ccc",
+      cursor:"pointer",
+      background: alergenosSeleccionados.includes(a.id)
+        ? "#facc15"
+        : "#fff",
+      fontWeight:"bold"
+    }}
+  >
+
+    {a.icono} {a.nombre}
+
+  </button>
+
+))}
+
+</div>
 
       <textarea
         rows="4"
