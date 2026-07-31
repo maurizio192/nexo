@@ -108,6 +108,55 @@ router.get("/alergenos/lista", async (req, res) => {
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| AGREGAR ALERGENO A RECETA
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/alergenos", async (req, res) => {
+
+  try {
+
+    const {
+      alergeno_id
+    } = req.body;
+
+
+    await pool.query(
+      `
+      INSERT INTO receta_alergenos
+      (
+        receta_id,
+        alergeno_id
+      )
+      VALUES
+      ($1,$2)
+      `,
+      [
+        req.params.id,
+        alergeno_id
+      ]
+    );
+
+
+    res.json({
+      ok:true
+    });
+
+
+  } catch(err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
 router.get("/categorias", async (req, res) => {
 
   try {
@@ -506,8 +555,17 @@ router.post("/:id/pasos", async (req, res) => {
 
 });
 
+router.post("/:id/alergenos", async (req, res) => {
+
+  
+
+});
+
 
 router.put("/:id/archivar", async (req, res) => {
+
+
+
 
   try {
 
