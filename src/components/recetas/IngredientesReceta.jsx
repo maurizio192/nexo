@@ -1,4 +1,8 @@
 export default function IngredientesReceta({ ingredientes }) {
+  
+
+  console.log("INGREDIENTES:", ingredientes);
+
   return (
     <>
       <h2>🥕 Ingredientes</h2>

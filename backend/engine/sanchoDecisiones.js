@@ -8,50 +8,54 @@ function generarDecisiones({
 
   const decisiones = [];
 
+// PRIORITÀ 1 - Stock critico
 
-  // PRIORITÀ 1 - Stock critico
-  if (incidencias && incidencias.some(p => Number(p.stock_actual) === 0)) {
+if (incidencias && incidencias.some(p =>
+  Number(p.stock_actual) <= Number(p.stock_minimo)
+)) {
 
-    const productosCriticos = incidencias
-      .filter(p => Number(p.stock_actual) <= Number(p.stock_minimo))
-      .map(p => ({
-        nombre: p.nombre,
-        stock_actual: Number(p.stock_actual),
-        stock_minimo: Number(p.stock_minimo)
-      }));
-
-
-    const proveedores = [];
-
-
-    if (proveedoresCriticos && proveedoresCriticos.length > 0) {
-
-      proveedoresCriticos.forEach(p => {
-
-        if (p.proveedor && !proveedores.includes(p.proveedor)) {
-          proveedores.push(p.proveedor);
-        }
-
-      });
-
-    }
+  const productosCriticos = incidencias
+    .filter(p =>
+      Number(p.stock_actual) <= Number(p.stock_minimo)
+    )
+    .map(p => ({
+      nombre: p.nombre,
+      stock_actual: Number(p.stock_actual),
+      stock_minimo: Number(p.stock_minimo)
+    }));
 
 
-    decisiones.push({
+  const proveedores = [];
 
-      prioridad: 1,
 
-      accion: "GENERAR_PEDIDOS",
+  if (proveedoresCriticos && proveedoresCriticos.length > 0) {
 
-      motivo: "Existen productos sin stock.",
+    proveedoresCriticos.forEach(p => {
 
-      productos: productosCriticos,
-
-      proveedores
+      if (p.proveedor && !proveedores.includes(p.proveedor)) {
+        proveedores.push(p.proveedor);
+      }
 
     });
 
   }
+
+
+  decisiones.push({
+
+    prioridad: 1,
+
+    accion: "PROPONER_PEDIDO",
+
+    motivo: "Existen productos por debajo del stock mínimo.",
+
+    productos: productosCriticos,
+
+    proveedores
+
+  });
+
+}
 
 
 

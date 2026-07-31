@@ -297,6 +297,8 @@ router.post("/", async (req, res) => {
 });
 /*
 |--------------------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
 | AGREGAR INGREDIENTE A RECETA
 |--------------------------------------------------------------------------
 */
@@ -306,12 +308,19 @@ router.post("/:id/ingredientes", async (req, res) => {
   try {
 
     const {
-  productoId,
-  cantidad,
-  unidad,
-  merma,
-  descontar
-} = req.body;
+      producto_id,
+      productoId,
+      cantidad,
+      unidad,
+      merma,
+      descontar
+    } = req.body;
+
+    const idProducto = producto_id || productoId;
+
+    console.log("INGREDIENTE RECIBIDO:", req.body);
+
+
     // Obtener nombre del producto
 
     const producto = await pool.query(
@@ -320,8 +329,18 @@ router.post("/:id/ingredientes", async (req, res) => {
       FROM productos
       WHERE id = $1
       `,
-      [productoId]
+      [idProducto]
     );
+
+
+    if (producto.rows.length === 0) {
+
+      return res.status(400).json({
+        error: "Producto no encontrado"
+      });
+
+    }
+
 
     await pool.query(
       `
@@ -346,8 +365,7 @@ router.post("/:id/ingredientes", async (req, res) => {
         $6,
         $7,
         (
-          SELECT
-          COALESCE(MAX(orden),0)+1
+          SELECT COALESCE(MAX(orden),0)+1
           FROM receta_ingredientes
           WHERE receta_id=$1
         )
@@ -358,17 +376,19 @@ router.post("/:id/ingredientes", async (req, res) => {
         producto.rows[0].nombre,
         cantidad,
         unidad,
-        producto_id,
+        idProducto,
         merma,
         descontar
       ]
     );
 
+
     res.json({
       ok: true
     });
 
-  } catch (err) {
+
+   } catch (err) {
 
     console.error(err);
 
@@ -379,6 +399,8 @@ router.post("/:id/ingredientes", async (req, res) => {
   }
 
 });
+
+
 router.put("/:id/archivar", async (req, res) => {
 
   try {
@@ -405,6 +427,63 @@ router.put("/:id/archivar", async (req, res) => {
   }
 
 });
-  return router;
+
+/*
+|--------------------------------------------------------------------------
+| ELIMINAR RECETA (solo pruebas)
+|--------------------------------------------------------------------------
+*/
+
+router.delete("/:id", async (req, res) => {
+
+  try {
+
+    await pool.query("BEGIN");
+
+    await pool.query(
+      `
+      DELETE FROM receta_ingredientes
+      WHERE receta_id = $1
+      `,
+      [req.params.id]
+    );
+
+    await pool.query(
+      `
+      DELETE FROM receta_pasos
+      WHERE receta_id = $1
+      `,
+      [req.params.id]
+    );
+
+    await pool.query(
+      `
+      DELETE FROM recetas
+      WHERE id = $1
+      `,
+      [req.params.id]
+    );
+
+    await pool.query("COMMIT");
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    await pool.query("ROLLBACK");
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
+return router;
 
 };
