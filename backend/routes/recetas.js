@@ -74,6 +74,40 @@ router.get("/categorias/lista", async (req, res) => {
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| LISTA ALERGENOS
+|--------------------------------------------------------------------------
+*/
+
+router.get("/alergenos/lista", async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        id,
+        nombre,
+        icono,
+        codigo
+      FROM alergenos
+      ORDER BY id
+    `);
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
 router.get("/categorias", async (req, res) => {
 
   try {
