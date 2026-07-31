@@ -400,6 +400,61 @@ router.post("/:id/ingredientes", async (req, res) => {
 
 });
 
+/*
+|--------------------------------------------------------------------------
+| AGREGAR PASO DE PROCEDIMIENTO
+|--------------------------------------------------------------------------
+*/
+
+router.post("/:id/pasos", async (req, res) => {
+
+  try {
+
+    const {
+      orden,
+      titulo,
+      descripcion
+    } = req.body;
+
+
+    await pool.query(
+      `
+      INSERT INTO receta_pasos
+      (
+        receta_id,
+        orden,
+        titulo,
+        descripcion
+      )
+      VALUES
+      ($1,$2,$3,$4)
+      `,
+      [
+        req.params.id,
+        orden,
+        titulo,
+        descripcion
+      ]
+    );
+
+
+    res.json({
+      ok:true
+    });
+
+
+  } catch(err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
 
 router.put("/:id/archivar", async (req, res) => {
 
