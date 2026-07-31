@@ -112,13 +112,13 @@ for (const fila of filas) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      producto_id: Number(fila.productoId),
-      cantidad: Number(fila.cantidad),
-      unidad: fila.unidad,
-      merma: Number(fila.merma),
-      descontar: fila.descontar
-    })
+ body: JSON.stringify({
+  productoId: Number(fila.productoId),
+  cantidad: Number(fila.cantidad),
+  unidad: fila.unidad,
+  merma: Number(fila.merma),
+  descontar: fila.descontar
+})
   }
 );
 

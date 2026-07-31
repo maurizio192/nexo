@@ -14,12 +14,12 @@ async function ejecutarDecisiones(decisiones, contexto) {
     switch (decision.accion) {
 
 
-      case "GENERAR_PEDIDOS":
+      case "PROPONER_PEDIDO":
 
         acciones.push({
           accion: "PROPONER_PEDIDO",
           resultado:
-            "Preparar pedidos agrupados por proveedor."
+            "Pedido preparado. Esperando confirmación del chef."
         });
 
         break;

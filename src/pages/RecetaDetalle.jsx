@@ -14,13 +14,15 @@ export default function RecetaDetalle() {
 const [menuAbierto, setMenuAbierto] = useState(false);
 
 
-  useEffect(() => {
 fetch(`${API}/recetas/${id}`)
-      .then(res => res.json())
-      .then(data => setDatos(data))
-      .catch(console.error);
+  .then(res => res.json())
+  .then(data => {
+    console.log("DATOS API:", data);
+    setDatos(data);
+  })
+  .catch(console.error);
 
-  }, [id]);
+  
 
   async function archivarReceta() {
 
@@ -28,16 +30,12 @@ fetch(`${API}/recetas/${id}`)
 
     try {
 
-      const res = await fetch(
+ const res = await fetch(
   `${API}/recetas/${id}/archivar`,
   {
     method: "PUT"
   }
 );
-        {
-          method: "PUT"
-        }
-      
 
       const data = await res.json();
 
@@ -201,6 +199,60 @@ const estiloMenu = {
         </>
 
       )}
+
+{pestana === "produccion" && (
+
+  <>
+
+    <h2>📦 Producción</h2>
+
+    <p>
+      <b>Unidad:</b> {receta.unidad_produccion}
+    </p>
+
+    <p>
+      <b>Raciones por unidad:</b> {receta.raciones_por_unidad}
+    </p>
+
+    <ProduccionReceta
+      receta={receta}
+    />
+
+    <hr />
+
+  </>
+
+)}
+
+{pestana === "compartir" && (
+
+  <>
+
+    <h2>📧 Compartir receta</h2>
+
+    <button
+      style={{
+        padding:"12px 20px",
+        borderRadius:"10px",
+        cursor:"pointer"
+      }}
+      onClick={() => {
+
+        navigator.share
+        ? navigator.share({
+            title: receta.nombre,
+            text: `Receta NEXO: ${receta.nombre}`
+          })
+        : alert("Compartir no disponible en este dispositivo");
+
+      }}
+    >
+      📤 Compartir
+    </button>
+
+  </>
+
+)}
 
       {pestana === "observaciones" && (
 
