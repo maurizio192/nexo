@@ -124,20 +124,22 @@ router.post("/:id/alergenos", async (req, res) => {
 
 
     await pool.query(
-      `
-      INSERT INTO receta_alergenos
-      (
-        receta_id,
-        alergeno_id
-      )
-      VALUES
-      ($1,$2)
-      `,
-      [
-        req.params.id,
-        alergeno_id
-      ]
-    );
+`
+INSERT INTO receta_alergenos
+(
+  receta_id,
+  alergeno_id
+)
+VALUES
+($1,$2)
+ON CONFLICT (receta_id, alergeno_id)
+DO NOTHING
+`,
+[
+  req.params.id,
+  alergeno_id
+]
+);
 
 
     res.json({
@@ -562,6 +564,85 @@ router.post("/:id/alergenos", async (req, res) => {
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| ACTUALIZAR RECETA
+|--------------------------------------------------------------------------
+*/
+
+router.put("/:id", async (req, res) => {
+
+  try {
+
+    const {
+      codigo,
+      nombre,
+      categoria,
+      unidadProduccion,
+      racionesPorUnidad,
+      consumoServicio,
+      unidadConsumo,
+      procedimiento,
+      emplatado,
+      observaciones,
+      tiempoPreparacion,
+      tiempoCoccion,
+      temperatura
+    } = req.body;
+
+    await pool.query(
+      `
+      UPDATE recetas
+      SET
+        codigo = $1,
+        nombre = $2,
+        categoria = $3,
+        unidad_produccion = $4,
+        raciones_por_unidad = $5,
+        consumo_servicio = $6,
+        unidad_consumo = $7,
+        procedimiento = $8,
+        emplatado = $9,
+        observaciones = $10,
+        tiempo_preparacion = $11,
+        tiempo_coccion = $12,
+        temperatura = $13
+      WHERE id = $14
+      `,
+      [
+        codigo,
+        nombre,
+        categoria,
+        unidadProduccion,
+        racionesPorUnidad,
+        consumoServicio,
+        unidadConsumo,
+        procedimiento,
+        emplatado,
+        observaciones,
+        tiempoPreparacion,
+        tiempoCoccion,
+        temperatura,
+        req.params.id
+      ]
+    );
+
+    res.json({
+      ok: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
 router.put("/:id/archivar", async (req, res) => {
 
 
@@ -598,11 +679,9 @@ router.put("/:id/archivar", async (req, res) => {
 |--------------------------------------------------------------------------
 */
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id/ingredientes", async (req, res) => {
 
   try {
-
-    await pool.query("BEGIN");
 
     await pool.query(
       `
@@ -612,31 +691,35 @@ router.delete("/:id", async (req, res) => {
       [req.params.id]
     );
 
+    res.json({ ok: true });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
+router.delete("/:id/alergenos", async (req, res) => {
+
+  try {
+
     await pool.query(
       `
-      DELETE FROM receta_pasos
+      DELETE FROM receta_alergenos
       WHERE receta_id = $1
       `,
       [req.params.id]
     );
 
-    await pool.query(
-      `
-      DELETE FROM recetas
-      WHERE id = $1
-      `,
-      [req.params.id]
-    );
-
-    await pool.query("COMMIT");
-
-    res.json({
-      ok: true
-    });
+    res.json({ ok: true });
 
   } catch (err) {
-
-    await pool.query("ROLLBACK");
 
     console.error(err);
 

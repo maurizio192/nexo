@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-
+import EditarReceta from "./pages/EditarReceta";
 import Menu from "./components/Menu";
 
 import Inicio from "./pages/Inicio";
@@ -67,6 +67,11 @@ function App() {
           <Route
             path="/recetas/:id"
             element={<RecetaDetalle />}
+          />
+
+           <Route 
+             path="/editar-receta/:id" 
+             element={<EditarReceta />} 
           />
           <Route
             path="/recetas/nueva"
