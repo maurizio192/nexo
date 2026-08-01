@@ -4,6 +4,14 @@ import { API } from "../config/api";
 import DatosBasicos from "../components/recetas/DatosBasicos";
 import Produccion from "../components/recetas/Produccion";
 import EditorIngredientes from "../components/recetas/EditorIngredientes";
+import {
+  obtenerReceta,
+  actualizarReceta,
+  eliminarIngredientesReceta,
+  guardarIngredienteReceta
+} from "../services/recetasService";
+
+
 
 export default function EditarReceta() {
 const { id } = useParams();
@@ -46,10 +54,11 @@ const { id } = useParams();
   }
 ]);
 
-useEffect(() => {
 
-  fetch(`${API}/recetas/${id}`)
-    .then(res => res.json())
+
+  useEffect(() => {
+
+  obtenerReceta(id)
     .then(data => {
 
       console.log("DATI EDITAR:", data);
@@ -61,7 +70,7 @@ useEffect(() => {
 
       const r = data.receta;
 
-      setCodigo(r.codigo || "");
+      
       setCodigo(r.codigo || "");
       setNombre(r.nombre || "");
       setCategoria(r.categoria || "");
@@ -143,122 +152,98 @@ function cambiarAlergeno(id) {
 async function guardarReceta() {
   try {
 
-    const respuesta = await fetch(`${API}/recetas/${id}`, {
-  method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+    const datosReceta = {
 
-        codigo,
-        nombre,
-        categoria,
+      codigo,
+      nombre,
+      categoria,
 
-        unidadProduccion,
+      unidadProduccion,
 
-        racionesPorUnidad: raciones === "" ? null : Number(raciones),
-        consumoServicio: consumo === "" ? null : Number(consumo),
-        unidadConsumo,
+      racionesPorUnidad: raciones === "" ? null : Number(raciones),
+      consumoServicio: consumo === "" ? null : Number(consumo),
+      unidadConsumo,
 
-        procedimiento,
-        emplatado: presentacion,
-        observaciones,
+      procedimiento,
+      emplatado: presentacion,
+      observaciones,
 
-        tiempoPreparacion: 15,
-        tiempoCoccion: 8,
-        temperatura: "70 °C"
+      tiempoPreparacion: 15,
+      tiempoCoccion: 8,
+      temperatura: "70 °C"
 
-      })
-    });
+    };
+
+    const respuesta = await actualizarReceta(id, datosReceta);
 
 
 
-await fetch(`${API}/recetas/${id}/alergenos`, {
-  method: "DELETE"
-});
+
+await eliminarAlergenosReceta(id);
 
 
 
 // Guardar ingredientes
+
+await eliminarIngredientesReceta(id);
+
 for (const fila of filas) {
 
   if (!fila.productoId) continue;
 
-  console.log("Enviando ingrediente", {
-    producto_id: Number(fila.productoId),
+  const ingrediente = {
+    productoId: Number(fila.productoId),
     cantidad: Number(fila.cantidad),
     unidad: fila.unidad,
     merma: Number(fila.merma),
     descontar: fila.descontar
-  });
+  };
 
-const resIng = await fetch(
-  `${API}/recetas/${id}/ingredientes`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+  console.log("Enviando ingrediente", ingrediente);
 
- body: JSON.stringify({
-  productoId: Number(fila.productoId),
-  cantidad: Number(fila.cantidad),
-  unidad: fila.unidad,
-  merma: Number(fila.merma),
-  descontar: fila.descontar
-})
-  }
-);
+  const jsonIng = await guardarIngredienteReceta(
+    id,
+    ingrediente
+  );
 
+  console.log("Respuesta ingrediente:", jsonIng);
+
+}
 const jsonIng = await resIng.json();
 
 console.log("Respuesta ingrediente:", jsonIng);
 
 // Guardar alérgenos
+
 for (const alergenoId of alergenosSeleccionados) {
 
-  const resAlergeno = await fetch(
-    `${API}/recetas/${id}/alergenos`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        alergeno_id: alergenoId
-      })
-    }
+  const jsonAlergeno = await guardarAlergenoReceta(
+    id,
+    alergenoId
   );
-
-  const jsonAlergeno = await resAlergeno.json();
 
   console.log("Respuesta alergeno:", jsonAlergeno);
 
-}
 }
 
 // Guardar procedimiento como primer paso
 if (procedimiento.trim() !== "") {
 
- 
-
-  const jsonPaso = await resPaso.json();
-
-  console.log("Respuesta paso:", jsonPaso);
+  console.log("Procedimiento preparado:", procedimiento);
 
 }
 
-    alert("✅ Receta guardada correctamente");
+alert("✅ Receta guardada correctamente");
 
-    navigate(`/recetas/${id}`);
+navigate(`/recetas/${id}`);
 
-  } catch (err) {
+} catch (err) {
 
-    console.error(err);
+  console.error(err);
 
-    alert("❌ " + err.message);
+  alert("❌ " + err.message);
 
-  }
+}
 
 }
 
