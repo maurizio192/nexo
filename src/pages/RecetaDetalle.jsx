@@ -126,18 +126,26 @@ return (
 
       <div>
 
-        <h1 style={{ margin:0 }}>
-          {receta.nombre}
-        </h1>
+        <h1
+  style={{
+    margin:0,
+    fontSize:"24px",
+    lineHeight:"1.2",
+    fontWeight:"700"
+  }}
+>
+  {receta.nombre}
+</h1>
 
         <div
-          style={{
-            color:"#666",
-            marginTop:"5px"
-          }}
-        >
-          {receta.categoria}
-        </div>
+  style={{
+    color:"#666",
+    marginTop:"6px",
+    fontSize:"14px"
+  }}
+>
+  {receta.categoria}
+</div>
 
       </div>
 
@@ -254,13 +262,25 @@ return (
           }}
         >
 
-          <h3>
-            {paso.orden}. {paso.titulo}
-          </h3>
+         <h3
+  style={{
+    fontSize:"16px",
+    marginBottom:"8px"
+  }}
+>
+  {paso.orden}. {paso.titulo}
+</h3>
 
-          <p>
-            {paso.descripcion}
-          </p>
+<p
+  style={{
+    fontSize:"14px",
+    lineHeight:"1.5",
+    margin:"0",
+    whiteSpace:"pre-line"
+  }}
+>
+  {paso.descripcion}
+</p>
 
         </div>
 
@@ -362,20 +382,38 @@ return (
 
       <>
 
-        <h3>🍽 Presentación</h3>
+      <h3
+  style={{
+    fontSize:"16px",
+    marginBottom:"8px"
+  }}
+>
+  🍽 Presentación
+</h3>
 
-        <p>
-          {receta.emplatado}
-        </p>
-
+<p
+  style={{
+    fontSize:"14px",
+    lineHeight:"1.5",
+    whiteSpace:"pre-line"
+  }}
+>
+  {receta.emplatado}
+</p>
       </>
 
     )}
 
 
-    <p>
-      {receta.observaciones || "Sin observaciones"}
-    </p>
+    <p
+  style={{
+    fontSize:"14px",
+    lineHeight:"1.5",
+    whiteSpace:"pre-line"
+  }}
+>
+  {receta.observaciones || "Sin observaciones"}
+</p>
 
 
     <hr />
