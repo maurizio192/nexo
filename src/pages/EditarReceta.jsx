@@ -8,7 +8,9 @@ import {
   obtenerReceta,
   actualizarReceta,
   eliminarIngredientesReceta,
-  guardarIngredienteReceta
+  guardarIngredienteReceta,
+  eliminarAlergenosReceta,
+  guardarAlergenoReceta
 } from "../services/recetasService";
 
 
@@ -209,9 +211,6 @@ for (const fila of filas) {
   console.log("Respuesta ingrediente:", jsonIng);
 
 }
-const jsonIng = await resIng.json();
-
-console.log("Respuesta ingrediente:", jsonIng);
 
 // Guardar alérgenos
 
@@ -229,25 +228,42 @@ for (const alergenoId of alergenosSeleccionados) {
 // Guardar procedimiento como primer paso
 if (procedimiento.trim() !== "") {
 
-  console.log("Procedimiento preparado:", procedimiento);
+  const resPaso = await fetch(
+    `${API}/recetas/${id}/pasos`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        orden: 1,
+        titulo: "Procedimiento",
+        descripcion: procedimiento
+      })
+    }
+  );
+
+  const jsonPaso = await resPaso.json();
+
+  console.log("Respuesta paso:", jsonPaso);
+
+  
 
 }
 
-alert("✅ Receta guardada correctamente");
+    alert("✅ Receta guardada correctamente");
 
-navigate(`/recetas/${id}`);
+    navigate(`/recetas/${id}`);
 
-} catch (err) {
+  } catch (err) {
 
-  console.error(err);
+    console.error(err);
 
-  alert("❌ " + err.message);
+    alert("❌ " + err.message);
+
+  }
 
 }
-
-}
-
-
   return (
 
     <div
