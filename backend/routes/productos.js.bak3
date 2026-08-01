@@ -54,14 +54,14 @@ ORDER BY p.nombre
 
       
       const {
-  nombre,
-  unidad,
-  stockMinimo,
-  ubicacion_id,
-  categoria_id,
-  proveedor_id,
-  stockGarantizado
-} = req.body;
+        nombre,
+        unidad,
+        stockMinimo,
+        ubicacion,
+        categoria,
+         proveedor_id,
+        stockGarantizado
+      } = req.body;
 
        console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
 
@@ -70,28 +70,28 @@ ORDER BY p.nombre
   `
   INSERT INTO productos
   (
-  nombre,
-  unidad,
-  categoria_id,
-  proveedor_id,
-  stock_actual,
-  stock_minimo,
-  ubicacion_id,
-  precio,
-  stock_garantizado
-)
-VALUES
-($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    nombre,
+    unidad,
+    categoria,
+    proveedor_id,
+    stock_actual,
+    stock_minimo,
+    ubicacion,
+    precio
+    stock_garantizado.
+  )
+  VALUES
+  ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 RETURNING *
 `,
 [
   nombre,
   unidad,
-  Number(categoria_id),
+  categoria,
   Number(proveedor_id),
   0,
   Number(stockMinimo) || 0,
-  Number(ubicacion_id),
+  ubicacion,
   0,
   Number(stockGarantizado) || 0
 ]

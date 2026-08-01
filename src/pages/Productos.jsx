@@ -31,9 +31,9 @@ function Productos() {
   const [nombre, setNombre] = useState("");
   const [unidad, setUnidad] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [proveedor, setProveedor] = useState("");
-  const [stockMinimo, setStockMinimo] = useState("");
-  const [ubicacion, setUbicacion] = useState("");
+const [proveedor, setProveedor] = useState("");
+const [stockMinimo, setStockMinimo] = useState("");
+const [ubicacion, setUbicacion] = useState("");
   const [stockGarantizado, setStockGarantizado] = useState(0);
 
   const [editandoId, setEditandoId] = useState(null);
@@ -132,12 +132,16 @@ function Productos() {
 
   nombre,
   unidad,
-  categoria,
+
+  categoria_id: Number(categoria),
 
   proveedor_id: Number(proveedor),
+
+  ubicacion_id: Number(ubicacion),
+
   stockGarantizado: Number(stockGarantizado) || 0,
-  stockMinimo: Number(stockMinimo) || 0,
-  ubicacion
+
+  stockMinimo: Number(stockMinimo) || 0
 
 };
 
@@ -307,6 +311,8 @@ function Productos() {
 
               <TableCell>Proveedor</TableCell>
 
+              <TableCell>Ubicación</TableCell>
+
               <TableCell>Stock</TableCell>
 
               <TableCell>Mínimo</TableCell>
@@ -337,13 +343,18 @@ function Productos() {
 
 
               <TableCell>
-                {producto.categoria}
+                {producto.categoria_nombre || "-"}
               </TableCell>
 
 
               <TableCell>
-                {producto.proveedor}
+                {producto.proveedor_nombre || "-"}
               </TableCell>
+
+
+              <TableCell>
+                {producto.ubicacion_nombre || "-"}
+             </TableCell>
 
 
               <TableCell>

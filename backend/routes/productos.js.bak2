@@ -14,19 +14,9 @@ module.exports = (pool) => {
     try {
 
       const result = await pool.query(`
-        SELECT 
-  p.*,
-  c.nombre AS categoria_nombre,
-  u.nombre AS ubicacion_nombre,
-  pr.nombre AS proveedor_nombre
-FROM productos p
-LEFT JOIN categorias_productos c
-ON p.categoria_id = c.id
-LEFT JOIN ubicaciones u
-ON p.ubicacion_id = u.id
-LEFT JOIN proveedores pr
-ON p.proveedor_id = pr.id
-ORDER BY p.nombre
+        SELECT *
+        FROM productos
+        ORDER BY nombre
       `);
 
       res.json(result.rows);
@@ -54,14 +44,14 @@ ORDER BY p.nombre
 
       
       const {
-  nombre,
-  unidad,
-  stockMinimo,
-  ubicacion_id,
-  categoria_id,
-  proveedor_id,
-  stockGarantizado
-} = req.body;
+        nombre,
+        unidad,
+        stockMinimo,
+        ubicacion,
+        categoria,
+         proveedor_id,
+        stockGarantizado
+      } = req.body;
 
        console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
 
@@ -70,28 +60,28 @@ ORDER BY p.nombre
   `
   INSERT INTO productos
   (
-  nombre,
-  unidad,
-  categoria_id,
-  proveedor_id,
-  stock_actual,
-  stock_minimo,
-  ubicacion_id,
-  precio,
-  stock_garantizado
-)
-VALUES
-($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    nombre,
+    unidad,
+    categoria,
+    proveedor_id,
+    stock_actual,
+    stock_minimo,
+    ubicacion,
+    precio
+    stock_garantizado.
+  )
+  VALUES
+  ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 RETURNING *
 `,
 [
   nombre,
   unidad,
-  Number(categoria_id),
+  categoria,
   Number(proveedor_id),
   0,
   Number(stockMinimo) || 0,
-  Number(ubicacion_id),
+  ubicacion,
   0,
   Number(stockGarantizado) || 0
 ]

@@ -70,7 +70,7 @@ module.exports = {
 
       // Registrar producción
 
-      await pool.query(
+        await pool.query(
         `
         INSERT INTO producciones
         (
@@ -78,7 +78,9 @@ module.exports = {
           elaboracion,
           fecha,
           responsable,
-          cantidad_bolsas,
+          cantidad_producida,
+          unidad_produccion,
+          ubicacion,
           estado
         )
         VALUES
@@ -86,8 +88,10 @@ module.exports = {
           $1,
           $2,
           NOW(),
-          'Maurizio',
+          'Jefe producción',
           $3,
+          'bolsa_vacio',
+          'frigo_cocina',
           'Completada'
         )
         `,
