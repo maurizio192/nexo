@@ -18,6 +18,8 @@ const eventosRoutes = require("./routes/eventos");
 const cartasRoutes = require("./routes/cartas");
 const recetasRoutes = require("./routes/recetas");
 const categoriasRecetasRoutes = require("./routes/categoriasRecetas");
+const categoriasProductosRoutes = require("./routes/categoriasProductos");
+const ubicacionesRoutes = require("./routes/ubicaciones");
 const restauranteRoutes = require("./routes/restaurante");
 const panelOperacionesRoutes = require("./routes/panelOperaciones");
 const produccionHoyRoutes = require("./routes/produccionHoy");
@@ -39,9 +41,11 @@ app.locals.pool = pool;
 app.use("/api/proveedores", proveedoresRoutes(pool));
 app.use("/api/pedidos-automaticos", pedidosAutomaticosRoutes(pool));
 app.use("/api/productos", productosRoutes(pool));
+app.use("/api/ubicaciones", ubicacionesRoutes(pool));
 app.use("/api/pedidos", pedidosRoutes(pool));
 app.use("/api/producciones", produccionesRoutes(pool));
 app.use("/api/elaboraciones", elaboracionesRoutes(pool));
+app.use("/api/categorias-productos", categoriasProductosRoutes(pool));
 app.use("/api/categorias", categoriasRoutes(pool));
 app.use("/api/ventas", ventasRoutes(pool));
 app.use("/api/consumos", consumosRoutes(pool));
@@ -57,7 +61,7 @@ app.use("/api/recetas", recetasRoutes(pool));
 app.use("/api/categorias-recetas", categoriasRecetasRoutes(pool));
 app.use("/api/servicio-carta", require("./routes/servicioCarta")(pool));
 /*
-|--------------------------------------------------------------------------
+x|--------------------------------------------------------------------------
 | HOME
 |--------------------------------------------------------------------------
 */

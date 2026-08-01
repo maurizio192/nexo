@@ -97,18 +97,21 @@ mensaje += "He revisado la situación de la cocina. ";
 
   }
 
+// PRIORIDADES OPERATIVAS
+if (incidencias && incidencias.length > 0) {
 
-   // PRIORIDADES
-  if (incidencias && incidencias.length > 0) {
+  const productos = incidencias
+    .slice(0, 3)
+    .map(p => {
 
-    const productos = incidencias
-      .slice(0, 3)
-      .map(p => p.nombre)
-      .join(", ");
+      return `${p.nombre} (stock ${p.stock_actual}/${p.stock_minimo}, ubicación ${p.ubicacion || "sin ubicación"}, proveedor ${p.proveedor || "sin proveedor"})`;
 
-    mensaje += `Las prioridades que requieren atención son: ${productos}. `;
+    })
+    .join(". ");
 
-  }
+  mensaje += `Las prioridades que requieren atención son: ${productos}. `;
+
+}
 
  if (prioridades.length > 0) {
 
