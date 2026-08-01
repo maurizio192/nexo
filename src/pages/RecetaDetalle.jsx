@@ -24,37 +24,71 @@ fetch(`${API}/recetas/${id}`)
 
   
 
-  async function archivarReceta() {
+ async function archivarReceta() {
 
-    if (!window.confirm("¿Seguro que quieres archivar esta receta?")) return;
+  if (!window.confirm("¿Seguro que quieres archivar esta receta?")) return;
 
-    try {
+  try {
 
- const res = await fetch(
-  `${API}/recetas/${id}/archivar`,
-  {
-    method: "PUT"
-  }
-);
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Error");
+    const res = await fetch(
+      `${API}/recetas/${id}/archivar`,
+      {
+        method: "PUT"
       }
+    );
 
-      alert("✅ Receta archivada");
+    const data = await res.json();
 
-      window.location.href = "/recetas";
-
-    } catch (err) {
-
-      alert("❌ " + err.message);
-
+    if (!res.ok) {
+      throw new Error(data.error || "Error");
     }
 
+    alert("✅ Receta archivada");
+
+    window.location.href = "/recetas";
+
+  } catch (err) {
+
+    alert("❌ " + err.message);
+
   }
 
+}
+
+async function eliminarReceta() {
+
+  if (
+    !window.confirm(
+      "⚠️ Esta acción eliminará definitivamente la receta.\n\n¿Continuar?"
+    )
+  ) return;
+
+  try {
+
+    const res = await fetch(
+      `${API}/recetas/${id}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Error");
+    }
+
+    alert("✅ Receta eliminada");
+
+    window.location.href = "/recetas";
+
+  } catch (err) {
+
+    alert("❌ " + err.message);
+
+  }
+
+}
   if (!datos) return <h2>Cargando receta...</h2>;
   const { receta, ingredientes, pasos, alergenos } = datos;
 
@@ -74,7 +108,6 @@ fetch(`${API}/recetas/${id}`)
 return (
 
   <div
-
     style={{
       padding:"20px",
       maxWidth:"1100px",
@@ -82,11 +115,85 @@ return (
     }}
   >
 
+    <div
+      style={{
+        display:"flex",
+        justifyContent:"space-between",
+        alignItems:"center",
+        marginBottom:"25px"
+      }}
+    >
+
+      <div>
+
+        <h1 style={{ margin:0 }}>
+          {receta.nombre}
+        </h1>
+
+        <div
+          style={{
+            color:"#666",
+            marginTop:"5px"
+          }}
+        >
+          {receta.categoria}
+        </div>
+
+      </div>
+
+      <div
+        style={{
+          display:"flex",
+          gap:"10px"
+        }}
+      >
+
+        <button
+          onClick={archivarReceta}
+          style={{
+            background:"#f59e0b",
+            color:"#fff",
+            border:"none",
+            padding:"12px 18px",
+            borderRadius:"10px",
+            cursor:"pointer",
+            fontWeight:"bold"
+          }}
+        >
+          📁 Archivar
+        </button>
+
+        <button
+  onClick={() => {
+    window.location.href = `/editar-receta/${id}`;
+  }}
+>
+  ✏️ Editar receta
+</button>
+
+        <button
+          onClick={eliminarReceta}
+          style={{
+            background:"#dc2626",
+            color:"#fff",
+            border:"none",
+            padding:"12px 18px",
+            borderRadius:"10px",
+            cursor:"pointer",
+            fontWeight:"bold"
+          }}
+        >
+          🗑 Eliminar
+        </button>
+
+      </div>
+
+    </div>
+
     <PestanasReceta
       pestana={pestana}
       setPestana={setPestana}
     />
-
 
     {pestana === "informacion" && (
 
