@@ -111,25 +111,27 @@ const estadoStock = (producto) => {
   // CARGAR PRODUCTOS
   // ==========================
 
-  const cargarProductos = async () => {
 
-    try {
+const cargarProductos = async () => {
 
-      const res = await fetch(`${API}/productos`);
+  try {
 
-      const data = await res.json();
+    const res = await fetch(`${API}/productos`);
 
-      setProductos(data);
+    const data = await res.json();
 
+    setProductos(data);
 
-    } catch(error) {
+  } catch(error) {
 
-      console.error("Error cargando productos:", error);
+    console.error(
+      "Error cargando productos:",
+      error
+    );
 
-    }
+  }
 
-  };
-
+};
 
 const cargarCategorias = async () => {
 
@@ -152,7 +154,7 @@ const cargarCategorias = async () => {
 
   }
 
-}
+};
 
   // ==========================
   // LIMPIAR FORMULARIO
@@ -180,19 +182,26 @@ const cargarCategorias = async () => {
 
   const guardarProducto = async () => {
 
+console.log("CONTROL DATI:", {
+  nombre,
+  unidad,
+  categoria,
+  proveedor
+});
 
-    if (
-      !nombre ||
-      !unidad ||
-      !categoria ||
-      !proveedor
-    ) {
 
-      alert("Completa los campos obligatorios");
+if (
+  !nombre ||
+  !unidad ||
+  !categoria ||
+  !proveedor
+) {
 
-      return;
+  alert("Completa los campos obligatorios");
 
-    }
+  return;
+
+}
 
 
 
@@ -285,34 +294,29 @@ const cargarCategorias = async () => {
   // ==========================
   // EDITAR PRODUCTO
   // ==========================
+const editarProducto = (producto) => {
 
-  const editarProducto = (producto) => {
+  console.log("EDITANDO PRODUCTO:", producto);
 
+  setEditandoId(producto.id);
 
-    setEditandoId(producto.id);
+  setModoEdicion(true);
 
-    setModoEdicion(true);
+  setNombre(producto.nombre || "");
 
+  setUnidad(producto.unidad || "");
 
-    setNombre(producto.nombre || "");
+  setCategoria(String(producto.categoria_id || ""));
 
-    setUnidad(producto.unidad || "");
+  setProveedor(String(producto.proveedor_id || ""));
 
-    setCategoria(producto.categoria || "");
+  setStockMinimo(String(producto.stock_minimo || ""));
 
-    setProveedor(producto.proveedor || "");
+  setStockGarantizado(String(producto.stock_garantizado || 0));
 
+  setUbicacion(String(producto.ubicacion_id || ""));
 
-    setStockMinimo(
-      String(producto.stock_minimo ?? "")
-    );
-
-
-    setUbicacion(producto.ubicacion || "");
-
-
-  };
-
+};
 
 
   return (
@@ -367,9 +371,9 @@ const cargarCategorias = async () => {
 <Chip
   label={estadoStock(producto)}
   color={
-    estadoStock(producto) === "🔴"
+    estadoStock(producto).startsWith("🔴")
       ? "error"
-      : estadoStock(producto) === "🟡"
+      : estadoStock(producto).startsWith("🟡")
       ? "warning"
       : "success"
   }
@@ -384,15 +388,19 @@ const cargarCategorias = async () => {
   Stock: {producto.stock_actual} / {producto.stock_minimo}
 </Typography>
 
+<IconButton
+  color="primary"
+  onClick={() => editarProducto(producto)}
+>
+  <EditIcon />
+</IconButton>
+</Paper>
+))}
 
-      </Paper>
-
-    ))}
-
-
-  </Paper>
+</Paper>
 
 )}
+
 
 
       <Typography variant="h4" gutterBottom>
@@ -473,21 +481,19 @@ const cargarCategorias = async () => {
     lineHeight: 1
   }}
 >
-
+{
   {
-  {
-  Verdura: "🥬",
-  Carne: "🥩",
-  Pescado: "🐟",
-  Lácteos: "🧀",
-  Despensa: "🧂",
-  Congelados: "🧊",
-  Limpieza: "🧼",
-  Delivery: "🚚",
-  Huevos: "🥚"
+    Verdura: "🥬",
+    Carne: "🥩",
+    Pescado: "🐟",
+    Lácteos: "🧀",
+    Despensa: "🧂",
+    Congelados: "🧊",
+    Limpieza: "🧼",
+    Delivery: "🚚",
+    Huevos: "🥚"
+  }[cat.nombre] || "📦"
 }
-    }[cat.nombre] || "📦"
-  
 
 </Typography>
 
