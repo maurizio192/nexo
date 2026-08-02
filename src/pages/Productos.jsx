@@ -25,28 +25,38 @@ function Productos() {
 
   const [productos, setProductos] = useState([]);
 
+  const [categorias, setCategorias] = useState([]);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+
   const location = useLocation();
 
 
   const [nombre, setNombre] = useState("");
   const [unidad, setUnidad] = useState("");
   const [categoria, setCategoria] = useState("");
-const [proveedor, setProveedor] = useState("");
-const [stockMinimo, setStockMinimo] = useState("");
-const [ubicacion, setUbicacion] = useState("");
+  const [proveedor, setProveedor] = useState("");
+  const [stockMinimo, setStockMinimo] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
   const [stockGarantizado, setStockGarantizado] = useState(0);
-
+ 
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
 
 
 
-  useEffect(() => {
+useEffect(() => {
 
-    cargarProductos();
+  cargarProductos();
 
-  }, []);
+}, []);
 
+
+
+useEffect(() => {
+
+  cargarCategorias();
+
+}, []);
 
 
   useEffect(() => {
@@ -59,6 +69,39 @@ const [ubicacion, setUbicacion] = useState("");
 
   }, [location]);
 
+  // ==========================
+// FILTRAR PRODUCTOS POR CATEGORÍA
+// ==========================
+
+const productosFiltrados = productos.filter(
+  (p) =>
+    Number(p.categoria_id) === Number(categoriaSeleccionada)
+);
+
+// ==========================
+// ESTADO STOCK
+// ==========================
+
+const estadoStock = (producto) => {
+
+  if (
+    Number(producto.stock_actual) <= 0
+  ) {
+    return "🔴";
+  }
+
+
+  if (
+    Number(producto.stock_actual) <
+    Number(producto.stock_minimo)
+  ) {
+    return "🟡";
+  }
+
+
+  return "🟢";
+
+};
 
 
   // ==========================
@@ -85,6 +128,28 @@ const [ubicacion, setUbicacion] = useState("");
   };
 
 
+const cargarCategorias = async () => {
+
+  try {
+
+    const res = await fetch(
+      `${API}/categorias-productos`
+    );
+
+    const data = await res.json();
+
+    setCategorias(data);
+
+  } catch(error) {
+
+    console.error(
+      "Error cargando categorias:",
+      error
+    );
+
+  }
+
+}
 
   // ==========================
   // LIMPIAR FORMULARIO
@@ -251,6 +316,71 @@ const [ubicacion, setUbicacion] = useState("");
 
     <>
 
+{categoriaSeleccionada && (
+
+  <Paper
+    sx={{
+      mt: 4,
+      p: 3
+    }}
+  >
+
+    <Typography variant="h5">
+      Productos
+    </Typography>
+
+
+    {productosFiltrados.map((producto) => (
+
+     <Paper
+  key={producto.id}
+  sx={{
+    mt: 2,
+    p: 2,
+    borderRadius: 3,
+    borderLeft:
+      estadoStock(producto) === "🔴"
+        ? "8px solid #d32f2f"
+        : estadoStock(producto) === "🟡"
+        ? "8px solid #f9a825"
+        : "8px solid #2e7d32"
+  }}
+>
+
+        <Typography variant="h6">
+  📦 {producto.nombre}
+</Typography>
+
+
+<Typography sx={{ mt: 1 }}>
+  🚚 Proveedor: {producto.proveedor_nombre || "-"}
+</Typography>
+
+
+<Typography>
+  📍 Ubicación: {producto.ubicacion_nombre || "-"}
+</Typography>
+
+
+<Typography sx={{ mt: 1 }}>
+  Estado: {estadoStock(producto)}
+</Typography>
+
+
+<Typography>
+  Stock: {producto.stock_actual} / {producto.stock_minimo}
+</Typography>
+
+
+      </Paper>
+
+    ))}
+
+
+  </Paper>
+
+)}
+
 
       <Typography variant="h4" gutterBottom>
 
@@ -289,136 +419,76 @@ const [ubicacion, setUbicacion] = useState("");
 
       />
 
-
-
-
-      <TableContainer
-        component={Paper}
-        sx={{ mt: 3 }}
+      <Typography
+        variant="h5"
+        sx={{ mt: 4, mb: 2 }}
       >
-
-
-        <Table>
-
-
-          <TableHead>
-
-            <TableRow>
-
-              <TableCell>Nombre</TableCell>
-
-              <TableCell>Categoría</TableCell>
-
-              <TableCell>Proveedor</TableCell>
-
-              <TableCell>Ubicación</TableCell>
-
-              <TableCell>Stock</TableCell>
-
-              <TableCell>Mínimo</TableCell>
-
-              <TableCell>Acciones</TableCell>
-
-
-            </TableRow>
-
-
-          </TableHead>
-
-
-
-
-          <TableBody>
-
-
-          {productos.map((producto)=>(
-
-
-            <TableRow key={producto.id}>
-
-
-              <TableCell>
-                {producto.nombre}
-              </TableCell>
-
-
-              <TableCell>
-                {producto.categoria_nombre || "-"}
-              </TableCell>
-
-
-              <TableCell>
-                {producto.proveedor_nombre || "-"}
-              </TableCell>
-
-
-              <TableCell>
-                {producto.ubicacion_nombre || "-"}
-             </TableCell>
-
-
-              <TableCell>
-                {producto.stock_actual}
-              </TableCell>
-
-
-              <TableCell>
-                {producto.stock_minimo}
-              </TableCell>
-
-
-
-              <TableCell>
-
-
-                <IconButton
-
-                  color="primary"
-
-                  onClick={() =>
-                    editarProducto(producto)
-                  }
-
-                >
-
-                  <EditIcon />
-
-                </IconButton>
-
-
-
-
-                <IconButton
-
-                  color="error"
-
-                >
-
-                  <DeleteIcon />
-
-                </IconButton>
-
-
-
-              </TableCell>
-
-
-
-            </TableRow>
-
-
-          ))}
-
-
-          </TableBody>
-
-
-        </Table>
-
-
-      </TableContainer>
-
-
+        Categorías
+      </Typography>
+
+
+      <div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(120px, 1fr))",
+    gap: "12px"
+  }}
+>
+
+        {categorias.map((cat) => (
+
+         <Paper
+  key={cat.id}
+  onClick={() =>
+    setCategoriaSeleccionada(cat.id)
+  }
+  sx={{
+    p: 1,
+    minHeight: 80,
+    textAlign: "center",
+    cursor: "pointer",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    borderRadius: 2
+  }}
+>
+      <Typography
+  sx={{
+    fontSize: "22px",
+    lineHeight: 1
+  }}
+>
+
+  {
+    {
+      Verdura: "🥬",
+      Carne: "🥩",
+      Pescado: "🐟",
+      Lácteos: "🧀",
+      Despensa: "🧂",
+      Congelados: "🧊",
+      Limpieza: "🧼",
+      Delivery: "🚚"
+    }[cat.nombre] || "📦"
+  }
+
+</Typography>
+
+
+            <Typography>
+
+              {cat.nombre}
+
+            </Typography>
+
+
+          </Paper>
+
+        ))}
+
+       </div>
 
     </>
 
