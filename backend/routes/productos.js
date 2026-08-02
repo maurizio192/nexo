@@ -119,14 +119,26 @@ router.put("/:id", async (req, res) => {
 
   const { id } = req.params;
 
-const {
+  const {
+    nombre,
+    unidad,
+    categoria_id,
+    proveedor_id,
+    stockMinimo,
+    stockGarantizado,
+    ubicacion_id
+  } = req.body;
+
+  console.log("PUT PRODUCTO PARAMS:", {
+  id,
   nombre,
   unidad,
-  categoria,
+  categoria_id,
   proveedor_id,
   stockMinimo,
-  ubicacion
-} = req.body;
+  stockGarantizado,
+  ubicacion_id
+});
 
 
   try {
@@ -135,22 +147,25 @@ const {
       `
       UPDATE productos
       SET
-       categoria=$3,
-      proveedor_id=$4,
-      stock_minimo=$5,
-      ubicacion=$6
-      WHERE id=$7
+        nombre=$1,
+        unidad=$2,
+        categoria=$3,
+        proveedor_id=$4,
+        stock_minimo=$5,
+        stock_garantizado=$6,
+        ubicacion=$7
+      WHERE id=$8
       RETURNING *
       `,
-      
       [
-       nombre,
-       unidad,
-       categoria,
-       Number(proveedor_id),
-       Number(stockMinimo),
-       ubicacion,
-       id
+        nombre,
+        unidad,
+        Number(categoria_id),
+        Number(proveedor_id),
+        Number(stockMinimo),
+        Number(stockGarantizado),
+        Number(ubicacion_id),
+        Number(id)
       ]
     );
 
@@ -158,7 +173,7 @@ const {
     res.json(result.rows[0]);
 
 
-  } catch (err) {
+  } catch(err) {
 
     console.error(err);
 
