@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Chip,
 } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
@@ -87,7 +88,7 @@ const estadoStock = (producto) => {
   if (
     Number(producto.stock_actual) <= 0
   ) {
-    return "🔴";
+    return "🔴 MANCANTE";
   }
 
 
@@ -95,13 +96,15 @@ const estadoStock = (producto) => {
     Number(producto.stock_actual) <
     Number(producto.stock_minimo)
   ) {
-    return "🟡";
+    return "🟡 BAJO";
   }
 
 
-  return "🟢";
+  return "🟢 OK";
 
 };
+
+
 
 
   // ==========================
@@ -330,7 +333,16 @@ const cargarCategorias = async () => {
     </Typography>
 
 
-    {productosFiltrados.map((producto) => (
+  {[...productosFiltrados]
+  .sort((a, b) => {
+    const orden = {
+  "🔴 MANCANTE": 1,
+  "🟡 BAJO": 2,
+  "🟢 OK": 3
+};
+    return orden[estadoStock(a)] - orden[estadoStock(b)];
+  })
+  .map((producto) => (
 
      <Paper
   key={producto.id}
@@ -339,9 +351,9 @@ const cargarCategorias = async () => {
     p: 2,
     borderRadius: 3,
     borderLeft:
-      estadoStock(producto) === "🔴"
+      estadoStock(producto).startsWith("🔴")
         ? "8px solid #d32f2f"
-        : estadoStock(producto) === "🟡"
+        : estadoStock(producto).startsWith("🟡")
         ? "8px solid #f9a825"
         : "8px solid #2e7d32"
   }}
@@ -352,19 +364,20 @@ const cargarCategorias = async () => {
 </Typography>
 
 
-<Typography sx={{ mt: 1 }}>
-  🚚 Proveedor: {producto.proveedor_nombre || "-"}
-</Typography>
-
-
-<Typography>
-  📍 Ubicación: {producto.ubicacion_nombre || "-"}
-</Typography>
-
-
-<Typography sx={{ mt: 1 }}>
-  Estado: {estadoStock(producto)}
-</Typography>
+<Chip
+  label={estadoStock(producto)}
+  color={
+    estadoStock(producto) === "🔴"
+      ? "error"
+      : estadoStock(producto) === "🟡"
+      ? "warning"
+      : "success"
+  }
+  sx={{
+    mt: 1,
+    fontWeight: "bold"
+  }}
+/>
 
 
 <Typography>
