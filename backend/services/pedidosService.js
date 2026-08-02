@@ -124,7 +124,37 @@ module.exports = {
       [pedidoId]
     );
 
-    return true;
+await pool.query(`
+INSERT INTO eventos_nexo
+(
+    fecha,
+    usuario,
+    accion,
+    detalle
+)
+VALUES
+(
+    NOW(),
+    'Sancho',
+    'RECIBIR_PEDIDO',
+    $1
+)
+`,
+[
+JSON.stringify({
+pedido: pedidoId
+})
+]);s
+
+ return {
+
+pedido: pedidoId,
+
+productos: detalle.rows.length,
+
+estado: "RECIBIDO"
+
+};
 
   }
 

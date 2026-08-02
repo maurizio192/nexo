@@ -106,10 +106,7 @@ module.exports = (pool) => {
 
 
       const pedidosPropuestos =
-        generarPedidoPropuesto(
-          productosCriticos,
-          proveedoresCriticos.rows
-        );
+        generarPedidoPropuesto(productosCriticos);
 
 
 
@@ -123,7 +120,18 @@ module.exports = (pool) => {
       */
 
 
-      const pedidosGenerados = [];
+      let pedidosGenerados = [];
+
+if (req.query.confirmar === "1") {
+
+  pedidosGenerados = await engine.ejecutar(
+    "CREAR_PEDIDOS_AUTOMATICOS",
+    {
+      pedidosPropuestos
+    }
+  );
+
+}
 
 
 

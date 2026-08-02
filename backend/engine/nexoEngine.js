@@ -54,6 +54,13 @@ class NexoEngine {
       return await require("./servicioHoy")(
       this.pool
   );
+      case "CREAR_PEDIDOS_AUTOMATICOS":
+
+      return await require("./crearPedidoAutomatico")(
+      this.pool,
+      datos.pedidosPropuestos
+  );
+
       default:
 
         throw new Error(
