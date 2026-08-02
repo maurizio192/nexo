@@ -475,17 +475,19 @@ const cargarCategorias = async () => {
 >
 
   {
-    {
-      Verdura: "🥬",
-      Carne: "🥩",
-      Pescado: "🐟",
-      Lácteos: "🧀",
-      Despensa: "🧂",
-      Congelados: "🧊",
-      Limpieza: "🧼",
-      Delivery: "🚚"
+  {
+  Verdura: "🥬",
+  Carne: "🥩",
+  Pescado: "🐟",
+  Lácteos: "🧀",
+  Despensa: "🧂",
+  Congelados: "🧊",
+  Limpieza: "🧼",
+  Delivery: "🚚",
+  Huevos: "🥚"
+}
     }[cat.nombre] || "📦"
-  }
+  
 
 </Typography>
 
