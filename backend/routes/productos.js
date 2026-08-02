@@ -52,18 +52,22 @@ ORDER BY p.nombre
 
     try {
 
-      
-      const {
+
+  const {
   nombre,
   unidad,
-  stockMinimo,
-  ubicacion_id,
   categoria_id,
   proveedor_id,
-  stockGarantizado
+  stock_actual,
+  stockMinimo,
+  stockGarantizado,
+  ubicacion_id
 } = req.body;
 
+
        console.log("STOCK MINIMO RECIBIDO:", stockMinimo);
+
+       console.log("BODY RECIBIDO:", req.body);
 
 
       const resultado = await pool.query(
@@ -120,21 +124,23 @@ router.put("/:id", async (req, res) => {
   const { id } = req.params;
 
   const {
-    nombre,
-    unidad,
-    categoria_id,
-    proveedor_id,
-    stockMinimo,
-    stockGarantizado,
-    ubicacion_id
-  } = req.body;
+  nombre,
+  unidad,
+  categoria_id,
+  proveedor_id,
+  stock_actual,
+  stockMinimo,
+  stockGarantizado,
+  ubicacion_id
+} = req.body;
 
-  console.log("PUT PRODUCTO PARAMS:", {
+console.log("PUT PRODUCTO PARAMS:", {
   id,
   nombre,
   unidad,
   categoria_id,
   proveedor_id,
+  stock_actual,
   stockMinimo,
   stockGarantizado,
   ubicacion_id
@@ -146,31 +152,34 @@ router.put("/:id", async (req, res) => {
     const result = await pool.query(
       `
       UPDATE productos
-      SET
-        nombre=$1,
-        unidad=$2,
-        categoria=$3,
-        proveedor_id=$4,
-        stock_minimo=$5,
-        stock_garantizado=$6,
-        ubicacion=$7
-      WHERE id=$8
-      RETURNING *
+  SET
+  nombre=$1,
+  unidad=$2,
+  categoria_id=$3,
+  proveedor_id=$4,
+  stock_actual=$5,
+  stock_minimo=$6,
+  stock_garantizado=$7,
+  ubicacion_id=$8
+WHERE id=$9
       `,
-      [
-        nombre,
-        unidad,
-        Number(categoria_id),
-        Number(proveedor_id),
-        Number(stockMinimo),
-        Number(stockGarantizado),
-        Number(ubicacion_id),
-        Number(id)
-      ]
+    [
+  nombre,
+  unidad,
+  Number(categoria_id),
+  Number(proveedor_id),
+  Number(stock_actual),
+  Number(stockMinimo),
+  Number(stockGarantizado),
+  Number(ubicacion_id),
+  Number(id)
+]
     );
 
 
-    res.json(result.rows[0]);
+   console.log("FILAS ACTUALIZADAS:", result.rows.length);
+console.log(result.rows[0]);
+res.json(result.rows[0] || {});
 
 
   } catch(err) {
