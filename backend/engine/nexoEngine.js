@@ -56,10 +56,9 @@ class NexoEngine {
   );
       case "CREAR_PEDIDOS_AUTOMATICOS":
 
-      return await require("./crearPedidoAutomatico")(
-      this.pool,
-      datos.pedidosPropuestos
-  );
+      const motorPedidos = new MotorPedidos(this.pool);
+
+return await motorPedidos.generarPedidosAutomaticos();
 
       default:
 

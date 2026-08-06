@@ -24,6 +24,7 @@ const restauranteRoutes = require("./routes/restaurante");
 const panelOperacionesRoutes = require("./routes/panelOperaciones");
 const produccionHoyRoutes = require("./routes/produccionHoy");
 const pedidosAutomaticosRoutes = require("./routes/pedidosAutomaticos");
+const productosProveedoresRoutes = require("./routes/productosProveedores");
 const app = express();
 
 
@@ -39,6 +40,7 @@ app.locals.pool = pool;
 */
 
 app.use("/api/proveedores", proveedoresRoutes(pool));
+app.use("/api/productos-proveedores", productosProveedoresRoutes(pool));
 app.use("/api/pedidos-automaticos", pedidosAutomaticosRoutes(pool));
 app.use("/api/productos", productosRoutes(pool));
 app.use("/api/ubicaciones", ubicacionesRoutes(pool));

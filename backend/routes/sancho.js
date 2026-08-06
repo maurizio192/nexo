@@ -1,6 +1,9 @@
 const express = require("express");
 
 const NexoEngine = require("../engine/nexoEngine");
+const MotorPedidos = require("../engine/MotorPedidos");
+const MotorStock = require("../engine/MotorStock");
+
 const generarRespuestaSancho = require("../engine/sanchoRespuesta");
 const evaluarEstadoCocina = require("../engine/motorEstadoCocina");
 const generarDecisionesSancho = require("../engine/sanchoDecisiones");
@@ -8,11 +11,15 @@ const ejecutarDecisiones = require("../engine/ejecutorDecisiones");
 const generarPedidoPropuesto = require("../engine/generarPedidoPropuesto");
 
 
+
 module.exports = (pool) => {
 
   const router = express.Router();
 
   const engine = new NexoEngine(pool);
+
+  const motorStock = new MotorStock(pool);
+  const motorPedidos = new MotorPedidos(pool);
 
 
 
@@ -40,7 +47,8 @@ module.exports = (pool) => {
         "SERVICIO_HOY"
       );
 
-
+const proveedoresCriticos =
+  await motorStock.obtenerProductosCriticos();
 
       const produccion = await pool.query(`
         SELECT 
@@ -54,17 +62,7 @@ module.exports = (pool) => {
 
 
 
-      const proveedoresCriticos = await pool.query(`
-        SELECT
-          p.nombre,
-          pr.nombre AS proveedor
-        FROM productos p
-        LEFT JOIN proveedores pr
-          ON p.proveedor_id = pr.id
-        WHERE p.stock_actual <= p.stock_minimo
-        ORDER BY pr.nombre,p.nombre
-      `);
-
+     
 
 
       const eventos = await pool.query(`
@@ -120,16 +118,12 @@ module.exports = (pool) => {
       */
 
 
-      let pedidosGenerados = [];
+   let pedidosGenerados = [];
 
 if (req.query.confirmar === "1") {
 
-  pedidosGenerados = await engine.ejecutar(
-    "CREAR_PEDIDOS_AUTOMATICOS",
-    {
-      pedidosPropuestos
-    }
-  );
+    pedidosGenerados =
+        await motorPedidos.generarPedidosAutomaticos();
 
 }
 
@@ -148,8 +142,7 @@ if (req.query.confirmar === "1") {
 
           eventos:eventos.rows,
 
-          proveedoresCriticos:
-            proveedoresCriticos.rows,
+          proveedoresCriticos,
 
           pedidosPendientes:
             pedidosPendientes.rows
@@ -173,8 +166,7 @@ if (req.query.confirmar === "1") {
           pedidosPendientes:
             pedidosPendientes.rows,
 
-          proveedoresCriticos:
-            proveedoresCriticos.rows
+         proveedoresCriticos,
 
         });
 
@@ -213,8 +205,7 @@ if (req.query.confirmar === "1") {
 
           inicio,
 
-          proveedoresCriticos:
-            proveedoresCriticos.rows,
+          proveedoresCriticos,
 
           pedidosPendientes:
             pedidosPendientes.rows
