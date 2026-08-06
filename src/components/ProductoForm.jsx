@@ -28,6 +28,9 @@ function ProductoForm({
   proveedor,
   setProveedor,
 
+  stockActual,
+  setStockActual,
+
   stockMinimo,
   setStockMinimo,
 
@@ -39,7 +42,6 @@ function ProductoForm({
   modoEdicion,
 
 }) {
-
 
   const [proveedores, setProveedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -221,6 +223,15 @@ function ProductoForm({
           onChange={(e)=>setStockMinimo(e.target.value)}
           helperText="Cantidad mínima antes de pedir"
         />
+
+        <TextField
+  label="Stock actual"
+  type="number"
+  value={stockActual}
+  onChange={(e) => setStockActual(e.target.value)}
+  fullWidth
+  margin="normal"
+/>
 
 
 

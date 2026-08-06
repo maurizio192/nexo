@@ -1,13 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import EditarReceta from "./pages/EditarReceta";
 import Menu from "./components/Menu";
-
+import ProductosCategoria from "./pages/ProductosCategoria";
 import Inicio from "./pages/Inicio";
 import Productos from "./pages/Productos";
+import ProductosNuevo from "./pages/ProductosNuevo";
 import Proveedores from "./pages/Proveedores";
 import Pedidos from "./pages/Pedidos";
 import Cartas from "./pages/Cartas";
 import NuevaReceta from "./pages/NuevaReceta";
+import ModificarProducto from "./pages/ModificarProducto";
 
 import LibroRecetas from "./pages/LibroRecetas";
 import CategoriaRecetas from "./pages/CategoriaRecetas";
@@ -51,6 +53,8 @@ function App() {
 
           <Route path="/productos" element={<Productos />} />
 
+          <Route path="/productos2" element={<ProductosNuevo />} />
+
           <Route path="/proveedores" element={<Proveedores />} />
 
           <Route path="/cartas" element={<Cartas />} />
@@ -58,6 +62,16 @@ function App() {
           <Route path="/pedidos" element={<Pedidos />} />
 
           <Route path="/libro-recetas" element={<LibroRecetas />} />
+
+          <Route
+                 path="/producto/modificar/:id"
+                 element={<ModificarProducto />}
+          />
+
+          <Route 
+                 path="/productos/categoria/:categoria" 
+                 element={<ProductosCategoria />} 
+          />
 
           <Route
             path="/categoria/:categoria"

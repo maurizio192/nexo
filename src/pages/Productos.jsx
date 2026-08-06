@@ -31,7 +31,7 @@ function Productos() {
 
   const location = useLocation();
 
-
+  const [stockActual, setStockActual] = useState(0);
   const [nombre, setNombre] = useState("");
   const [unidad, setUnidad] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -116,13 +116,13 @@ const cargarProductos = async () => {
 
   try {
 
-    const res = await fetch(`${API}/productos`);
+    const res = await fetch(`${API}/productos-proveedores`);
 
     const data = await res.json();
 
     setProductos(data);
 
-  } catch(error) {
+  } catch (error) {
 
     console.error(
       "Error cargando productos:",
@@ -218,6 +218,8 @@ if (
 
   stockGarantizado: Number(stockGarantizado) || 0,
 
+  stock_actual: Number(stockActual) || 0,
+
   stockMinimo: Number(stockMinimo) || 0
 
 };
@@ -311,6 +313,8 @@ const editarProducto = (producto) => {
   setProveedor(String(producto.proveedor_id || ""));
 
   setStockMinimo(String(producto.stock_minimo || ""));
+
+  setStockActual(String(producto.stock_actual || 0));
 
   setStockGarantizado(String(producto.stock_garantizado || 0));
 
@@ -430,6 +434,9 @@ const editarProducto = (producto) => {
 
         stockGarantizado={stockGarantizado}
         setStockGarantizado={setStockGarantizado}
+
+        stockActual={stockActual}
+        setStockActual={setStockActual}
 
         ubicacion={ubicacion}
         setUbicacion={setUbicacion}
