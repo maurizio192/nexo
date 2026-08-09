@@ -91,8 +91,36 @@ ON pr.id = pp.proveedor_id
 
        console.log("BODY RECIBIDO:", req.body);
 
+       const resultado = await pool.query(
+         `
+         INSERT INTO productos
+         (
+           nombre,
+           unidad,
+           categoria_id,
+           proveedor_id,
+           stock_actual,
+           stock_minimo,
+           stock_garantizado,
+           ubicacion_id
+         )
+         VALUES
+         ($1,$2,$3,$4,$5,$6,$7,$8)
+         RETURNING *
+         `,
+         [
+           nombre,
+           unidad,
+           Number(categoria_id),
+           proveedor_id ? Number(proveedor_id) : null,
+           Number(stock_actual) || 0,
+           Number(stockMinimo) || 0,
+           Number(stockGarantizado) || 0,
+           ubicacion_id ? Number(ubicacion_id) : null
+         ]
+       );
 
-   const producto = resultado.rows[0];
+       const producto = resultado.rows[0];
 
 // Guardar proveedor principal
 if (proveedor_id) {
