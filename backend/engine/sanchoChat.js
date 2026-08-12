@@ -332,12 +332,15 @@ class SanchoChat {
         // PROVEEDORES DISPONIBLES HOY
 
         if (
-            texto.includes("hacer el pedido") ||
-            texto.includes("hacer pedidos") ||
-            texto.includes("pedidos hoy") ||
-            texto.includes("a quién") ||
-            texto.includes("a quien")
-        ) {
+    texto.includes("hacer el pedido") ||
+    texto.includes("hacer pedidos") ||
+    texto.includes("pedidos hoy") ||
+    texto.includes("qué proveedores") ||
+    texto.includes("que proveedores") ||
+    texto.includes("proveedores hoy") ||
+    texto.includes("a quién") ||
+    texto.includes("a quien")
+) {
 
             const result = await this.pool.query(`
                 SELECT

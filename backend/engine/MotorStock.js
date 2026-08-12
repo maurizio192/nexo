@@ -29,21 +29,20 @@ class MotorStock {
         const result = await this.pool.query(
             `
             SELECT
-
                 p.*,
-
                 pr.id AS proveedor_id,
                 pr.nombre AS proveedor
 
             FROM productos p
 
-            LEFT JOIN productos_proveedores pp
-                ON pp.producto_id = p.id
-
             LEFT JOIN proveedores pr
-                ON pr.id = pp.proveedor_id
+                ON pr.id = p.proveedor_id
 
-            WHERE p.stock_actual <= p.stock_minimo
+            WHERE p.stock_actual <
+                  GREATEST(
+                      p.stock_minimo,
+                      p.stock_garantizado
+                  )
 
             ORDER BY
                 pr.nombre,
@@ -52,7 +51,6 @@ class MotorStock {
         );
 
         return result.rows;
-
     }
 
     async obtenerProductosBajoMinimo() {
