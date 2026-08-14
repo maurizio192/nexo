@@ -185,8 +185,17 @@ class MotorPedidos {
          * Descripción legible para Sancho.
          */
 
+        const formatoDescripcion =
+            cantidadFinal === 1
+                ? (formatoFinal || "UDS")
+                : (formatoFinal === "CAJA"
+                    ? "CAJAS"
+                    : formatoFinal === "PAQUETE"
+                        ? "PAQUETES"
+                        : formatoFinal || "UDS");
+
         let descripcionCantidad =
-            `${cantidadFinal} ${formatoFinal || "UDS"}`;
+            `${cantidadFinal} ${formatoDescripcion}`;
 
 
         if (
@@ -194,8 +203,11 @@ class MotorPedidos {
             unidadFormato
         ) {
 
+            const cantidadTotalFormato =
+                cantidadFinal * cantidadFormato;
+
             let contenido =
-                `${cantidadFormato} ${unidadFormato}`;
+                `${cantidadTotalFormato} ${unidadFormato}`;
 
 
             if (
