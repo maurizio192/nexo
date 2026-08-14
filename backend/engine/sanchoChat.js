@@ -1,5 +1,6 @@
 const MotorPedidos = require("./MotorPedidos");
 
+console.log("🔥 SANCHOCHAT.JS CARGADO");
 class SanchoChat {
 
      constructor(pool) {
@@ -11,6 +12,7 @@ class SanchoChat {
 }
 
     async procesar(pregunta) {
+        console.log("🔥 SANCHO PROCESAR RECIBE:", pregunta);
 
         const texto = String(pregunta || "")
             .trim()
@@ -216,6 +218,110 @@ class SanchoChat {
                     pendiente.productos
             };
         }
+  
+        // CONSULTAR STOCK DE PRODUCTO
+
+        const patronStockProducto = texto.match(
+            /(?:cu[aá]nto\s+stock\s+tenemos\s+de\s+(.+)|cu[aá]nto\s+tenemos\s+de\s+(.+)|cu[aá]ntas\s+tenemos\s+de\s+(.+)|qu[eé]\s+stock\s+tenemos\s+de\s+(.+)|stock\s+de\s+(.+)|cu[aá]nto\s+(.+?)\s+tenemos|cu[aá]ntas\s+(.+?)\s+tenemos|cu[aá]ntas\s+quedan\s+de\s+(.+)|cu[aá]nto\s+queda\s+de\s+(.+))/i
+        );
+
+        if (patronStockProducto) {
+
+            const nombreBuscado = (
+                patronStockProducto[1] ||
+                patronStockProducto[2] ||
+                patronStockProducto[3] ||
+                patronStockProducto[4] ||
+                patronStockProducto[5] ||
+                patronStockProducto[6] ||
+                patronStockProducto[7] ||
+                patronStockProducto[8] ||
+                patronStockProducto[9]
+            )
+                .replace(/[?¿]/g, "")
+                .replace(/\bpor favor\b/gi, "")
+                .replace(/^(el|la|los|las|un|una)\s+/i, "")
+                .trim();
+
+            console.log("🔥 BUSCANDO STOCK:", nombreBuscado);
+
+            const palabras = nombreBuscado
+                .split(/\s+/)
+                .filter(Boolean);
+
+            if (palabras.length === 0) {
+                return {
+                    respuesta: "Dime qué producto quieres consultar.",
+                    accion: "CONSULTAR_STOCK"
+                };
+            }
+
+            const condiciones = palabras
+                .map((_, i) => `LOWER(p.nombre) LIKE $${i + 1}`)
+                .join(" AND ");
+
+            const valores = palabras.map(p => `%${p.toLowerCase()}%`);
+
+            const result = await this.pool.query(`
+                SELECT
+                    p.*,
+                    pr.nombre AS proveedor_nombre
+                FROM productos p
+                LEFT JOIN proveedores pr
+                    ON p.proveedor_id = pr.id
+                WHERE ${condiciones}
+                ORDER BY p.nombre
+                LIMIT 5
+            `, valores);
+
+            if (result.rows.length === 0) {
+                return {
+                    respuesta:
+                        `No encuentro el producto "${nombreBuscado}".`,
+                    accion: "PRODUCTO_NO_ENCONTRADO"
+                };
+            }
+
+            if (result.rows.length > 1) {
+
+                const productoExacto = result.rows.find(p =>
+                    p.nombre.trim().toLowerCase() === nombreBuscado.trim().toLowerCase()
+                );
+
+                if (productoExacto) {
+                    return {
+                        respuesta:
+                            `${productoExacto.nombre} tiene ${productoExacto.stock_actual} ${productoExacto.unidad || "unidades"} en stock.`,
+                        accion: "CONSULTAR_STOCK",
+                        producto: productoExacto
+                    };
+                }
+
+                const lista = result.rows
+                    .map(p =>
+                        `- ${p.nombre}: ${p.stock_actual} ${p.unidad || ""}`
+                    )
+                    .join("\n");
+
+                return {
+                    respuesta:
+                        `He encontrado varios productos:\n${lista}`,
+                    accion: "CONSULTAR_STOCK",
+                    productos: result.rows
+                };
+            }
+
+            const producto = result.rows[0];
+
+            return {
+                respuesta:
+                    `${producto.nombre} tiene ${producto.stock_actual} ${producto.unidad || "unidades"} en stock.`,
+                accion: "CONSULTAR_STOCK",
+                producto
+            };
+        }
+
+
         // CONSULTAR STOCK
 
         if (
@@ -259,7 +365,8 @@ class SanchoChat {
 
             return {
                 respuesta:
-                    `Tenemos ${result.rows.length} productos bajo stock:\n${lista}`,
+                    `Tenemos ${result.rows.length} productos bajo stock:
+${lista}`,
                 accion: "CONSULTAR_STOCK",
                 productos: result.rows
             };
@@ -316,10 +423,13 @@ class SanchoChat {
 
             for (const proveedor of Object.keys(grupos)) {
 
-                respuesta += `\n${proveedor}:\n`;
+                respuesta += `
+${proveedor}:
+`;
 
                 for (const producto of grupos[proveedor]) {
-                    respuesta += `- ${producto}\n`;
+                    respuesta += `- ${producto}
+`;
                 }
             }
 
@@ -378,16 +488,120 @@ class SanchoChat {
 
             return {
                 respuesta:
-                    `Hoy puedes hacer pedidos a:\n${lista}\n\nLos proveedores sin día fijo también están disponibles.`,
+                    `Hoy puedes hacer pedidos a:
+${lista}
+
+Los proveedores sin día fijo también están disponibles.`,
                 accion: "CONSULTAR_PROVEEDORES",
                 proveedores: result.rows
             };
         }
+        // CONSULTAR UBICACIÓN DE PRODUCTO
+
+        const patronUbicacion = texto.match(/(?:dónde está|donde está|dónde se encuentra|donde se encuentra|dónde tenemos|donde tenemos|ubicación de|ubicacion de)\s+(.+)/i);
+
+        if (patronUbicacion) {
+            const nombreBuscado = patronUbicacion[1]
+                .replace(/^(el|la|los|las|un|una)\s+/i, "")
+                .replace(/[?¿]/g, "")
+                .replace(/\bpor favor\b/gi, "")
+                .trim();
+            console.log("TEXTO SANCHO:", texto);
+
+            console.log("BUSCANDO UBICACIÓN:", nombreBuscado);
+
+           const result = await this.pool.query(`
+    SELECT
+        p.*,
+        pr.nombre AS proveedor_nombre,
+        u.nombre AS ubicacion_nombre
+    FROM productos p
+
+    LEFT JOIN proveedores pr
+        ON p.proveedor_id = pr.id
+
+    LEFT JOIN ubicaciones u
+        ON p.ubicacion_id = u.id
+
+    WHERE
+        LOWER(p.nombre) = LOWER($1)
+
+        OR LOWER(p.nombre) LIKE '%' || LOWER($1) || '%'
+
+        OR LOWER(
+            REGEXP_REPLACE(
+                p.nombre,
+                '\\s*\\([^)]*\\)',
+                '',
+                'g'
+            )
+        ) = LOWER($1)
+
+        OR (
+            SELECT COUNT(*)
+            FROM regexp_split_to_table(
+                LOWER(
+                    REGEXP_REPLACE(
+                        p.nombre,
+                        '\\s*\\([^)]*\\)',
+                        '',
+                        'g'
+                    )
+                ),
+                '\\s+'
+            ) palabras
+            WHERE LOWER($1) LIKE '%' || palabras || '%'
+        ) >= array_length(
+            regexp_split_to_array(
+                LOWER($1),
+                '\\s+'
+            ),
+            1
+        )
+
+    ORDER BY
+        CASE
+            WHEN LOWER(p.nombre) = LOWER($1)
+            THEN 0
+
+            WHEN LOWER(p.nombre) LIKE '%' || LOWER($1) || '%'
+            THEN 1
+
+            ELSE 2
+        END,
+
+        p.nombre
+
+    LIMIT 5
+`, [nombreBuscado]);
+
+            if (result.rows.length === 0) {
+
+                return {
+                    respuesta:
+                        `No encuentro el producto "${nombreBuscado}".`,
+                    accion: "PRODUCTO_NO_ENCONTRADO"
+                };
+
+            }
+
+            const producto = result.rows[0];
+
+            return {
+                respuesta:
+                    producto.ubicacion_nombre
+                        ? `${producto.nombre} está en ${producto.ubicacion_nombre}.`
+                        : `${producto.nombre} no tiene una ubicación asignada.`,
+                accion: "CONSULTAR_UBICACION",
+                producto: producto
+            };
+        }
+
 
         // AÑADIR PRODUCTO
 
         const patron = texto.match(
-            /(?:pide|pedir|añade|añadir|agrega|agregar)\s+(\d+(?:[.,]\d+)?)\s*(cajas?|paquetes?|paqs?|unidades?|uds?|ud|botellas?|botes?|piezas?)?\s+(?:de\s+)?(.+)/
+            /^(?:pide|pedir|añade|añadir|agrega|agregar|necesitamos|necesito|quiero|queremos)\s+(\d+(?:[.,]\d+)?)\s*(cajas?|paquetes?|paqs?|unidades?|uds?|ud|botellas?|botes?|piezas?)?\s+(?:de\s+)?(.+)$/i
         );
 
         console.log("PATRON:", patron);
@@ -404,52 +618,56 @@ class SanchoChat {
                     : null;
 
             const nombreBuscado = patron[3]
-                .replace(/\bpor favor\b/g, "")
-                .trim();
+    .replace(/\bpor favor\b/g, "")
+    .replace(/^(el|la|los|las|un|una)\s+/i, "")
+    .trim();
 
             console.log("CANTIDAD:", cantidad);
             console.log("UNIDAD:", unidadPedido);
             console.log("PRODUCTO:", nombreBuscado);
 
             
-                const result = await this.pool.query(`
-    SELECT
-        p.*,
-        pr.nombre AS proveedor_nombre
-    FROM productos p
-    LEFT JOIN proveedores pr
-        ON p.proveedor_id = pr.id
-    WHERE
-        LOWER(p.nombre) LIKE '%' || LOWER($1) || '%'
-        OR
-        LOWER(
-            REGEXP_REPLACE(
-                p.nombre,
-                '\\\\s*\\\\([^)]*\\\\)',
-                '',
-                'g'
-            )
-        ) = LOWER($1)
-    ORDER BY
-        CASE
-            WHEN LOWER(
-                REGEXP_REPLACE(
-                    p.nombre,
-                    '\\\\s*\\\\([^)]*\\\\)',
-                    '',
-                    'g'
-                )
-            ) = LOWER($1)
-            THEN 0
+            const palabrasProducto = nombreBuscado
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .split(/\s+/)
+                .filter(p => !["de", "del", "la", "el", "los", "las", "un", "una"].includes(p))
+                .filter(Boolean);
 
-            WHEN LOWER(p.nombre) = LOWER($1)
-            THEN 1
+            const condicionesProducto = palabrasProducto
+                .map((_, i) => `
+                    LOWER(
+                        REGEXP_REPLACE(
+                            p.nombre,
+                            '\\s*\\([^)]*\\)',
+                            '',
+                            'g'
+                        )
+                    ) LIKE '%' || $${i + 1} || '%'
+                `)
+                .join(" AND ");
 
-            ELSE 2
-        END,
-        p.nombre
-    LIMIT 5
-`, [nombreBuscado]);
+            const result = await this.pool.query(`
+                SELECT
+                    p.*,
+                    pr.nombre AS proveedor_nombre,
+                    u.nombre AS ubicacion_nombre
+                FROM productos p
+                LEFT JOIN proveedores pr
+                    ON p.proveedor_id = pr.id
+                LEFT JOIN ubicaciones u
+                    ON p.ubicacion_id = u.id
+                WHERE ${condicionesProducto}
+                ORDER BY
+                    CASE
+                        WHEN LOWER(p.nombre) = LOWER($1)
+                        THEN 0
+                        ELSE 1
+                    END,
+                    p.nombre
+                LIMIT 5
+            `, palabrasProducto);
                        if (result.rows.length === 0) {
 
     return {
@@ -496,7 +714,9 @@ class SanchoChat {
 
     return {
         respuesta:
-            `He encontrado varios productos parecidos:\n${opciones}\nDime cuál quieres.`,
+            `He encontrado varios productos parecidos:
+${opciones}
+Dime cuál quieres.`,
         accion: "CONFIRMAR_PRODUCTO",
         productos: result.rows
     };

@@ -203,19 +203,45 @@ function generarPedidoPropuesto(productosCriticos = []) {
     // DESCRIPCIÓN PARA SANCHO
     // ======================================
 
-    let descripcionCantidad;
+    const formatoDescripcion =
+      cantidadPropuesta === 1
+        ? (formatoCompra || unidadPropuesta || "UDS")
+        : (formatoCompra === "CAJA"
+            ? "CAJAS"
+            : formatoCompra === "PAQUETE"
+                ? "PAQUETES"
+                : formatoCompra || unidadPropuesta || "UDS");
 
+    let descripcionCantidad =
+      `${cantidadPropuesta} ${formatoDescripcion}`;
 
-    if (cantidadFormato > 0) {
+    if (
+      cantidadFormato > 0 &&
+      unidadFormato
+    ) {
 
-      descripcionCantidad =
-        `${cantidadPropuesta} ${unidadPropuesta}`;
+      const cantidadTotalFormato =
+        cantidadPropuesta * cantidadFormato;
 
-    } else {
+      let contenido =
+        `${cantidadTotalFormato} ${unidadFormato}`;
 
-      descripcionCantidad =
-        `${cantidadPropuesta} ${unidadPropuesta}`;
+      const cantidadUnidad =
+        Number(producto.cantidad_unidad || 0);
 
+      const unidadProducto =
+        producto.unidad_producto || null;
+
+      if (
+        cantidadUnidad > 0 &&
+        unidadProducto
+      ) {
+        contenido +=
+          ` × ${cantidadUnidad} ${unidadProducto}`;
+      }
+
+      descripcionCantidad +=
+        ` (${contenido})`;
     }
 
 
