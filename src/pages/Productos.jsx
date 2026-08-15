@@ -392,6 +392,10 @@ const editarProducto = (producto) => {
   Stock: {producto.stock_actual} / {producto.stock_minimo}
 </Typography>
 
+<Typography sx={{ mt: 1 }}>
+  📍 Ubicación: {producto.ubicacion_nombre || "Sin ubicación asignada"}
+</Typography>
+
 <IconButton
   color="primary"
   onClick={() => editarProducto(producto)}
