@@ -380,6 +380,37 @@ class SanchoChat {
 
             if (candidatos.length > 1) {
 
+                const pedidosSeleccion =
+                    candidatos.map(c => ({
+                        id: c.pedido.id,
+                        proveedor: c.pedido.proveedor,
+                        producto: c.detalle.producto,
+                        cantidad: c.detalle.cantidad,
+                        formato: c.detalle.formato,
+                        detalle: [c.detalle]
+                    }));
+
+                // Guardamos también la recepción parcial solicitada
+                // para aplicarla cuando el usuario seleccione el pedido.
+                this.seleccionPedidoPendiente = {
+                    proveedor:
+                        candidatos[0].pedido.proveedor,
+
+                    pedidos:
+                        pedidosSeleccion,
+
+                    recepcionDirecta: {
+                        cantidad:
+                            cantidadRecibida,
+
+                        unidad:
+                            unidad,
+
+                        producto:
+                            productoBuscado
+                    }
+                };
+
                 return {
                     respuesta:
                         `He encontrado varios pedidos pendientes con ${productoBuscado}. Necesito que me indiques cuál ha llegado.`,
@@ -388,13 +419,7 @@ class SanchoChat {
                         "SELECCIONAR_PEDIDO",
 
                     pedidos:
-                        candidatos.map(c => ({
-                            id: c.pedido.id,
-                            proveedor: c.pedido.proveedor,
-                            producto: c.detalle.producto,
-                            cantidad: c.detalle.cantidad,
-                            formato: c.detalle.formato
-                        }))
+                        pedidosSeleccion
                 };
             }
         }
