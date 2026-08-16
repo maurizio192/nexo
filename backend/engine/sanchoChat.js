@@ -223,6 +223,183 @@ class SanchoChat {
         }
   
         // =========================================
+        // RECEPCIÓN PARCIAL DIRECTA POR VOZ
+        // =========================================
+
+        const patronRecepcionParcial =
+            texto.match(
+                /^(?:han\s+llegado|ha\s+llegado|llegaron|recibimos)\s+(\d+(?:[.,]\d+)?)\s+(cajas?|paquetes?|unidades?|uds?|botellas?|botes?|piezas?)\s+(?:de\s+)?(.+)$/i
+            );
+
+        if (patronRecepcionParcial) {
+
+            const cantidadRecibida =
+                Number(
+                    patronRecepcionParcial[1]
+                        .replace(",", ".")
+                );
+
+            const unidad =
+                patronRecepcionParcial[2]
+                    .toLowerCase()
+                    .replace(/s$/, "");
+
+            const productoBuscado =
+                patronRecepcionParcial[3]
+                    .replace(/[?.!,¿¡]/g, "")
+                    .trim()
+                    .toLowerCase();
+
+            console.log(
+                "📦 SANCHO RECEPCIÓN PARCIAL DIRECTA:",
+                cantidadRecibida,
+                unidad,
+                productoBuscado
+            );
+
+            const pedidosResult =
+                await this.pool.query(
+                    `
+                    SELECT
+                        p.id,
+                        p.proveedor,
+                        p.proveedor_id,
+                        p.estado
+                    FROM pedidos p
+                    WHERE
+                        p.estado = 'Pendiente'
+                    ORDER BY
+                        p.id DESC
+                    `
+                );
+
+            const candidatos = [];
+
+            for (const pedido of pedidosResult.rows) {
+
+                const detalleResult =
+                    await this.pool.query(
+                        `
+                        SELECT
+                            id,
+                            producto,
+                            cantidad,
+                            formato,
+                            cantidad_recibida
+                        FROM pedido_detalle
+                        WHERE pedido_id = $1
+                          AND cantidad_recibida < cantidad
+                        `,
+                        [pedido.id]
+                    );
+
+                for (const detalle of detalleResult.rows) {
+
+                    const nombreProducto =
+                        String(detalle.producto || "")
+                            .toLowerCase();
+
+                    const palabrasBuscadas =
+                        productoBuscado
+                            .split(/\s+/)
+                            .filter(p => p.length >= 4);
+
+                    const coincideProducto =
+                        palabrasBuscadas.some(palabra =>
+                            nombreProducto.includes(palabra)
+                        );
+
+                    const formato =
+                        String(detalle.formato || "")
+                            .toLowerCase();
+
+                    const coincideUnidad =
+                        !unidad ||
+                        formato === unidad ||
+                        (unidad === "ud" && formato === "unidad") ||
+                        (unidad === "unidad" && formato === "ud");
+
+                    if (
+                        coincideProducto &&
+                        coincideUnidad
+                    ) {
+                        candidatos.push({
+                            pedido,
+                            detalle
+                        });
+                    }
+                }
+            }
+
+            if (candidatos.length === 1) {
+
+                const candidato =
+                    candidatos[0];
+
+                console.log(
+                    "📦 SANCHO PEDIDO ENCONTRADO:",
+                    candidato.pedido.id,
+                    candidato.detalle.producto
+                );
+
+                const pedidosService =
+                    require("../services/pedidosService");
+
+                const recepciones = [
+                    {
+                        detalle_id:
+                            candidato.detalle.id,
+                        cantidad:
+                            cantidadRecibida
+                    }
+                ];
+
+                const resultado =
+                    await pedidosService.recibirPedido(
+                        this.pool,
+                        candidato.pedido.id,
+                        recepciones
+                    );
+
+                return {
+                    respuesta:
+                        `Perfecto. He registrado la recepción de ${cantidadRecibida} ${unidad}${cantidadRecibida !== 1 ? "s" : ""} de ${candidato.detalle.producto}. El pedido queda en estado ${resultado.estado.toLowerCase()}.`,
+
+                    accion:
+                        "RECIBIR_PEDIDO",
+
+                    pedido:
+                        resultado,
+
+                    proveedor:
+                        candidato.pedido.proveedor,
+
+                    recepciones
+                };
+            }
+
+            if (candidatos.length > 1) {
+
+                return {
+                    respuesta:
+                        `He encontrado varios pedidos pendientes con ${productoBuscado}. Necesito que me indiques cuál ha llegado.`,
+
+                    accion:
+                        "SELECCIONAR_PEDIDO",
+
+                    pedidos:
+                        candidatos.map(c => ({
+                            id: c.pedido.id,
+                            proveedor: c.pedido.proveedor,
+                            producto: c.detalle.producto,
+                            cantidad: c.detalle.cantidad,
+                            formato: c.detalle.formato
+                        }))
+                };
+            }
+        }
+
+        // =========================================
         // RECEPCIONAR PEDIDO POR PROVEEDOR
         // =========================================
 
@@ -521,15 +698,92 @@ class SanchoChat {
                 const pedidosService =
                     require("../services/pedidosService");
 
+                // -----------------------------------------
+                // DETECTAR RECEPCIÓN PARCIAL POR VOZ
+                // -----------------------------------------
+
+                let recepciones = null;
+
+                const patronCantidad =
+                    texto.match(/(?:han\s+llegado|ha\s+llegado|recibimos|recibido|llegaron)\s+(\d+(?:[.,]\d+)?)\s+(?:cajas?|paquetes?|unidades?|uds?|botellas?|botes?|piezas?)/i);
+
+                if (patronCantidad && pedidoSeleccionado.detalle) {
+
+                    const cantidadSolicitada =
+                        Number(
+                            patronCantidad[1]
+                                .replace(",", ".")
+                        );
+
+                    const unidadTexto =
+                        texto.match(
+                            /\d+(?:[.,]\d+)?\s+(cajas?|paquetes?|unidades?|uds?|botellas?|botes?|piezas?)/i
+                        );
+
+                    const unidad =
+                        unidadTexto
+                            ? unidadTexto[1]
+                                .toLowerCase()
+                                .replace(/s$/, "")
+                            : null;
+
+                    let detalleSeleccionado = null;
+
+                    for (const detalle of pedidoSeleccionado.detalle) {
+
+                        const formato =
+                            String(
+                                detalle.formato || ""
+                            )
+                                .toLowerCase();
+
+                        if (
+                            unidad &&
+                            (
+                                formato === unidad ||
+                                (unidad === "unidad" && formato === "ud") ||
+                                (unidad === "ud" && formato === "unidad")
+                            )
+                        ) {
+                            detalleSeleccionado = detalle;
+                            break;
+                        }
+                    }
+
+                    // Si solo hay una línea, podemos identificarla directamente
+                    if (
+                        !detalleSeleccionado &&
+                        pedidoSeleccionado.detalle.length === 1
+                    ) {
+                        detalleSeleccionado =
+                            pedidoSeleccionado.detalle[0];
+                    }
+
+                    if (detalleSeleccionado) {
+
+                        recepciones = [
+                            {
+                                detalle_id:
+                                    detalleSeleccionado.id,
+                                cantidad:
+                                    cantidadSolicitada
+                            }
+                        ];
+                    }
+                }
+
                 const resultado =
                     await pedidosService.recibirPedido(
                         this.pool,
-                        pedidoSeleccionado.id
+                        pedidoSeleccionado.id,
+                        recepciones
                     );
 
                 return {
                     respuesta:
-                        `Perfecto. He registrado la recepción del pedido de ${seleccion.proveedor}. El pedido queda en estado ${resultado.estado.toLowerCase()}.`,
+                        recepciones
+                            ? `Perfecto. He registrado la recepción parcial del pedido de ${seleccion.proveedor}. El pedido queda en estado ${resultado.estado.toLowerCase()}.`
+                            : `Perfecto. He registrado la recepción completa del pedido de ${seleccion.proveedor}. El pedido queda en estado ${resultado.estado.toLowerCase()}.`,
 
                     accion:
                         "RECIBIR_PEDIDO",
