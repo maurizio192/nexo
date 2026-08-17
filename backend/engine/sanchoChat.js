@@ -622,19 +622,34 @@ class SanchoChat {
             // -----------------------------------------
 
             const numero =
-                texto.match(/^(?:el\s+)?(?:pedido\s+)?(\d+)$/i);
+                texto.match(/^(?:el\s+)?(?:pedido\s+)?(?:n[uú]mero\s+)?(\d+)$/i);
 
             if (numero) {
 
-                const indice =
-                    Number(numero[1]) - 1;
+                const numeroPedido =
+                    Number(numero[1]);
 
-                if (
-                    indice >= 0 &&
-                    indice < seleccion.pedidos.length
-                ) {
-                    pedidoSeleccionado =
-                        seleccion.pedidos[indice];
+                // Primero: interpretar el número como ID real del pedido
+                pedidoSeleccionado =
+                    seleccion.pedidos.find(
+                        pedido =>
+                            Number(pedido.id) === numeroPedido
+                    );
+
+                // Compatibilidad: si no coincide con un ID,
+                // interpretar el número como posición
+                if (!pedidoSeleccionado) {
+
+                    const indice =
+                        numeroPedido - 1;
+
+                    if (
+                        indice >= 0 &&
+                        indice < seleccion.pedidos.length
+                    ) {
+                        pedidoSeleccionado =
+                            seleccion.pedidos[indice];
+                    }
                 }
             }
 
