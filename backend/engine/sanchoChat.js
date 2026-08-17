@@ -378,6 +378,28 @@ class SanchoChat {
                 };
             }
 
+            if (candidatos.length === 0) {
+
+                console.log(
+                    "📦 SANCHO RECEPCIÓN SIN PEDIDO COMPATIBLE:",
+                    productoBuscado,
+                    unidad
+                );
+
+                return {
+                    respuesta:
+                        `No encuentro ningún pedido pendiente compatible con "${productoBuscado}" en formato ${unidad}.`,
+                    accion:
+                        "PEDIDO_RECEPCION_NO_ENCONTRADO",
+                    producto:
+                        productoBuscado,
+                    cantidad:
+                        cantidadRecibida,
+                    unidad:
+                        unidad
+                };
+            }
+
             if (candidatos.length > 1) {
 
                 const pedidosSeleccion =
