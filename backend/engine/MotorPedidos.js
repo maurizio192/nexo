@@ -293,6 +293,270 @@ class MotorPedidos {
     }
 
 
+    async previsualizarPedidosAutomaticos() {
+
+        const criticos =
+            await this.stock.obtenerProductosCriticos();
+
+        const propuestas = [];
+
+        const dias = [
+            "Domingo",
+            "Lunes",
+            "Martes",
+            "Miércoles",
+            "Jueves",
+            "Viernes",
+            "Sábado"
+        ];
+
+        const hoy =
+            dias[new Date().getDay()];
+
+        for (const producto of criticos) {
+
+            if (!producto.proveedor_id) {
+                continue;
+            }
+
+            const proveedorResult =
+                await this.pool.query(
+                    `
+                    SELECT
+                        id,
+                        nombre,
+                        dia_pedido
+                    FROM proveedores
+                    WHERE id = $1
+                    `,
+                    [
+                        producto.proveedor_id
+                    ]
+                );
+
+            const proveedor =
+                proveedorResult.rows[0];
+
+            if (!proveedor) {
+                continue;
+            }
+
+            const regla =
+                String(
+                    proveedor.dia_pedido || ""
+                ).trim();
+
+            let disponible = false;
+
+            if (
+                regla === "" ||
+                regla.toLowerCase() ===
+                    "segun necesidad"
+            ) {
+
+                disponible = true;
+
+            } else {
+
+                const diasPermitidos =
+                    regla
+                        .split("/")
+                        .map(d =>
+                            d
+                                .replace(
+                                    /antes.*$/i,
+                                    ""
+                                )
+                                .trim()
+                        )
+                        .filter(Boolean);
+
+                disponible =
+                    diasPermitidos.includes(hoy);
+            }
+
+            if (!disponible) {
+                continue;
+            }
+
+            if (
+                regla
+                    .toLowerCase()
+                    .includes(
+                        "antes de las 13"
+                    )
+            ) {
+
+                const ahora =
+                    new Date();
+
+                const hora =
+                    ahora.getHours();
+
+                if (hora >= 13) {
+                    continue;
+                }
+            }
+
+            const stockActual =
+                Number(producto.stock_actual || 0);
+
+            const stockMinimo =
+                Number(producto.stock_minimo || 0);
+
+            const stockGarantizado =
+                Number(producto.stock_garantizado || 0);
+
+            const stockObjetivo =
+                Math.max(
+                    stockMinimo,
+                    stockGarantizado
+                );
+
+            const cantidadNecesaria =
+                Math.max(
+                    0,
+                    stockObjetivo - stockActual
+                );
+
+            const cantidadFormato =
+                Number(producto.cantidad_formato || 0);
+
+            const cantidadUnidad =
+                Number(producto.cantidad_unidad || 0);
+
+            const formatoFinal =
+                producto.formato_compra ||
+                null;
+
+            const unidadFormato =
+                producto.unidad_formato ||
+                "UDS";
+
+            const unidadProducto =
+                producto.unidad_producto ||
+                null;
+
+            const cantidadPorFormato =
+                cantidadFormato > 0 &&
+                cantidadUnidad > 0
+                    ? cantidadFormato * cantidadUnidad
+                    : 0;
+
+            let cantidadFinal;
+
+            if (
+                cantidadPorFormato > 0 &&
+                cantidadNecesaria > 0
+            ) {
+
+                cantidadFinal =
+                    Math.ceil(
+                        cantidadNecesaria /
+                        cantidadPorFormato
+                    );
+
+            } else {
+
+                cantidadFinal =
+                    cantidadNecesaria;
+            }
+
+            const formatoDescripcion =
+                cantidadFinal === 1
+                    ? (formatoFinal || "UDS")
+                    : (formatoFinal === "CAJA"
+                        ? "CAJAS"
+                        : formatoFinal === "PAQUETE"
+                            ? "PAQUETES"
+                            : formatoFinal || "UDS");
+
+            let descripcionCantidad =
+                `${cantidadFinal} ${formatoDescripcion}`;
+
+            if (
+                cantidadFormato > 0 &&
+                unidadFormato
+            ) {
+
+                const cantidadTotalFormato =
+                    cantidadFinal * cantidadFormato;
+
+                let contenido =
+                    `${cantidadTotalFormato} ${unidadFormato}`;
+
+                if (
+                    cantidadUnidad > 0 &&
+                    unidadProducto
+                ) {
+
+                    contenido +=
+                        ` × ${cantidadUnidad} ${unidadProducto}`;
+                }
+
+                descripcionCantidad +=
+                    ` (${contenido})`;
+            }
+
+            const existente =
+                await this.obtenerPedidoPendiente(
+                    producto.proveedor_id
+                );
+
+            propuestas.push({
+                proveedor_id:
+                    producto.proveedor_id,
+
+                proveedor:
+                    proveedor.nombre,
+
+                pedido_pendiente_id:
+                    existente
+                        ? existente.id
+                        : null,
+
+                producto_id:
+                    producto.id,
+
+                producto:
+                    producto.nombre,
+
+                stock_actual:
+                    stockActual,
+
+                stock_objetivo:
+                    stockObjetivo,
+
+                cantidad_necesaria:
+                    cantidadNecesaria,
+
+                cantidad:
+                    cantidadFinal,
+
+                formato:
+                    formatoFinal,
+
+                cantidad_formato:
+                    cantidadFormato,
+
+                unidad_formato:
+                    unidadFormato,
+
+                cantidad_unidad:
+                    cantidadUnidad,
+
+                unidad_producto:
+                    unidadProducto,
+
+                descripcion_cantidad:
+                    descripcionCantidad
+            });
+        }
+
+        return propuestas;
+    }
+
+
     async generarPedidosAutomaticos() {
 
         const criticos =
