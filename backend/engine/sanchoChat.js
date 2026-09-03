@@ -20,6 +20,9 @@ class SanchoChat {
 
     // Pedidos pendientes de selección por el usuario
     this.seleccionPedidoPendiente = null;
+
+    // Propuesta de pedidos automáticos pendiente de confirmación
+    this.confirmacionPedidoAutomaticoPendiente = null;
 }
 
     async procesar(pregunta) {
@@ -241,6 +244,131 @@ class SanchoChat {
             };
         }
   
+        // =========================================
+        // CONFIRMAR PEDIDOS AUTOMÁTICOS
+        // =========================================
+
+        if (this.confirmacionPedidoAutomaticoPendiente) {
+
+            const afirmativo =
+                /^(sí|si|correcto|vale|ok|okay|confirmo|adelante)$/i
+                    .test(texto.trim());
+
+            const negativo =
+                /^(no|cancelar|cancela|no quiero|anular|anula)$/i
+                    .test(texto.trim());
+
+            if (afirmativo) {
+
+                const propuestas =
+                    this.confirmacionPedidoAutomaticoPendiente;
+
+                const pedidosGenerados =
+                    await this.motorPedidos.generarPedidosAutomaticos();
+
+                this.confirmacionPedidoAutomaticoPendiente = null;
+
+                if (!pedidosGenerados.length) {
+
+                    return {
+                        respuesta:
+                            "No se ha generado ningún pedido automático.",
+                        accion:
+                            "PEDIDOS_AUTOMATICOS"
+                    };
+                }
+
+                return {
+                    respuesta:
+                        `Perfecto. He generado ${pedidosGenerados.length} pedido${pedidosGenerados.length === 1 ? "" : "s"} automático${pedidosGenerados.length === 1 ? "" : "s"}: ${pedidosGenerados.join(", ")}.`,
+                    accion:
+                        "PEDIDOS_AUTOMATICOS",
+                    pedidos:
+                        pedidosGenerados,
+                    propuestas
+                };
+            }
+
+            if (negativo) {
+
+                this.confirmacionPedidoAutomaticoPendiente = null;
+
+                return {
+                    respuesta:
+                        "De acuerdo. He cancelado la generación de los pedidos. No se ha modificado nada.",
+                    accion:
+                        "PEDIDOS_AUTOMATICOS_CANCELADOS"
+                };
+            }
+        }
+
+        // =========================================
+        // PROPUESTA DE PEDIDOS AUTOMÁTICOS
+        // =========================================
+
+        if (
+            texto.includes("genera los pedidos") ||
+            texto.includes("generar los pedidos") ||
+            texto.includes("prepara los pedidos") ||
+            texto.includes("preparar los pedidos") ||
+            texto.includes("genera pedidos") ||
+            texto.includes("generar pedidos") ||
+            texto.includes("prepara pedidos") ||
+            texto.includes("preparar pedidos")
+        ) {
+
+            const propuestas =
+                await this.motorPedidos.previsualizarPedidosAutomaticos();
+
+            if (!propuestas.length) {
+
+                return {
+                    respuesta:
+                        "No hay pedidos automáticos que preparar hoy.",
+                    accion:
+                        "CONSULTAR_PEDIDOS"
+                };
+            }
+
+            this.confirmacionPedidoAutomaticoPendiente =
+                propuestas;
+
+            const grupos = {};
+
+            for (const propuesta of propuestas) {
+
+                if (!grupos[propuesta.proveedor]) {
+                    grupos[propuesta.proveedor] = [];
+                }
+
+                grupos[propuesta.proveedor].push(
+                    `- ${propuesta.producto}: ${propuesta.descripcion_cantidad}`
+                );
+            }
+
+            let respuesta =
+                "He preparado la propuesta de pedidos para hoy:\n";
+
+            for (const proveedor of Object.keys(grupos)) {
+
+                respuesta += `\n${proveedor}:\n`;
+
+                for (const producto of grupos[proveedor]) {
+                    respuesta += `${producto}\n`;
+                }
+            }
+
+            respuesta +=
+                "\n¿Quieres que genere estos pedidos?";
+
+            return {
+                respuesta,
+                accion:
+                    "CONFIRMAR_PEDIDOS_AUTOMATICOS",
+                propuestas
+            };
+        }
+
         // =========================================
         // CONFIRMAR RECEPCIÓN PENDIENTE
         // =========================================
