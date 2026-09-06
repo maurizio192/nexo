@@ -83,7 +83,9 @@ ON pr.id = pp.proveedor_id
   stock_actual,
   stockMinimo,
   stockGarantizado,
-  ubicacion_id
+  ubicacion_id,
+  formato_compra,
+  cantidad_formato
 } = req.body;
 
 
@@ -102,10 +104,12 @@ ON pr.id = pp.proveedor_id
            stock_actual,
            stock_minimo,
            stock_garantizado,
-           ubicacion_id
+           ubicacion_id,
+           formato_compra,
+           cantidad_formato
          )
          VALUES
-         ($1,$2,$3,$4,$5,$6,$7,$8)
+         ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
          RETURNING *
          `,
          [
@@ -116,7 +120,11 @@ ON pr.id = pp.proveedor_id
            Number(stock_actual) || 0,
            Number(stockMinimo) || 0,
            Number(stockGarantizado) || 0,
-           ubicacion_id ? Number(ubicacion_id) : null
+           ubicacion_id ? Number(ubicacion_id) : null,
+           formato_compra || null,
+           cantidad_formato !== undefined && cantidad_formato !== null && cantidad_formato !== ""
+             ? Number(cantidad_formato)
+             : null
          ]
        );
 
@@ -175,7 +183,9 @@ router.put("/:id", async (req, res) => {
   stock_actual,
   stockMinimo,
   stockGarantizado,
-  ubicacion_id
+  ubicacion_id,
+  formato_compra,
+  cantidad_formato
 } = req.body;
 
 console.log("PUT PRODUCTO PARAMS:", {
@@ -203,8 +213,10 @@ console.log("PUT PRODUCTO PARAMS:", {
     stock_actual=$4,
     stock_minimo=$5,
     stock_garantizado=$6,
-    ubicacion_id=$7
-  WHERE id=$8
+    ubicacion_id=$7,
+    formato_compra=$8,
+    cantidad_formato=$9
+  WHERE id=$10
   RETURNING *
   `,
   [
@@ -215,6 +227,10 @@ console.log("PUT PRODUCTO PARAMS:", {
     Number(stockMinimo),
     Number(stockGarantizado),
     Number(ubicacion_id),
+    formato_compra || null,
+    cantidad_formato !== undefined && cantidad_formato !== null && cantidad_formato !== ""
+      ? Number(cantidad_formato)
+      : null,
     Number(id)
   ]
 );
