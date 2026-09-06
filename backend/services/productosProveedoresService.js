@@ -6,6 +6,8 @@ const getProductosProveedores = async (pool) => {
             p.id,
             p.nombre,
             p.unidad,
+            p.formato_compra,
+            p.cantidad_formato,
 
             p.stock_actual,
             p.stock_minimo,

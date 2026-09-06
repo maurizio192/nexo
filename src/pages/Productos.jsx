@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { API } from "../config/api";
 
@@ -39,6 +39,10 @@ function Productos() {
   const [stockMinimo, setStockMinimo] = useState("");
   const [ubicacion, setUbicacion] = useState("");
   const [stockGarantizado, setStockGarantizado] = useState(0);
+  const [formatoCompra, setFormatoCompra] = useState("");
+  const [cantidadFormato, setCantidadFormato] = useState("");
+
+  const formularioRef = useRef(null);
  
   const [editandoId, setEditandoId] = useState(null);
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -58,6 +62,20 @@ useEffect(() => {
   cargarCategorias();
 
 }, []);
+
+
+useEffect(() => {
+
+  if (modoEdicion) {
+
+    formularioRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  }
+
+}, [modoEdicion]);
 
 
   useEffect(() => {
@@ -171,6 +189,9 @@ const cargarCategorias = async () => {
 
     setEditandoId(null);
     setModoEdicion(false);
+    setFormatoCompra("");
+    setCantidadFormato("");
+
 
   };
 
@@ -220,7 +241,16 @@ if (
 
   stock_actual: Number(stockActual) || 0,
 
-  stockMinimo: Number(stockMinimo) || 0
+  stockMinimo: Number(stockMinimo) || 0,
+
+  formato_compra: formatoCompra || null,
+
+  cantidad_formato:
+    cantidadFormato !== undefined &&
+    cantidadFormato !== null &&
+    cantidadFormato !== ""
+      ? Number(cantidadFormato)
+      : null
 
 };
 
@@ -318,6 +348,15 @@ const editarProducto = (producto) => {
 
   setStockGarantizado(String(producto.stock_garantizado || 0));
 
+  setFormatoCompra(producto.formato_compra || "");
+
+  setCantidadFormato(
+    producto.cantidad_formato !== null &&
+    producto.cantidad_formato !== undefined
+      ? String(producto.cantidad_formato)
+      : ""
+  );
+
   setUbicacion(String(producto.ubicacion_id || ""));
 
 };
@@ -393,7 +432,15 @@ const editarProducto = (producto) => {
 </Typography>
 
 <Typography sx={{ mt: 1 }}>
-  📍 Ubicación: {producto.ubicacion_nombre || "Sin ubicación asignada"}
+  🛒 Formato compra: {producto.formato_compra || "Sin formato"}
+</Typography>
+
+<Typography>
+  📦 Cantidad por formato: {producto.cantidad_formato ?? "-"} {producto.unidad || ""}
+</Typography>
+
+<Typography sx={{ mt: 1 }}>
+  📍 Ubicación: {producto.ubicacion || "Sin ubicación asignada"}
 </Typography>
 
 <IconButton
@@ -420,6 +467,7 @@ const editarProducto = (producto) => {
 
 
       <ProductoForm
+        ref={formularioRef}
 
         nombre={nombre}
         setNombre={setNombre}
@@ -441,6 +489,12 @@ const editarProducto = (producto) => {
 
         stockActual={stockActual}
         setStockActual={setStockActual}
+
+        formatoCompra={formatoCompra}
+        setFormatoCompra={setFormatoCompra}
+
+        cantidadFormato={cantidadFormato}
+        setCantidadFormato={setCantidadFormato}
 
         ubicacion={ubicacion}
         setUbicacion={setUbicacion}

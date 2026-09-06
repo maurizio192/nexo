@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { API } from "../config/api";
 
 import {
@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 
 
-function ProductoForm({
+const ProductoForm = forwardRef(({
 
   nombre,
   setNombre,
@@ -37,11 +37,17 @@ function ProductoForm({
   stockGarantizado,
   setStockGarantizado,
 
+  formatoCompra,
+  setFormatoCompra,
+
+  cantidadFormato,
+  setCantidadFormato,
+
   guardarProducto,
 
   modoEdicion,
 
-}) {
+}, ref) => {
 
   const [proveedores, setProveedores] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -95,6 +101,7 @@ function ProductoForm({
   return (
 
     <Paper
+      ref={ref}
       sx={{
         p:3,
         mt:3,
@@ -213,7 +220,22 @@ function ProductoForm({
 
         </TextField>
 
+        <TextField
+          fullWidth
+          label="Formato de compra"
+          value={formatoCompra}
+          onChange={(e)=>setFormatoCompra(e.target.value)}
+          helperText="Ej.: CAJA, BOTELLA, ENVASE, PIEZA"
+        />
 
+        <TextField
+          fullWidth
+          label="Cantidad por formato"
+          type="number"
+          value={cantidadFormato}
+          onChange={(e)=>setCantidadFormato(e.target.value)}
+          helperText="Cantidad contenida en un formato de compra"
+        />
 
         <TextField
           fullWidth
@@ -266,7 +288,7 @@ function ProductoForm({
 
   );
 
-}
+});
 
 
 export default ProductoForm;
