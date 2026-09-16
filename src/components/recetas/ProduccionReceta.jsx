@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { API } from "../../config/api";
 
 export default function ProduccionReceta({
@@ -7,31 +7,76 @@ export default function ProduccionReceta({
   receta
 }) {
 
- const [cantidad, setCantidad] = useState(1);
+  const [cantidad, setCantidad] = useState(1);
+  const [elaboracion, setElaboracion] = useState(null);
+  const [cargandoElaboracion, setCargandoElaboracion] = useState(true);
+
+  useEffect(() => {
+    let activa = true;
+
+    async function cargarElaboracion() {
+      try {
+        const res = await fetch(`${API}/elaboraciones/receta/${receta.id}`);
+        const data = await res.json();
+
+        if (activa && res.ok) {
+          setElaboracion(data.elaboracion ?? null);
+        }
+      } catch (error) {
+        console.error("Error obteniendo la elaboración de la receta:", error);
+      } finally {
+        if (activa) {
+          setCargandoElaboracion(false);
+        }
+      }
+    }
+
+    cargarElaboracion();
+
+    return () => {
+      activa = false;
+    };
+  }, [receta.id]);
 
 async function producir() {
 
-  const res = await fetch(
-    `${API}/recetas/${receta.id}/producir`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        cantidad,
-        responsable: "Maurizio"
-      })
+  if (!elaboracion?.id) {
+    alert("❌ Esta receta no tiene una elaboración vinculada");
+    return;
+  }
+
+  if (!Number.isFinite(cantidad) || cantidad <= 0) {
+    alert("❌ La cantidad debe ser mayor que cero");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `${API}/producciones/producir`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          elaboracionId: elaboracion.id,
+          cantidad,
+          responsable: "Maurizio"
+        })
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.ok) {
+      alert("✅ Producción registrada correctamente");
+      window.location.reload();
+    } else {
+      alert(`❌ ${data.error || "Error al producir"}`);
     }
-  );
-
-  const data = await res.json();
-
-  if (data.ok) {
-    alert("✅ Producción registrada correctamente");
-    window.location.reload();
-  } else {
-    alert("❌ Error al producir");
+  } catch (error) {
+    console.error("Error registrando la producción:", error);
+    alert("❌ No se ha podido conectar con el servidor");
   }
 
 }
@@ -78,12 +123,13 @@ async function producir() {
 
           <button
             onClick={producir}
+            disabled={cargandoElaboracion || !elaboracion}
             style={{
               padding: "10px 18px",
               cursor: "pointer"
             }}
           >
-            ▶ PRODUCIR
+            {cargandoElaboracion ? "Cargando elaboración..." : "▶ PRODUCIR"}
           </button>
 
         </div>
