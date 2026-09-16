@@ -52,7 +52,10 @@ module.exports = (pool) => {
 
     try {
 
-      const pregunta = req.body.pregunta || req.body.mensaje;
+      const pregunta =
+  req.body.pregunta ||
+  req.body.mensaje ||
+  req.body.message;
 
       const resultado =
         await sanchoChat.procesar(pregunta);

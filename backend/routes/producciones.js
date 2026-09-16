@@ -29,22 +29,23 @@ module.exports = (pool) => {
 
     try {
 
-      const { elaboracionId, cantidad } = req.body;
+      const { elaboracionId, cantidad, responsable } = req.body;
 
-      const receta =
+      const resultado =
         await produccionService.producirElaboracion(
           pool,
           elaboracionId,
-          cantidad
+          cantidad,
+          responsable
         );
 
-      res.json({ ok: true, receta });
+      res.status(201).json({ ok: true, ...resultado });
 
     } catch (err) {
 
       console.error(err);
 
-      res.status(500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({ error: err.message });
 
     }
 

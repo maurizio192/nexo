@@ -1,76 +1,212 @@
+function crearErrorProduccion(statusCode, message) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+function normalizarUnidad(unidad) {
+  if (typeof unidad !== "string") {
+    return null;
+  }
+
+  const unidadNormalizada = unidad.trim().toLowerCase();
+  return unidadNormalizada || null;
+}
+
+function convertirCantidad(cantidad, unidadOrigen, unidadDestino) {
+  const origen = normalizarUnidad(unidadOrigen);
+  const destino = normalizarUnidad(unidadDestino);
+  const valor = Number(cantidad);
+
+  if (!Number.isFinite(valor) || valor < 0 || !origen || !destino) {
+    return null;
+  }
+
+  if (origen === destino) {
+    return valor;
+  }
+
+  const conversiones = {
+    "g:kg": valor / 1000,
+    "kg:g": valor * 1000,
+    "ml:l": valor / 1000,
+    "l:ml": valor * 1000,
+    "ud:ud": valor
+  };
+
+  return conversiones[`${origen}:${destino}`] ?? null;
+}
+
 module.exports = {
+  async producirElaboracion(pool, elaboracionId, cantidad, responsable) {
+    const elaboracionIdNumerico = Number(elaboracionId);
+    const cantidadNumerica = Number(cantidad);
 
-  async producirElaboracion(pool, elaboracionId, cantidad) {
+    if (!Number.isInteger(elaboracionIdNumerico) || elaboracionIdNumerico <= 0) {
+      throw crearErrorProduccion(400, "La elaboración indicada no es válida");
+    }
 
-    await pool.query("BEGIN");
+    if (!Number.isFinite(cantidadNumerica) || cantidadNumerica <= 0) {
+      throw crearErrorProduccion(400, "La cantidad a producir debe ser mayor que cero");
+    }
+
+    const client = await pool.connect();
+    let transaccionIniciada = false;
 
     try {
+      await client.query("BEGIN");
+      transaccionIniciada = true;
 
-      // Leer receta
-
-      const receta = await pool.query(
+      const elaboracionResult = await client.query(
         `
         SELECT
-          ei.producto_id,
-          p.nombre,
-          ei.cantidad
-        FROM elaboracion_ingredientes ei
-        JOIN productos p
-          ON p.id = ei.producto_id
-        WHERE ei.elaboracion_id = $1
-        ORDER BY p.nombre
+          e.id,
+          e.nombre AS elaboracion_nombre,
+          e.receta_id,
+          r.nombre AS receta_nombre,
+          r.unidad_produccion
+        FROM elaboraciones e
+        JOIN recetas r ON r.id = e.receta_id
+        WHERE e.id = $1
+        FOR UPDATE OF e
         `,
-        [elaboracionId]
+        [elaboracionIdNumerico]
       );
 
-      // Descontar ingredientes
+      if (elaboracionResult.rows.length === 0) {
+        throw crearErrorProduccion(404, "No se encontró una elaboración con una receta vinculada");
+      }
 
-      for (const ingrediente of receta.rows) {
+      const elaboracion = elaboracionResult.rows[0];
 
-        const consumo = ingrediente.cantidad * cantidad;
+      // ======================================
+      // VERIFICAR INGREDIENTES CON producto_id NULL
+      // ======================================
+      const ingredientesNullResult = await client.query(
+        `
+        SELECT ingrediente
+        FROM receta_ingredientes
+        WHERE receta_id = $1
+          AND COALESCE(descontar, TRUE) = TRUE
+          AND producto_id IS NULL
+        `,
+        [elaboracion.receta_id]
+      );
 
-        await pool.query(
+      if (ingredientesNullResult.rows.length > 0) {
+        const nombres = ingredientesNullResult.rows.map(r => r.ingrediente).join(", ");
+        throw crearErrorProduccion(
+          400,
+          `No se puede producir: los siguientes ingredientes deben descontar stock pero no tienen producto asignado: ${nombres}`
+        );
+      }
+
+      const totalIngredientesResult = await client.query(
+        `
+        SELECT COUNT(*)::int AS total
+        FROM receta_ingredientes
+        WHERE receta_id = $1
+          AND COALESCE(descontar, TRUE) = TRUE
+        `,
+        [elaboracion.receta_id]
+      );
+      const ingredientesResult = await client.query(
+        `
+        SELECT
+          ri.producto_id,
+          ri.ingrediente,
+          ri.cantidad,
+          ri.unidad AS unidad_receta,
+          p.nombre AS producto_nombre,
+          p.unidad AS unidad_producto,
+          p.stock_actual
+        FROM receta_ingredientes ri
+        JOIN productos p ON p.id = ri.producto_id
+        WHERE ri.receta_id = $1
+          AND COALESCE(ri.descontar, TRUE) = TRUE
+        ORDER BY p.id
+        FOR UPDATE OF p
+        `,
+        [elaboracion.receta_id]
+      );
+
+      if (ingredientesResult.rows.length !== totalIngredientesResult.rows[0].total) {
+        throw crearErrorProduccion(
+          400,
+          "La receta tiene ingredientes descontables sin un producto de inventario válido"
+        );
+      }
+
+      for (const ingrediente of ingredientesResult.rows) {
+          const cantidadReceta = Number(ingrediente.cantidad) * cantidadNumerica;
+const stockActual = Number(ingrediente.stock_actual);
+const unidadReceta = normalizarUnidad(ingrediente.unidad_receta);
+const unidadProducto = normalizarUnidad(ingrediente.unidad_producto);
+
+const consumoEnUnidadProducto = convertirCantidad(
+  cantidadReceta,
+  unidadReceta,
+  unidadProducto
+);
+
+        if (!unidadReceta || !unidadProducto) {
+          throw crearErrorProduccion(
+            400,
+            `La unidad de ${ingrediente.producto_nombre} no está definida en la receta o en el producto`
+          );
+        }
+
+        if (consumoEnUnidadProducto === null) {
+  throw crearErrorProduccion(
+    409,
+    `No se puede convertir la unidad de ${ingrediente.producto_nombre}: receta ${ingrediente.unidad_receta}, producto ${ingrediente.unidad_producto}`
+  );
+}
+
+if (!Number.isFinite(consumoEnUnidadProducto) || consumoEnUnidadProducto < 0) {
+  throw crearErrorProduccion(
+    400,
+    `La cantidad del ingrediente ${ingrediente.producto_nombre} no es válida`
+  );
+}
+
+ingrediente.consumoConvertido = consumoEnUnidadProducto;
+
+
+        if (stockActual < consumoEnUnidadProducto) {
+          throw crearErrorProduccion(409, `Stock insuficiente para ${ingrediente.producto_nombre}`);
+        }
+      }
+
+      for (const ingrediente of ingredientesResult.rows) {
+        const consumo = ingrediente.consumoConvertido;
+        const actualizado = await client.query(
           `
           UPDATE productos
           SET stock_actual = stock_actual - $1
           WHERE id = $2
+            AND stock_actual >= $1
+          RETURNING id
           `,
-          [
-            consumo,
-            ingrediente.producto_id
-          ]
+          [consumo, ingrediente.producto_id]
         );
 
+        if (actualizado.rows.length === 0) {
+          throw crearErrorProduccion(409, `El stock cambió durante la producción de ${ingrediente.producto_nombre}`);
+        }
       }
 
-      // Aumentar elaboración producida
-
-      await pool.query(
+      const elaboracionActualizada = await client.query(
         `
         UPDATE elaboraciones
-        SET bolsas_actuales = bolsas_actuales + $2
-        WHERE id = $1
+        SET bolsas_actuales = COALESCE(bolsas_actuales, 0) + $1
+        WHERE id = $2
+        RETURNING *
         `,
-        [
-          elaboracionId,
-          cantidad
-        ]
+        [cantidadNumerica, elaboracion.id]
       );
 
-      // Nombre elaboración
-
-      const elaboracion = await pool.query(
-        `
-        SELECT nombre
-        FROM elaboraciones
-        WHERE id = $1
-        `,
-        [elaboracionId]
-      );
-
-      // Registrar producción
-
-        await pool.query(
+      const produccionResult = await client.query(
         `
         INSERT INTO producciones
         (
@@ -83,57 +219,42 @@ module.exports = {
           ubicacion,
           estado
         )
-        VALUES
-        (
-          $1,
-          $2,
-          NOW(),
-          'Jefe producción',
-          $3,
-          'bolsa_vacio',
-          'frigo_cocina',
-          'Completada'
-        )
+        VALUES ($1, $2, NOW(), $3, $4, $5, 'frigo_cocina', 'Completada')
+        RETURNING *
         `,
         [
-          elaboracionId,
-          elaboracion.rows[0].nombre,
-          cantidad
+          elaboracion.id,
+          elaboracion.elaboracion_nombre,
+          responsable?.trim() || "Maurizio",
+          cantidadNumerica,
+          elaboracion.unidad_produccion || "bolsa_vacio"
         ]
       );
 
-      // Registrar log
-
-      await pool.query(
+      await client.query(
         `
-        INSERT INTO log_nexo
-        (
-          tipo,
-          descripcion
-        )
-        VALUES
-        (
-          'PRODUCCION',
-          $1
-        )
+        INSERT INTO log_nexo (tipo, descripcion)
+        VALUES ('PRODUCCION', $1)
         `,
-        [
-          `Producción de ${elaboracion.rows[0].nombre} completada (${cantidad})`
-        ]
+        [`Producción de ${elaboracion.elaboracion_nombre} completada (${cantidadNumerica})`]
       );
 
-      await pool.query("COMMIT");
+      await client.query("COMMIT");
+      transaccionIniciada = false;
 
-      return receta.rows;
-      
-    } catch (err) {
+      return {
+        elaboracion: elaboracionActualizada.rows[0],
+        produccion: produccionResult.rows[0],
+        ingredientes: ingredientesResult.rows
+      };
+    } catch (error) {
+      if (transaccionIniciada) {
+        await client.query("ROLLBACK");
+      }
 
-      await pool.query("ROLLBACK");
-      throw err;
-
+      throw error;
+    } finally {
+      client.release();
     }
-
   }
-
 };
-

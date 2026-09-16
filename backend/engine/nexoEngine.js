@@ -13,7 +13,9 @@ class NexoEngine {
         return await require("../services/produccionService")
           .producirElaboracion(
             this.pool,
-            datos.elaboracionId
+            datos.elaboracionId,
+            datos.cantidad,
+            datos.responsable
           );
 
       case "GENERAR_PEDIDO":
@@ -59,6 +61,34 @@ class NexoEngine {
       const motorPedidos = new MotorPedidos(this.pool);
 
 return await motorPedidos.generarPedidosAutomaticos();
+
+      case "REGISTRAR_MERMA":
+
+        return await require("../services/mermaService")
+          .registrarMerma(
+            this.pool,
+            datos
+          );
+
+      case "ANULAR_MERMA":
+
+        return await require("../services/mermaService")
+          .anularMerma(
+            this.pool,
+            datos.mermaId ?? datos.id,
+            {
+              responsable: datos.responsable,
+              motivo: datos.motivo
+            }
+          );
+
+      case "ESTADISTICAS_MERMA":
+
+        return await require("../services/mermaService")
+          .obtenerEstadisticas(
+            this.pool,
+            datos
+          );
 
       default:
 

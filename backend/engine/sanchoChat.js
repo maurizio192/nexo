@@ -42,10 +42,7 @@ class SanchoChat {
 
     async procesar(pregunta) {
         console.log("🔥 SANCHO PROCESAR RECIBE:", pregunta);
-
-        const texto = String(pregunta || "")
-            .trim()
-            .toLowerCase();
+        const texto = String(pregunta || "").trim().toLowerCase();
 
         console.log(
             "🧠 ESTADO RECEPCIÓN:",
@@ -58,10 +55,6 @@ class SanchoChat {
             }
         );
 
-        // #region agent log
-        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'post-fix',hypothesisId:'A',location:'engine/sanchoChat.js:procesar:entry',message:'SANCHO procesar entrada',data:{texto,hasConfirmacionRecepcion:!!this.confirmacionRecepcionPendiente,hasRecepcionParcial:!!this.recepcionParcialPendiente,hasSeleccionPedido:!!this.seleccionPedidoPendiente,hasConfirmacionProducto:!!this.confirmacionPendiente,confirmacionRecepcion:this.confirmacionRecepcionPendiente||null,recepcionParcial:this.recepcionParcialPendiente||null,esNumerico:/^\d+(?:[.,]\d+)?$/.test(texto)},timestamp:Date.now()})}).catch(()=>{});
-        try { require("fs").appendFileSync("/home/maurizio/.cursor/debug-logs/debug-a85c6b.log", JSON.stringify({sessionId:"a85c6b",runId:"post-fix",hypothesisId:"A",location:"engine/sanchoChat.js:procesar:entry",message:"SANCHO procesar entrada",data:{texto,hasConfirmacionRecepcion:!!this.confirmacionRecepcionPendiente,hasRecepcionParcial:!!this.recepcionParcialPendiente,hasSeleccionPedido:!!this.seleccionPedidoPendiente,error:"none"},timestamp:Date.now()}) + "\n"); } catch (e) {}
-        // #endregion
 
         // =========================================
         // SELECCIÓN DE ELABORACIÓN / PRODUCTO PENDIENTE
@@ -2609,8 +2602,8 @@ Los proveedores sin día fijo también están disponibles.`,
         // =========================================
 
         const patronProduccion = texto.match(
-            /^(?:produce|producir|prepara|preparar|haz|hacer)\s+(\d+(?:[.,]\d+)?)\s*(?:bolsas?|unidades?|uds?|ud)?\s+(?:de\s+)?(.+)$/i
-        );
+    /^(?:produce|producir|prepara|preparar|haz|hacer)\s+(\d+(?:[.,]\d+)?)\s*(?:bolsas?|cubetas?|unidades?|uds?|ud)?\s+(?:de\s+)?(.+)$/i
+);
 
         if (patronProduccion) {
 
