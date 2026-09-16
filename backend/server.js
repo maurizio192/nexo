@@ -25,6 +25,7 @@ const panelOperacionesRoutes = require("./routes/panelOperaciones");
 const produccionHoyRoutes = require("./routes/produccionHoy");
 const pedidosAutomaticosRoutes = require("./routes/pedidosAutomaticos");
 const productosProveedoresRoutes = require("./routes/productosProveedores");
+const mermasRoutes = require("./routes/mermas");
 const app = express();
 
 
@@ -62,6 +63,7 @@ app.use("/api/produccion-hoy", produccionHoyRoutes(pool));
 app.use("/api/recetas", recetasRoutes(pool));
 app.use("/api/categorias-recetas", categoriasRecetasRoutes(pool));
 app.use("/api/servicio-carta", require("./routes/servicioCarta")(pool));
+app.use("/api/mermas", mermasRoutes(pool));
 /*
 x|--------------------------------------------------------------------------
 | HOME
