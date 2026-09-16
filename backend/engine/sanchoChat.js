@@ -1,4 +1,6 @@
 const MotorPedidos = require("./MotorPedidos");
+const NexoEngine = require("./nexoEngine");
+const productoService = require("../services/productoService");
 
 console.log("🔥 SANCHOCHAT.JS CARGADO");
 class SanchoChat {
@@ -6,6 +8,7 @@ class SanchoChat {
      constructor(pool) {
     this.pool = pool;
     this.motorPedidos = new MotorPedidos(pool);
+    this.nexoEngine = new NexoEngine(pool);
 
     this.idInstancia =
         Math.random().toString(36).substring(2, 8);
@@ -23,6 +26,18 @@ class SanchoChat {
 
     // Propuesta de pedidos automáticos pendiente de confirmación
     this.confirmacionPedidoAutomaticoPendiente = null;
+
+    // Producción pendiente de selección por el usuario
+    this.seleccionProduccionPendiente = null;
+
+    // Producción pendiente de confirmación explícita del usuario
+    this.confirmacionProduccionPendiente = null;
+
+    // Merma pendiente de selección por el usuario
+    this.seleccionMermaPendiente = null;
+
+    // Merma real pendiente de confirmación explícita del usuario
+    this.confirmacionMermaPendiente = null;
 }
 
     async procesar(pregunta) {
@@ -42,6 +57,323 @@ class SanchoChat {
                 texto
             }
         );
+
+        // #region agent log
+        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'post-fix',hypothesisId:'A',location:'engine/sanchoChat.js:procesar:entry',message:'SANCHO procesar entrada',data:{texto,hasConfirmacionRecepcion:!!this.confirmacionRecepcionPendiente,hasRecepcionParcial:!!this.recepcionParcialPendiente,hasSeleccionPedido:!!this.seleccionPedidoPendiente,hasConfirmacionProducto:!!this.confirmacionPendiente,confirmacionRecepcion:this.confirmacionRecepcionPendiente||null,recepcionParcial:this.recepcionParcialPendiente||null,esNumerico:/^\d+(?:[.,]\d+)?$/.test(texto)},timestamp:Date.now()})}).catch(()=>{});
+        try { require("fs").appendFileSync("/home/maurizio/.cursor/debug-logs/debug-a85c6b.log", JSON.stringify({sessionId:"a85c6b",runId:"post-fix",hypothesisId:"A",location:"engine/sanchoChat.js:procesar:entry",message:"SANCHO procesar entrada",data:{texto,hasConfirmacionRecepcion:!!this.confirmacionRecepcionPendiente,hasRecepcionParcial:!!this.recepcionParcialPendiente,hasSeleccionPedido:!!this.seleccionPedidoPendiente,error:"none"},timestamp:Date.now()}) + "\n"); } catch (e) {}
+        // #endregion
+
+        // =========================================
+        // SELECCIÓN DE ELABORACIÓN / PRODUCTO PENDIENTE
+        // =========================================
+
+        if (this.seleccionProduccionPendiente) {
+            const pendiente = this.seleccionProduccionPendiente;
+
+            const seleccion = texto.match(
+                /^(?:la|el|opcion|opción|numero|número)?\s*(\d+)$/
+            );
+
+            let elaboracion = null;
+
+            if (seleccion) {
+                const valor = parseInt(seleccion[1], 10);
+
+                elaboracion =
+                    pendiente.elaboraciones.find(
+                        (e) => Number(e.id) === valor
+                    ) ||
+                    pendiente.elaboraciones[valor - 1];
+            } else {
+                elaboracion = pendiente.elaboraciones.find(
+                    (e) =>
+                        String(e.nombre).trim().toLowerCase() === texto
+                );
+            }
+
+            if (!elaboracion) {
+                return {
+                    respuesta:
+                        "No identifico esa elaboración. Indica el número o el nombre completo de una de las opciones.",
+                    accion: "SELECCIONAR_ELABORACION",
+                    elaboraciones: pendiente.elaboraciones
+                };
+            }
+
+            this.seleccionProduccionPendiente = null;
+
+            this.confirmacionProduccionPendiente = {
+                cantidad: pendiente.cantidad,
+                elaboracion
+            };
+
+            return {
+                respuesta:
+                    `Vas a producir ${pendiente.cantidad} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
+                accion: "CONFIRMAR_PRODUCCION",
+                elaboracion,
+                cantidad: pendiente.cantidad
+            };
+        }
+
+        if (this.seleccionMermaPendiente) {
+            const pendiente = this.seleccionMermaPendiente;
+
+            const seleccion = texto.match(
+                /^(?:la|el|opcion|opción|numero|número)?\s*(\d+)$/
+            );
+
+            let producto = null;
+
+            if (seleccion) {
+                const valor = parseInt(seleccion[1], 10);
+
+                producto =
+                    pendiente.productos.find(
+                        (p) => Number(p.id) === valor
+                    ) ||
+                    pendiente.productos[valor - 1];
+            } else {
+                producto = pendiente.productos.find(
+                    (p) =>
+                        String(p.nombre).trim().toLowerCase() === texto
+                );
+            }
+
+            if (!producto) {
+                return {
+                    respuesta:
+                        "No identifico ese producto. Indica el número o el nombre completo de una de las opciones.",
+                    accion: "SELECCIONAR_PRODUCTO_MERMA",
+                    productos: pendiente.productos
+                };
+            }
+
+            const cantidadLavorada = pendiente.cantidadLavorada;
+            const cantidadMerma = pendiente.cantidadMerma;
+            const lavorazione = pendiente.lavorazione;
+
+            if (!cantidadLavorada) {
+                this.seleccionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `Has seleccionado ${producto.nombre}. ¿Qué cantidad se trabajó?`,
+                    accion: "MERMA_CANTIDAD_LAVORADA",
+                    producto
+                };
+            }
+
+            if (!lavorazione) {
+                this.seleccionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `Has seleccionado ${producto.nombre}. ¿Qué lavorazione corresponde a esta merma?`,
+                    accion: "MERMA_LAVORAZIONE",
+                    producto
+                };
+            }
+
+            if (cantidadMerma === null || cantidadMerma === undefined) {
+                this.seleccionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `Has seleccionado ${producto.nombre}. ¿Qué cantidad de merma se produjo?`,
+                    accion: "MERMA_CANTIDAD_MERMA",
+                    producto
+                };
+            }
+
+            const unidadProducto = producto.unidad || null;
+
+            const unidadLavorado = parsearUnidad(
+                pendiente.textoUnidadLavorado,
+                unidadProducto
+            );
+
+            const unidadMerma = parsearUnidad(
+                pendiente.textoUnidadMerma,
+                unidadLavorado
+            );
+
+            if (!unidadLavorado) {
+                this.seleccionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `No puedo determinar la unidad de la cantidad trabajada para ${producto.nombre}. Indícala explícitamente.`,
+                    accion: "MERMA_UNIDAD_LAVORADA",
+                    producto
+                };
+            }
+
+            if (!unidadMerma) {
+                this.seleccionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `No puedo determinar la unidad de la merma de ${producto.nombre}. Indícala explícitamente.`,
+                    accion: "MERMA_UNIDAD_MERMA",
+                    producto
+                };
+            }
+
+            const datos = {
+                producto_id: producto.id,
+                lavorazione,
+                cantidad_lavorada: cantidadLavorada,
+                unidad: unidadLavorado,
+                cantidad_merma: cantidadMerma,
+                unidad_merma: unidadMerma,
+                responsable: "Sancho"
+            };
+
+            this.seleccionMermaPendiente = null;
+
+            this.confirmacionMermaPendiente = {
+                producto,
+                datos
+            };
+
+            return {
+                respuesta:
+                    `Has seleccionado ${producto.nombre}. Voy a registrar ${cantidadMerma} ${unidadMerma} de merma sobre ${cantidadLavorada} ${unidadLavorado} (lavorazione ${lavorazione}). ¿Confirmas?`,
+                accion: "CONFIRMAR_MERMA",
+                producto,
+                datos
+            };
+        }
+
+        // =========================================
+        // CONFIRMAR PRODUCCIÓN PENDIENTE
+        // =========================================
+
+        if (this.confirmacionProduccionPendiente) {
+
+            const afirmativo =
+                /^(sí|si|correcto|vale|ok|okay|confirmo|adelante)$/i
+                    .test(texto);
+
+            const negativo =
+                /^(no|cancelar|cancela|no quiero|anular|anula)$/i
+                    .test(texto);
+
+            const pendiente = this.confirmacionProduccionPendiente;
+
+            if (negativo) {
+
+                this.confirmacionProduccionPendiente = null;
+
+                return {
+                    respuesta:
+                        `De acuerdo. He cancelado la producción de ${pendiente.cantidad} de ${pendiente.elaboracion.nombre}.`,
+                    accion: "PRODUCCION_CANCELADA"
+                };
+            }
+
+            if (!afirmativo) {
+                return {
+                    respuesta:
+                        `Tengo pendiente producir ${pendiente.cantidad} de ${pendiente.elaboracion.nombre}. ¿Confirmas?`,
+                    accion: "CONFIRMAR_PRODUCCION"
+                };
+            }
+
+            this.confirmacionProduccionPendiente = null;
+
+            try {
+
+                const resultado = await this.nexoEngine.ejecutar(
+                    "PRODUCIR",
+                    {
+                        elaboracionId: pendiente.elaboracion.id,
+                        cantidad: pendiente.cantidad,
+                        responsable: "Sancho"
+                    }
+                );
+
+                return {
+                    respuesta:
+                        `Producción completada: ${pendiente.cantidad} de ${pendiente.elaboracion.nombre}.`,
+                    accion: "PRODUCCION_COMPLETADA",
+                    produccion: resultado.produccion,
+                    elaboracion: resultado.elaboracion
+                };
+
+            } catch (error) {
+
+                return {
+                    respuesta:
+                        `No puedo iniciar la producción de ${pendiente.elaboracion.nombre}: ${error.message}`,
+                    accion: "PRODUCCION_RECHAZADA",
+                    error: error.message
+                };
+            }
+        }
+
+        // =========================================
+        // CONFIRMAR MERMA PENDIENTE
+        // =========================================
+
+        if (this.confirmacionMermaPendiente) {
+
+            const afirmativo =
+                /^(sí|si|correcto|vale|ok|okay|confirmo|adelante)$/i
+                    .test(texto);
+
+            const negativo =
+                /^(no|cancelar|cancela|no quiero|anular|anula)$/i
+                    .test(texto);
+
+            const pendiente = this.confirmacionMermaPendiente;
+
+            if (negativo) {
+
+                this.confirmacionMermaPendiente = null;
+
+                return {
+                    respuesta:
+                        `De acuerdo. He cancelado el registro de merma de ${pendiente.datos.cantidad_merma} ${pendiente.datos.unidad} en ${pendiente.producto.nombre}.`,
+                    accion: "MERMA_CANCELADA"
+                };
+            }
+
+            if (!afirmativo) {
+                return {
+                    respuesta:
+                        `Tengo pendiente registrar una merma de ${pendiente.datos.cantidad_merma} ${pendiente.datos.unidad} en ${pendiente.producto.nombre} (lavorazione ${pendiente.datos.lavorazione}). ¿Confirmas?`,
+                    accion: "CONFIRMAR_MERMA"
+                };
+            }
+
+            this.confirmacionMermaPendiente = null;
+
+            try {
+
+                const resultado = await this.nexoEngine.ejecutar(
+                    "REGISTRAR_MERMA",
+                    pendiente.datos
+                );
+
+                return {
+                    respuesta:
+                        `Merma registrada: ${resultado.cantidad_merma} ${resultado.unidad} sobre ${resultado.cantidad_lavorada} ${resultado.unidad} de ${pendiente.producto.nombre} (${resultado.lavorazione}). Merma ${resultado.porcentaje_merma}% · neto ${resultado.cantidad_neta} ${resultado.unidad}.`,
+                    accion: "MERMA_COMPLETADA",
+                    merma: resultado
+                };
+
+            } catch (error) {
+
+                return {
+                    respuesta:
+                        `No puedo registrar la merma de ${pendiente.producto.nombre}: ${error.message}`,
+                    accion: "MERMA_RECHAZADA",
+                    error: error.message
+                };
+            }
+        }
 
                 // CONFIRMAR PRODUCTO PENDIENTE
 
@@ -384,6 +716,10 @@ class SanchoChat {
 
             if (afirmativo) {
 
+                // #region agent log
+                fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'C',location:'engine/sanchoChat.js:recepcion:afirmativo',message:'Confirmación recepción afirmativa',data:{texto,pedidoId:confirmacion.pedidoId,detalleId:confirmacion.detalleId,cantidad:confirmacion.cantidad},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
+
                 this.confirmacionRecepcionPendiente = null;
 
                 const pedidosService =
@@ -449,6 +785,10 @@ class SanchoChat {
                         confirmacion.proveedor
                 };
 
+                // #region agent log
+                fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'A',location:'engine/sanchoChat.js:recepcion:negativo',message:'Recepcion parcial pendiente seteada',data:{texto,recepcionParcial:this.recepcionParcialPendiente},timestamp:Date.now()})}).catch(()=>{});
+                // #endregion
+
                 return {
                     respuesta:
                         `De acuerdo. ¿Cuántos ${confirmacion.formato || "UDS"} de ${confirmacion.producto} han llegado?`,
@@ -480,6 +820,13 @@ class SanchoChat {
             texto.match(
                 /^(?:han\s+llegado|ha\s+llegado|llegaron|recibimos)\s+(\d+(?:[.,]\d+)?)\s+(cajas?|paquetes?|unidades?|uds?|botellas?|botes?|piezas?)(?:\s+(?:de\s+)?(.+))?$/i
             );
+
+        // #region agent log
+        if (this.confirmacionRecepcionPendiente && !patronRecepcionParcial) {
+            fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'B',location:'engine/sanchoChat.js:recepcion:fallthrough-confirmacion',message:'Confirmación recepción no sí/no; continúa sin limpiar estado',data:{texto,confirmacion:this.confirmacionRecepcionPendiente},timestamp:Date.now()})}).catch(()=>{});
+        }
+        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'E',location:'engine/sanchoChat.js:recepcion:patron-parcial',message:'Evaluación patrón recepción parcial',data:{texto,matched:!!patronRecepcionParcial,hasRecepcionParcial:!!this.recepcionParcialPendiente,recepcionParcial:this.recepcionParcialPendiente||null,esNumerico:/^\d+(?:[.,]\d+)?$/.test(texto)},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
 
         if (patronRecepcionParcial) {
 
@@ -959,11 +1306,17 @@ if (numeroPedidoTexto) {
                         FROM pedido_detalle
                         WHERE pedido_id = $1
                           AND cantidad_recibida < cantidad
-                    `, [pedido.id]);console.log(
-    "🔎 DETALLES PEDIDO:",
-    pedido.id,
-    detalleResult.rows.length
-);s
+                    `, [pedido.id]);
+
+                console.log(
+                    "🔎 DETALLES PEDIDO:",
+                    pedido.id,
+                    detalleResult.rows.length
+                );
+
+                // #region agent log
+                try { require("fs").appendFileSync("/home/maurizio/.cursor/debug-logs/debug-a85c6b.log", JSON.stringify({sessionId:"a85c6b",runId:"post-fix",hypothesisId:"F",location:"engine/sanchoChat.js:recepcion-sin-cantidad:detalle",message:"Detalle pedido leído sin ReferenceError",data:{pedidoId:pedido.id,detalles:detalleResult.rows.length},timestamp:Date.now()}) + "\n"); } catch (e) {}
+                // #endregion
 
                 for (const detalle of detalleResult.rows) {
 
@@ -2251,6 +2604,396 @@ Los proveedores sin día fijo también están disponibles.`,
 
         // AÑADIR PRODUCTO
 
+        // =========================================
+        // PROPONER PRODUCCIÓN
+        // =========================================
+
+        const patronProduccion = texto.match(
+            /^(?:produce|producir|prepara|preparar|haz|hacer)\s+(\d+(?:[.,]\d+)?)\s*(?:bolsas?|unidades?|uds?|ud)?\s+(?:de\s+)?(.+)$/i
+        );
+
+        if (patronProduccion) {
+
+            const cantidad = Number(
+                patronProduccion[1].replace(",", ".")
+            );
+
+            const nombreBuscado = patronProduccion[2]
+                .replace(/\bpor favor\b/gi, "")
+                .replace(/^(el|la|los|las|un|una)\s+/i, "")
+                .trim();
+
+            if (!Number.isFinite(cantidad) || cantidad <= 0) {
+                return {
+                    respuesta: "La cantidad a producir debe ser mayor que cero.",
+                    accion: "PRODUCCION_RECHAZADA"
+                };
+            }
+
+            const elaboraciones = await this.pool.query(
+                `
+                SELECT
+                    e.id,
+                    e.nombre,
+                    r.nombre AS receta
+                FROM elaboraciones e
+                JOIN recetas r
+                    ON r.id = e.receta_id
+                WHERE e.activa IS DISTINCT FROM FALSE
+                    AND LOWER(e.nombre) LIKE LOWER($1)
+                ORDER BY e.nombre
+                LIMIT 5
+                `,
+                [`%${nombreBuscado}%`]
+            );
+
+            if (elaboraciones.rows.length === 0) {
+                return {
+                    respuesta:
+                        `No encuentro una elaboración vinculada a una receta con el nombre "${nombreBuscado}".`,
+                    accion: "ELABORACION_NO_ENCONTRADA"
+                };
+            }
+
+            if (elaboraciones.rows.length > 1) {
+                const opciones = elaboraciones.rows
+                    .map((elaboracion, indice) => `${indice + 1}. ${elaboracion.nombre}`)
+                    .join(", ");
+
+                this.seleccionProduccionPendiente = {
+                    cantidad,
+                    elaboraciones: elaboraciones.rows
+                };
+
+                return {
+                    respuesta:
+                        `He encontrado varias elaboraciones: ${opciones}. Indica el número o el nombre completo de una de ellas.`,
+                    accion: "SELECCIONAR_ELABORACION",
+                    elaboraciones: elaboraciones.rows
+                };
+            }
+
+            const elaboracion = elaboraciones.rows[0];
+
+            this.confirmacionProduccionPendiente = {
+                cantidad,
+                elaboracion
+            };
+
+            return {
+                respuesta:
+                    `Vas a producir ${cantidad} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
+                accion: "CONFIRMAR_PRODUCCION",
+                elaboracion,
+                cantidad
+            };
+        }
+// =========================================
+        // PROPONER REGISTRO DE MERMA (MODULO MERME)
+
+        // =========================================
+        // Ej: "he trabajado 3 kg de tomate, he quitado 95 g de merma,
+        //      lavorazione mondatura"
+
+        if (/\bmerma\b/i.test(texto)) {
+    console.log("🔥 SANCHO: ENTRA EN BLOQUE MERMA", texto);
+
+    // -----------------------------------------
+    // ESTADISTICAS DE MERMA (consulta)
+    // -----------------------------------------
+
+// -----------------------------------------
+            // ESTADISTICAS DE MERMA (consulta)
+            // -----------------------------------------
+
+            if (
+                /\b(estadistic|estad[ií]stica|acumulad|resumen|porcentaje|historial|cu[aá]nta merma|llevamos)\b/i
+                    .test(texto)
+            ) {
+                const estadisticas =
+                    await this.nexoEngine.ejecutar(
+                        "ESTADISTICAS_MERMA",
+                        {}
+                    );
+
+                if (estadisticas.length === 0) {
+                    return {
+                        respuesta:
+                            "Todavía no hay rilevaciones de merma registradas.",
+                        accion: "MERMA_ESTADISTICAS",
+                        estadisticas
+                    };
+                }
+
+                const resumen = estadisticas
+                    .slice(0, 5)
+                    .map(
+                        (e) =>
+                            `${e.producto_nombre} (${e.lavorazione}): ${e.porcentaje_merma_medio_ponderado}% merma, ${e.numero_rilevazioni} rilevaciones`
+                    )
+                    .join(". ");
+
+                return {
+                    respuesta: `Estadísticas de merma: ${resumen}.`,
+                    accion: "MERMA_ESTADISTICAS",
+                    estadisticas
+                };
+            }
+
+            // -----------------------------------------
+            // ANULAR UNA RILEVAZIONE (sin borrar)
+            // -----------------------------------------
+
+            if (
+                /\banul(?:a|ar|ame)\b/i.test(texto) &&
+                /\bmerma\b/i.test(texto)
+            ) {
+                const numero = texto.match(/(\d+)/);
+
+                if (!numero) {
+                    return {
+                        respuesta:
+                            "Dime el número de la rilevazione de merma que quieres anular. Ejemplo: «anula la merma 12».",
+                        accion: "MERMA_ANULAR_INCOMPLETO"
+                    };
+                }
+
+                try {
+
+                    const merma =
+                        await this.nexoEngine.ejecutar(
+                            "ANULAR_MERMA",
+                            {
+                                mermaId: Number(numero[1]),
+                                responsable: "Sancho",
+                                motivo: "Anulada por voz"
+                            }
+                        );
+
+                    return {
+                        respuesta:
+                            `He anulado la rilevazione de merma #${merma.id}. El historial se conserva y ya no cuenta en las estadísticas.`,
+                        accion: "MERMA_ANULADA",
+                        merma
+                    };
+
+                } catch (error) {
+
+                    return {
+                        respuesta:
+                            `No puedo anular la merma #${numero[1]}: ${error.message}`,
+                        accion: "MERMA_ANULAR_RECHAZADA",
+                        error: error.message
+                    };
+                }
+            }
+
+            const UNIDADES_MERMA = {
+                kg: "kg", kilo: "kg", kilos: "kg", kilogramo: "kg", kilogramos: "kg",
+                g: "g", gr: "g", grs: "g", gramo: "g", gramos: "g",
+                l: "l", lt: "l", litro: "l", litros: "l",
+                ml: "ml", mililitro: "ml", mililitros: "ml",
+                ud: "ud", uds: "ud", unidad: "ud", unidades: "ud"
+            };
+
+            const UNIDAD_REGEX =
+                "(?:kg|kilos?|kilogramos?|g|gr|grs?|gramos?|l|lt|litros?|ml|mililitros?|ud|uds|unidades?)";
+
+            function parsearNumero(valor) {
+                return Number(String(valor).replace(",", "."));
+            }
+
+            function parsearUnidad(valor, defecto) {
+                return valor
+                    ? UNIDADES_MERMA[valor.toLowerCase()] || null
+                    : defecto;
+            }
+
+            // Lavorazione (texto libre)
+            const patronLavorazione =
+    texto.match(
+        /\b(?:lavorazione|lavorazion|trabajado|trabajando|trabajo|proceso|elaboraci[oó]n|operaci[oó]n)\b[\s:]+([a-záéíóúñü]+(?:\s+[a-záéíóúñü]+)?)/i
+    ) ||
+  texto.match(
+    /\ben\s+([a-záéíóúñü0-9_]+)\s*$/i
+);
+
+            const lavorazione = patronLavorazione
+                ? patronLavorazione[1].trim()
+                : null;
+
+            // Se quita la frase de lavorazione para no confundirla con el producto
+            const textoMerma = patronLavorazione
+                ? texto.replace(patronLavorazione[0], " ")
+                : texto;
+
+            // Cantidad trabajada: "trabajado 3 kg de tomate" / "trabajé 3 kg de tomate"
+           const patronLavorado = textoMerma.match(
+    new RegExp(
+        "(?:trabajad[oa]s?|lavorat[oa]s?|procesad[oa]s?|trabaj[eé]|trabajando|lavorando)\\s+" +
+        "(?:(\\d+(?:[.,]\\d+)?)\\s*(" + UNIDAD_REGEX + ")?\\s*(?:de\\s+)?)?" +
+        "([a-záéíóúñü][^,;]*?)(?=,|;|\\by\\b|\\bmerma\\b|$)",
+        "i"
+    )
+);
+            // Cantidad de merma: "95 g de merma" / "merma 95 g" / "merma de 95 g"
+            const patronMermaCantidad =
+                textoMerma.match(
+                    new RegExp(
+                        "(\\d+(?:[.,]\\d+)?)\\s*" + UNIDAD_REGEX +
+                        "?\\s*(?:de\\s+)?merma",
+                        "i"
+                    )
+                ) ||
+                textoMerma.match(
+                    new RegExp(
+                        "merma\\s*(?:de\\s*)?(\\d+(?:[.,]\\d+)?)\\s*" +
+                        UNIDAD_REGEX + "?",
+                        "i"
+                    )
+                );
+
+            let nombreProducto = patronLavorado
+    ? patronLavorado[3]
+        .replace(/\b(trabajad[oa]s?|lavorat[oa]s?|procesad[oa]s?)\b/gi, "")
+        .replace(/^(el|la|los|las|un|una)\s+/i, "")
+        .trim()
+    : null;
+
+// Caso: "merma de SALSA TARTUFATA: trabajé 3 ud..."
+const patronProductoMerma = texto.match(
+    /\bmerma\s+de\s+(.+?)\s*:/i
+);
+
+if (patronProductoMerma) {
+    nombreProducto = patronProductoMerma[1].trim();
+}
+
+            if (!nombreProducto) {
+                return {
+                    respuesta:
+                        "Indícame qué producto has trabajado. Ejemplo: «he trabajado 3 kg de tomate, merma 95 g, lavorazione mondatura».",
+                    accion: "MERMA_INCOMPLETA"
+                };
+            }
+
+            const productos = await productoService.buscarProductos(
+                this.pool,
+                nombreProducto,
+                5
+            );
+
+            if (productos.length === 0) {
+                return {
+                    respuesta:
+                        `No encuentro el producto "${nombreProducto}" para registrar la merma.`,
+                    accion: "PRODUCTO_NO_ENCONTRADO",
+                    producto_buscado: nombreProducto
+                };
+            }
+
+            if (productos.length > 1) {
+                const opciones = productos
+                    .map((producto, indice) => `${indice + 1}. ${producto.nombre}`)
+                    .join(", ");
+
+                this.seleccionMermaPendiente = {
+                    productos,
+                    lavorazione,
+                    cantidadLavorada: patronLavorado
+                        ? parsearNumero(patronLavorado[1])
+                        : null,
+                    textoUnidadLavorado: patronLavorado
+                        ? patronLavorado[2]
+                        : null,
+                    cantidadMerma: patronMermaCantidad
+                        ? parsearNumero(patronMermaCantidad[1])
+                        : null,
+                    textoUnidadMerma: patronMermaCantidad
+                        ? patronMermaCantidad[2]
+                        : null
+                };
+
+                return {
+                    respuesta:
+                        `He encontrado varios productos: ${opciones}. Indica el número o el nombre completo de uno de ellos para registrar la merma.`,
+                    accion: "SELECCIONAR_PRODUCTO_MERMA",
+                    productos
+                };
+            }
+
+            const producto = productos[0];
+if (!patronLavorado || !patronLavorado[1]) {
+                return {
+                    respuesta:
+                        "Indícame cuánto has trabajado. Ejemplo: «he trabajado 3 kg de tomate, merma 95 g, lavorazione mondatura».",
+                    accion: "MERMA_INCOMPLETA",
+                    producto
+                };
+            }
+
+            if (!lavorazione) {
+                return {
+                    respuesta:
+                        `¿Cuál es la lavorazione de ${producto.nombre}? Ejemplo: «lavorazione mondatura».`,
+                    accion: "MERMA_INCOMPLETA",
+                    producto
+                };
+            }
+
+            if (!patronMermaCantidad) {
+                return {
+                    respuesta:
+                        `¿Cuánta merma has quitado de ${producto.nombre}? Ejemplo: «merma 95 g».`,
+                    accion: "MERMA_INCOMPLETA",
+                    producto,
+                    lavorazione
+                };
+            }
+
+            const unidadProducto = producto.unidad || null;
+            const unidadLavorado = parsearUnidad(
+                patronLavorado[2],
+                unidadProducto
+            );
+            const unidadMerma = parsearUnidad(
+                patronMermaCantidad[2],
+                unidadLavorado
+            );
+
+            if (!unidadLavorado || !unidadMerma) {
+                return {
+                    respuesta:
+                        `No reconozco la unidad de ${producto.nombre}. Di por ejemplo «3 kg de ${producto.nombre}, merma 95 g».`,
+                    accion: "MERMA_UNIDAD_NO_VALIDA",
+                    producto
+                };
+            }
+
+            const datos = {
+                producto_id: producto.id,
+                lavorazione,
+                cantidad_lavorada: parsearNumero(patronLavorado[1]),
+                unidad: unidadLavorado,
+                cantidad_merma: parsearNumero(patronMermaCantidad[1]),
+                unidad_merma: unidadMerma,
+                responsable: "Sancho"
+            };
+
+            this.confirmacionMermaPendiente = {
+                producto,
+                datos
+            };
+
+            return {
+                respuesta:
+                    `Vas a registrar la merma de ${producto.nombre}: lavorado ${datos.cantidad_lavorada} ${datos.unidad}, merma ${datos.cantidad_merma} ${datos.unidad_merma}, lavorazione ${lavorazione}. ¿Confirmas?`,
+                accion: "CONFIRMAR_MERMA",
+                producto,
+                datos
+            };
+        }
+
         const patron = texto.match(
             /^(?:pide|pedir|añade|añadir|agrega|agregar|necesitamos|necesito|quiero|queremos)\s+(\d+(?:[.,]\d+)?)\s*(cajas?|paquetes?|paqs?|unidades?|uds?|ud|botellas?|botes?|piezas?)?\s+(?:de\s+)?(.+)$/i
         );
@@ -2471,9 +3214,13 @@ if (cantidad !== 1) {
         }
     // AYUDA
 
+        // #region agent log
+        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'A',location:'engine/sanchoChat.js:procesar:ayuda',message:'Cayó a AYUDA sin consumir recepción parcial',data:{texto,hasRecepcionParcial:!!this.recepcionParcialPendiente,recepcionParcial:this.recepcionParcialPendiente||null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+
     return {
         respuesta:
-            "Te puedo ayudar con los pedidos. Por ejemplo: «tenemos que hacer el pedido», «dime qué tenemos bajo stock», «pide 2 cajas de harina» o «qué pedidos tenemos preparados».",
+            "Te puedo ayudar con pedidos y producción. Por ejemplo: «tenemos que hacer el pedido», «dime qué tenemos bajo stock», «pide 2 cajas de harina», «produce 2 bolsas de Enasalada de Verano» o «qué pedidos tenemos preparados».",
         accion: "AYUDA"
     };
     }
