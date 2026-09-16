@@ -136,7 +136,8 @@ module.exports = {
 
         const unidadesRecibidas =
           formato &&
-          formato !== "UDS"
+          formato !== "UDS" &&
+          formato !== "UD"
             ? cantidadRecibidaAhora *
               cantidadFormato
             : cantidadRecibidaAhora;

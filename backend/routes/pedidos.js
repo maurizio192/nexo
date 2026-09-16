@@ -124,6 +124,11 @@ module.exports = (pool) => {
       await client.query("BEGIN");
 
       // ======================================
+      // LEER PROVEEDOR SOLICITADO
+      // ======================================
+      const { proveedor } = req.body;
+
+      // ======================================
       // BUSCAR PRODUCTOS POR DEBAJO DEL MÍNIMO
       // ======================================
 
@@ -143,11 +148,14 @@ p.cantidad_formato
         FROM productos p
         JOIN proveedores pr
           ON pr.id = p.proveedor_id
-      WHERE
-  p.stock_actual < p.stock_minimo
-  OR p.pedido_proximo_cantidad IS NOT NULL
+        WHERE
+          (
+            p.stock_actual < p.stock_minimo
+            OR p.pedido_proximo_cantidad IS NOT NULL
+          )
+          AND pr.nombre = $1
         ORDER BY pr.nombre, p.nombre
-      `);
+      `, [proveedor]);
 
 
       // ======================================
@@ -390,6 +398,7 @@ grupos[producto.proveedor_id].push(productoPedido);
 
       res.json({
         ok: true,
+        pedido: pedidosCreados.length > 0 ? pedidosCreados[0].id : null,
         pedidos: pedidosCreados
       });
 
