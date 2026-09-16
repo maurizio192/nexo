@@ -17,6 +17,7 @@ import RecetaDetalle from "./pages/RecetaDetalle";
 
 import Elaboraciones from "./pages/Elaboraciones";
 import Producciones from "./pages/Producciones";
+import Mermas from "./pages/Mermas";
 
 import Servicio from "./pages/Servicio";
 import Sancho from "./pages/Sancho";
@@ -100,6 +101,11 @@ function App() {
           <Route
             path="/producciones"
             element={<Producciones />}
+          />
+
+          <Route
+            path="/mermas"
+            element={<Mermas />}
           />
 
           <Route

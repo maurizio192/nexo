@@ -75,7 +75,11 @@ function Menu() {
 
       <p>📊 Stock</p>
 
-      <p>📉 Mermas</p>
+      <p>
+        <Link to="/mermas" style={{ color: "white", textDecoration: "none" }}>
+          📉 Mermas
+        </Link>
+      </p>
 
       <p>📜 Historial</p>
 
