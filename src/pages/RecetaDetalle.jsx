@@ -14,13 +14,52 @@ export default function RecetaDetalle() {
 const [menuAbierto, setMenuAbierto] = useState(false);
 
 
-fetch(`${API}/recetas/${id}`)
-  .then(res => res.json())
-  .then(data => {
-    console.log("DATOS API:", data);
-    setDatos(data);
-  })
-  .catch(console.error);
+useEffect(() => {
+  let cancelado = false;
+
+  async function cargarReceta() {
+    try {
+      const [resReceta, resElaboracion] = await Promise.all([
+        fetch(`${API}/recetas/${id}`),
+        fetch(`${API}/elaboraciones/receta/${id}`)
+      ]);
+
+      const data = await resReceta.json();
+      const dataElaboracion = await resElaboracion.json();
+
+      if (!resReceta.ok) {
+        throw new Error(data.error || "Error al cargar la receta");
+      }
+
+      if (!resElaboracion.ok) {
+        throw new Error(
+          dataElaboracion.error || "Error al cargar la elaboración"
+        );
+      }
+
+      if (!cancelado) {
+        console.log("DATOS API:", data);
+        console.log("ELABORACIÓN:", dataElaboracion.elaboracion);
+
+        setDatos({
+          ...data,
+          elaboracion: dataElaboracion.elaboracion
+        });
+      }
+
+    } catch (err) {
+      if (!cancelado) {
+        console.error(err);
+      }
+    }
+  }
+
+  cargarReceta();
+
+  return () => {
+    cancelado = true;
+  };
+}, [id]);
 
   
 
