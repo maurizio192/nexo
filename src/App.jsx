@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+
 import EditarReceta from "./pages/EditarReceta";
 import Menu from "./components/Menu";
 import ProductosCategoria from "./pages/ProductosCategoria";
@@ -22,32 +23,32 @@ import Mermas from "./pages/Mermas";
 import Servicio from "./pages/Servicio";
 import Sancho from "./pages/Sancho";
 
-
 import TestVoz from "./pages/TestVoz";
 
 function App() {
-
   return (
-
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "260px 1fr",
-        minHeight: "100vh"
+        gridTemplateColumns: "230px minmax(0, 1fr)",
+        minHeight: "100vh",
+        width: "100%",
+        background: "#0b0f14",
       }}
     >
-
       <Menu />
 
-      <div
+      <main
         style={{
-          background: "#f3f4f6",
-          padding: "30px"
+          minWidth: 0,
+          minHeight: "100vh",
+          background: "#0b0f14",
+          color: "#ffffff",
+          padding: 0,
+          overflowX: "hidden",
         }}
       >
-
         <Routes>
-
           <Route path="/" element={<Inicio />} />
 
           <Route path="/testvoz" element={<TestVoz />} />
@@ -65,13 +66,13 @@ function App() {
           <Route path="/libro-recetas" element={<LibroRecetas />} />
 
           <Route
-                 path="/producto/modificar/:id"
-                 element={<ModificarProducto />}
+            path="/producto/modificar/:id"
+            element={<ModificarProducto />}
           />
 
-          <Route 
-                 path="/productos/categoria/:categoria" 
-                 element={<ProductosCategoria />} 
+          <Route
+            path="/productos/categoria/:categoria"
+            element={<ProductosCategoria />}
           />
 
           <Route
@@ -84,10 +85,11 @@ function App() {
             element={<RecetaDetalle />}
           />
 
-           <Route 
-             path="/editar-receta/:id" 
-             element={<EditarReceta />} 
+          <Route
+            path="/editar-receta/:id"
+            element={<EditarReceta />}
           />
+
           <Route
             path="/recetas/nueva"
             element={<NuevaReceta />}
@@ -117,16 +119,10 @@ function App() {
             path="/sancho"
             element={<Sancho />}
           />
-
-          
         </Routes>
-
-      </div>
-
+      </main>
     </div>
-
   );
-
 }
 
 export default App;
