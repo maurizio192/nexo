@@ -4,14 +4,20 @@ import { API } from "../config/api";
 
 export default function LibroRecetas() {
   const [categorias, setCategorias] = useState([]);
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`${API}/recetas/categorias`)
-      .then((res) => res.json())
-      .then((data) => setCategorias(data))
-      .catch(console.error);
+    const cargarCategorias = async () => {
+      try {
+        const respuesta = await fetch(API + "/recetas/categorias");
+        const data = await respuesta.json();
+        setCategorias(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    cargarCategorias();
   }, []);
 
   return (
@@ -48,7 +54,7 @@ export default function LibroRecetas() {
           <h1
             style={{
               margin: 0,
-              color: "#ffffff",
+              color: "#d7f7ff",
               fontSize: "32px",
               fontWeight: "700",
               lineHeight: "1.1",
@@ -71,8 +77,7 @@ export default function LibroRecetas() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns:
-              "repeat(2, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
             gap: "14px",
           }}
         >
@@ -81,9 +86,8 @@ export default function LibroRecetas() {
               key={categoria.id}
               onClick={() =>
                 navigate(
-                  `/categoria/${encodeURIComponent(
-                    categoria.nombre
-                  )}`
+                  "/categoria/" +
+                    encodeURIComponent(categoria.nombre)
                 )
               }
               style={{
@@ -98,10 +102,8 @@ export default function LibroRecetas() {
                 boxSizing: "border-box",
                 borderRadius: "14px",
                 border: "1px solid #252d38",
-                boxShadow:
-                  "0 8px 20px rgba(0,0,0,0.20)",
+                boxShadow: "0 8px 20px rgba(0,0,0,0.20)",
                 cursor: "pointer",
-                transition: "border-color 0.15s ease",
               }}
             >
               <div
@@ -124,7 +126,7 @@ export default function LibroRecetas() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#ffffff",
+                    color: "#d7f7ff",
                     fontSize: "16px",
                     fontWeight: "700",
                     lineHeight: "1.2",
