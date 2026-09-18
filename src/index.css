@@ -51,16 +51,7 @@ body {
   background: #0b0f14;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--heading);
-  font-weight: 600;
-  color: #ffffff;
-}
+
 
 h1 {
   font-size: 36px;
