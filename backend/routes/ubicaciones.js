@@ -29,7 +29,7 @@ module.exports = (pool) => {
       console.error("Error cargando ubicaciones:", err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }

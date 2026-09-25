@@ -64,7 +64,7 @@ router.post("/programar", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
   }
 });
@@ -191,7 +191,7 @@ router.post("/", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
   }
 });

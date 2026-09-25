@@ -30,7 +30,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -63,7 +65,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -89,7 +93,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -116,7 +122,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -139,7 +147,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -169,7 +179,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 
@@ -192,7 +204,9 @@ module.exports = (pool) => {
 
       console.error(err);
 
-      res.status(err.statusCode || 500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({
+        error: err.public ? err.message : "Error interno del servidor"
+      });
 
     }
 

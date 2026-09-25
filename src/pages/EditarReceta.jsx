@@ -13,19 +13,14 @@ import {
   guardarAlergenoReceta
 } from "../services/recetasService";
 
-
-
 export default function EditarReceta() {
-const { id } = useParams();
-
+  const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const categoriaInicial =
-    searchParams.get("categoria") || "";
+  const categoriaInicial = searchParams.get("categoria") || "";
 
   const [categoria, setCategoria] = useState(categoriaInicial);
-
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
 
@@ -40,351 +35,411 @@ const { id } = useParams();
   const [alergenosSeleccionados, setAlergenosSeleccionados] = useState([]);
   const [observaciones, setObservaciones] = useState("");
 
-  const [producto, setProducto] = useState("");
-  const [cantidad, setCantidad] = useState("");
-  const [unidad, setUnidad] = useState("g");
-  const [merma, setMerma] = useState("0");
-
-  const [productos, setProductos] = useState([]);
   const [filas, setFilas] = useState([
-  {
-    productoId: "",
-    cantidad: "",
-    unidad: "g",
-    merma: 0,
-    descontar: true
-  }
-]);
-
-
+    {
+      productoId: "",
+      cantidad: "",
+      unidad: "g",
+      merma: 0,
+      descontar: true
+    }
+  ]);
 
   useEffect(() => {
+    obtenerReceta(id)
+      .then((data) => {
+        console.log("DATOS EDITAR:", data);
 
-  obtenerReceta(id)
-    .then(data => {
+        if (!data.receta) {
+          console.error("Respuesta no válida:", data);
+          return;
+        }
 
-      console.log("DATI EDITAR:", data);
+        const r = data.receta;
 
-      if (!data.receta) {
-        console.error("Risposta non valida:", data);
-        return;
-      }
+        setCodigo(r.codigo || "");
+        setNombre(r.nombre || "");
+        setCategoria(r.categoria || "");
+        setUnidadProduccion(r.unidad_produccion || "");
+        setRaciones(r.raciones_por_unidad || "");
+        setConsumo(r.consumo_servicio || "");
+        setUnidadConsumo(r.unidad_consumo || "");
+        setProcedimiento(r.procedimiento || "");
+        setPresentacion(r.emplatado || "");
+        setObservaciones(r.observaciones || "");
 
-      const r = data.receta;
+        setFilas(
+          (data.ingredientes || []).map((i) => ({
+            productoId: i.producto_id,
+            cantidad: i.cantidad,
+            unidad: i.unidad,
+            merma: i.merma || 0,
+            descontar: i.descontar
+          }))
+        );
 
-      
-      setCodigo(r.codigo || "");
-      setNombre(r.nombre || "");
-      setCategoria(r.categoria || "");
-
-      setUnidadProduccion(
-        r.unidad_produccion || ""
-      );
-
-      setRaciones(
-        r.raciones_por_unidad || ""
-      );
-
-      setConsumo(
-        r.consumo_servicio || ""
-      );
-
-      setUnidadConsumo(
-        r.unidad_consumo || ""
-      );
-
-      setProcedimiento(
-        r.procedimiento || ""
-      );
-
-      setPresentacion(
-        r.emplatado || ""
-      );
-
-      setObservaciones(
-        r.observaciones || ""
-      );
-
-      setFilas(
-        data.ingredientes.map(i => ({
-          productoId: i.producto_id,
-          cantidad: i.cantidad,
-          unidad: i.unidad,
-          merma: i.merma || 0,
-          descontar: i.descontar
-        }))
-      );
-
-    })
-    .catch(console.error);
-
-}, [id]);
-
- useEffect(() => {
-
-  fetch(`${API}/productos`)
-    .then(res => res.json())
-    .then(data => setProductos(data))
-    .catch(console.error);
-
-
-  fetch(`${API}/recetas/alergenos/lista`)
-    .then(res => res.json())
-    .then(data => setListaAlergenos(data))
-    .catch(console.error);
-
-}, []);
-
-
-function cambiarAlergeno(id) {
-
-  setAlergenosSeleccionados(prev =>
-
-    prev.includes(id)
-
-      ? prev.filter(x => x !== id)
-
-      : [...prev, id]
-
-  );
-
-}
-
-
-async function guardarReceta() {
-  try {
-
-    const datosReceta = {
-
-      codigo,
-      nombre,
-      categoria,
-
-      unidadProduccion,
-
-      racionesPorUnidad: raciones === "" ? null : Number(raciones),
-      consumoServicio: consumo === "" ? null : Number(consumo),
-      unidadConsumo,
-
-      procedimiento,
-      emplatado: presentacion,
-      observaciones,
-
-      tiempoPreparacion: 15,
-      tiempoCoccion: 8,
-      temperatura: "70 °C"
-
-    };
-
-    const respuesta = await actualizarReceta(id, datosReceta);
-
-
-
-
-await eliminarAlergenosReceta(id);
-
-
-
-// Guardar ingredientes
-
-await eliminarIngredientesReceta(id);
-
-for (const fila of filas) {
-
-  if (!fila.productoId) continue;
-
-  const ingrediente = {
-    productoId: Number(fila.productoId),
-    cantidad: Number(fila.cantidad),
-    unidad: fila.unidad,
-    merma: Number(fila.merma),
-    descontar: fila.descontar
-  };
-
-  console.log("Enviando ingrediente", ingrediente);
-
-  const jsonIng = await guardarIngredienteReceta(
-    id,
-    ingrediente
-  );
-
-  console.log("Respuesta ingrediente:", jsonIng);
-
-}
-
-// Guardar alérgenos
-
-for (const alergenoId of alergenosSeleccionados) {
-
-  const jsonAlergeno = await guardarAlergenoReceta(
-    id,
-    alergenoId
-  );
-
-  console.log("Respuesta alergeno:", jsonAlergeno);
-
-}
-
-// Guardar procedimiento como primer paso
-if (procedimiento.trim() !== "") {
-
-  const resPaso = await fetch(
-    `${API}/recetas/${id}/pasos`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        orden: 1,
-        titulo: "Procedimiento",
-        descripcion: procedimiento
+        setAlergenosSeleccionados(
+          (data.alergenos || []).map((a) => a.id)
+        );
       })
-    }
-  );
+      .catch(console.error);
+  }, [id]);
 
-  const jsonPaso = await resPaso.json();
+  useEffect(() => {
+    fetch(`${API}/recetas/alergenos/lista`)
+      .then((res) => res.json())
+      .then((data) => setListaAlergenos(data))
+      .catch(console.error);
+  }, []);
 
-  console.log("Respuesta paso:", jsonPaso);
-
-  
-
-}
-
-    alert("✅ Receta guardada correctamente");
-
-    navigate(`/recetas/${id}`);
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("❌ " + err.message);
-
+  function cambiarAlergeno(alergenoId) {
+    setAlergenosSeleccionados((prev) =>
+      prev.includes(alergenoId)
+        ? prev.filter((x) => x !== alergenoId)
+        : [...prev, alergenoId]
+    );
   }
 
-}
-  return (
+  async function guardarReceta() {
+    try {
+      const datosReceta = {
+        codigo,
+        nombre,
+        categoria,
+        unidadProduccion,
+        racionesPorUnidad:
+          raciones === "" ? null : Number(raciones),
+        consumoServicio:
+          consumo === "" ? null : Number(consumo),
+        unidadConsumo,
+        procedimiento,
+        emplatado: presentacion,
+        observaciones,
+        tiempoPreparacion: 15,
+        tiempoCoccion: 8,
+        temperatura: "70 °C"
+      };
 
+      /*
+       * El PUT guarda también el procedimiento y sincroniza
+       * receta_pasos. No hacemos POST /pasos aquí para evitar
+       * duplicados.
+       */
+      await actualizarReceta(id, datosReceta);
+
+      await eliminarAlergenosReceta(id);
+      await eliminarIngredientesReceta(id);
+
+      for (const fila of filas) {
+        if (!fila.productoId) continue;
+
+        const ingrediente = {
+          productoId: Number(fila.productoId),
+          cantidad: Number(fila.cantidad),
+          unidad: fila.unidad,
+          merma: Number(fila.merma),
+          descontar: fila.descontar
+        };
+
+        console.log("Enviando ingrediente:", ingrediente);
+
+        await guardarIngredienteReceta(id, ingrediente);
+      }
+
+      for (const alergenoId of alergenosSeleccionados) {
+        await guardarAlergenoReceta(id, alergenoId);
+      }
+
+      alert("✅ Receta guardada correctamente");
+      navigate(`/recetas/${id}`);
+    } catch (err) {
+      console.error(err);
+      alert("❌ " + err.message);
+    }
+  }
+
+  return (
     <div
       style={{
-        maxWidth: "1000px",
-        margin: "30px auto",
-        background: "#fff",
-        padding: "35px",
-        borderRadius: "14px",
-        boxShadow: "0 2px 12px rgba(0,0,0,.08)"
+        minHeight: "100vh",
+        width: "100%",
+        boxSizing: "border-box",
+        background: "#0b0f14",
+        color: "#ffffff",
+        padding: "24px"
       }}
     >
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+          background: "#11161d",
+          padding: "24px",
+          borderRadius: "16px",
+          border: "1px solid #252d38",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.25)"
+        }}
+      >
+        <div style={{ marginBottom: "24px" }}>
+          <div
+            style={{
+              color: "#00d9ff",
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              marginBottom: "6px"
+            }}
+          >
+            NEXO · COCINA
+          </div>
 
-      <DatosBasicos
-        nombre={nombre}
-        setNombre={setNombre}
-        categoria={categoria}
-        setCategoria={setCategoria}
-      />
+          <h1
+            style={{
+              margin: 0,
+              color: "#d7f7ff",
+              fontSize: "28px",
+              lineHeight: "1.15"
+            }}
+          >
+            ✏️ Modificar receta
+          </h1>
 
-      <Produccion
-        codigo={codigo}
-        setCodigo={setCodigo}
-        categoria={categoria}
-        unidadProduccion={unidadProduccion}
-        setUnidadProduccion={setUnidadProduccion}
-        raciones={raciones}
-        setRaciones={setRaciones}
-        consumo={consumo}
-        setConsumo={setConsumo}
-        unidadConsumo={unidadConsumo}
-        setUnidadConsumo={setUnidadConsumo}
-      />
+          <p
+            style={{
+              margin: "7px 0 0",
+              color: "#8f9baa",
+              fontSize: "14px"
+            }}
+          >
+            Modifica los datos y guarda los cambios.
+          </p>
+        </div>
 
-      <br />
+        <DatosBasicos
+          nombre={nombre}
+          setNombre={setNombre}
+          categoria={categoria}
+          setCategoria={setCategoria}
+        />
+
+        <Produccion
+          codigo={codigo}
+          setCodigo={setCodigo}
+          categoria={categoria}
+          unidadProduccion={unidadProduccion}
+          setUnidadProduccion={setUnidadProduccion}
+          raciones={raciones}
+          setRaciones={setRaciones}
+          consumo={consumo}
+          setConsumo={setConsumo}
+          unidadConsumo={unidadConsumo}
+          setUnidadConsumo={setUnidadConsumo}
+        />
 
         <EditorIngredientes
-       filas={filas}
-       setFilas={setFilas}
-      />
+          filas={filas}
+          setFilas={setFilas}
+        />
 
-      <textarea
-        rows="8"
-        style={{ width: "100%", marginBottom: "20px" }}
-        placeholder="Procedimiento"
-        value={procedimiento}
-        onChange={(e) => setProcedimiento(e.target.value)}
-      />
+        <div
+          style={{
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "20px"
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 12px",
+              color: "#d7f7ff",
+              fontSize: "20px"
+            }}
+          >
+            👨‍🍳 Procedimiento
+          </h2>
 
-      <textarea
-        rows="4"
-        style={{ width: "100%", marginBottom: "20px" }}
-        placeholder="Presentación"
-        value={presentacion}
-        onChange={(e) => setPresentacion(e.target.value)}
-      />
+          <textarea
+            rows="8"
+            value={procedimiento}
+            onChange={(e) => setProcedimiento(e.target.value)}
+            placeholder="Describe el procedimiento..."
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "14px",
+              borderRadius: "10px",
+              border: "1px solid #303945",
+              background: "#11161d",
+              color: "#ffffff",
+              fontSize: "16px",
+              lineHeight: "1.5",
+              resize: "vertical",
+              outline: "none"
+            }}
+          />
+        </div>
 
-     <h3>⚠️ Alérgenos</h3>
+        <div
+          style={{
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "20px"
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 12px",
+              color: "#d7f7ff",
+              fontSize: "20px"
+            }}
+          >
+            🍽️ Presentación
+          </h2>
 
-<div
-  style={{
-    display:"flex",
-    flexWrap:"wrap",
-    gap:"10px",
-    marginBottom:"20px"
-  }}
->
+          <textarea
+            rows="4"
+            value={presentacion}
+            onChange={(e) => setPresentacion(e.target.value)}
+            placeholder="Describe la presentación..."
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "14px",
+              borderRadius: "10px",
+              border: "1px solid #303945",
+              background: "#11161d",
+              color: "#ffffff",
+              fontSize: "16px",
+              lineHeight: "1.5",
+              resize: "vertical",
+              outline: "none"
+            }}
+          />
+        </div>
 
-{listaAlergenos.map((a)=>(
+        <div
+          style={{
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "20px"
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 14px",
+              color: "#d7f7ff",
+              fontSize: "20px"
+            }}
+          >
+            ⚠️ Alérgenos
+          </h2>
 
-  <button
-    key={a.id}
-    type="button"
-    onClick={() => cambiarAlergeno(a.id)}
-    style={{
-      padding:"10px 15px",
-      borderRadius:"12px",
-      border:"1px solid #ccc",
-      cursor:"pointer",
-      background: alergenosSeleccionados.includes(a.id)
-        ? "#facc15"
-        : "#fff",
-      fontWeight:"bold"
-    }}
-  >
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px"
+            }}
+          >
+            {listaAlergenos.map((a) => {
+              const seleccionado = alergenosSeleccionados.includes(a.id);
 
-    {a.icono} {a.nombre}
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => cambiarAlergeno(a.id)}
+                  style={{
+                    minHeight: "44px",
+                    padding: "10px 14px",
+                    borderRadius: "10px",
+                    border: seleccionado
+                      ? "1px solid #00d9ff"
+                      : "1px solid #303945",
+                    background: seleccionado
+                      ? "#0e333d"
+                      : "#11161d",
+                    color: seleccionado
+                      ? "#00d9ff"
+                      : "#d7dfe8",
+                    cursor: "pointer",
+                    fontWeight: "700",
+                    fontSize: "14px"
+                  }}
+                >
+                  {a.icono} {a.nombre}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-  </button>
+        <div
+          style={{
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "20px"
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 12px",
+              color: "#d7f7ff",
+              fontSize: "20px"
+            }}
+          >
+            📝 Observaciones
+          </h2>
 
-))}
+          <textarea
+            rows="4"
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            placeholder="Observaciones..."
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "14px",
+              borderRadius: "10px",
+              border: "1px solid #303945",
+              background: "#11161d",
+              color: "#ffffff",
+              fontSize: "16px",
+              lineHeight: "1.5",
+              resize: "vertical",
+              outline: "none"
+            }}
+          />
+        </div>
 
-</div>
-
-      <textarea
-        rows="4"
-        style={{ width: "100%", marginBottom: "30px" }}
-        placeholder="Observaciones"
-        value={observaciones}
-        onChange={(e) => setObservaciones(e.target.value)}
-      />
-
-   <button
-  onClick={guardarReceta}
-  style={{
-    width: "100%",
-    padding: "16px",
-    background: "#16a34a",
-    color: "white",
-    border: "none",
-    borderRadius: "10px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    cursor: "pointer"
-  }}
->
-        💾 Guardar receta
-      </button>
-
+        <button
+          type="button"
+          onClick={guardarReceta}
+          style={{
+            width: "100%",
+            minHeight: "52px",
+            padding: "14px",
+            background: "#00d9ff",
+            color: "#071016",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "17px",
+            fontWeight: "800",
+            cursor: "pointer"
+          }}
+        >
+          💾 Guardar receta
+        </button>
+      </div>
     </div>
-
   );
-
 }

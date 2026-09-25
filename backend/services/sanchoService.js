@@ -1,4 +1,6 @@
-const API = "http://192.168.1.67:3001";
+require("dotenv").config();
+
+const API = process.env.API_BASE_URL || "http://localhost:3001/api";
 
 export async function obtenerEstadoSancho() {
 

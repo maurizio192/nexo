@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 const pool = require("./config/database");
 
@@ -31,6 +32,18 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 120,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        error: "Troppe richieste. Riprova più tardi."
+    }
+});
+
+app.use("/api", apiLimiter);
 
 app.locals.pool = pool;
 

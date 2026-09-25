@@ -22,7 +22,7 @@ module.exports = (pool) => {
             console.error("Error obteniendo productos:", err);
 
             res.status(500).json({
-                error: err.message
+                error: "Error interno del servidor"
             });
 
         }
@@ -52,7 +52,7 @@ module.exports = (pool) => {
             console.error("Error actualizando proveedor:", err);
 
             res.status(500).json({
-                error: err.message
+                error: "Error interno del servidor"
             });
 
         }

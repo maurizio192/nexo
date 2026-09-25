@@ -41,7 +41,7 @@ module.exports = (pool) => {
 
         ok: false,
 
-        error: err.message
+        error: "Error interno del servidor"
 
       });
 

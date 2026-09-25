@@ -26,6 +26,7 @@ const ESTADO_ANULADA = "anulada";
 function crearErrorMerma(statusCode, message) {
   const error = new Error(message);
   error.statusCode = statusCode;
+  error.public = true;
   return error;
 }
 

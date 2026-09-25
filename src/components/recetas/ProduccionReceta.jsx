@@ -6,7 +6,6 @@ export default function ProduccionReceta({
   platosDisponibles,
   receta
 }) {
-
   const [cantidad, setCantidad] = useState(1);
   const [elaboracion, setElaboracion] = useState(null);
   const [cargandoElaboracion, setCargandoElaboracion] = useState(true);
@@ -23,7 +22,10 @@ export default function ProduccionReceta({
           setElaboracion(data.elaboracion ?? null);
         }
       } catch (error) {
-        console.error("Error obteniendo la elaboración de la receta:", error);
+        console.error(
+          "Error obteniendo la elaboración de la receta:",
+          error
+        );
       } finally {
         if (activa) {
           setCargandoElaboracion(false);
@@ -38,136 +40,207 @@ export default function ProduccionReceta({
     };
   }, [receta.id]);
 
-async function producir() {
-
-  if (!elaboracion?.id) {
-    alert("❌ Esta receta no tiene una elaboración vinculada");
-    return;
-  }
-
-  if (!Number.isFinite(cantidad) || cantidad <= 0) {
-    alert("❌ La cantidad debe ser mayor que cero");
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      `${API}/producciones/producir`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          elaboracionId: elaboracion.id,
-          cantidad,
-          responsable: "Maurizio"
-        })
-      }
-    );
-
-    const data = await res.json().catch(() => ({}));
-
-    if (res.ok && data.ok) {
-      alert("✅ Producción registrada correctamente");
-      window.location.reload();
-    } else {
-      alert(`❌ ${data.error || "Error al producir"}`);
+  async function producir() {
+    if (!elaboracion?.id) {
+      alert("❌ Esta receta no tiene una elaboración vinculada");
+      return;
     }
-  } catch (error) {
-    console.error("Error registrando la producción:", error);
-    alert("❌ No se ha podido conectar con el servidor");
+
+    if (!Number.isFinite(cantidad) || cantidad <= 0) {
+      alert("❌ La cantidad debe ser mayor que cero");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${API}/producciones/producir`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            elaboracionId: elaboracion.id,
+            cantidad,
+            responsable: "Maurizio"
+          })
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        alert("✅ Producción registrada correctamente");
+        window.location.reload();
+      } else {
+        alert(`❌ ${data.error || "Error al producir"}`);
+      }
+    } catch (error) {
+      console.error("Error registrando la producción:", error);
+      alert("❌ No se ha podido conectar con el servidor");
+    }
   }
 
-}
+  const tarjeta = {
+    background: "#151a21",
+    color: "#ffffff",
+    padding: "20px",
+    borderRadius: "14px",
+    border: "1px solid #252d38",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
+    boxSizing: "border-box"
+  };
 
-   return (
-    <>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3,1fr)",
-          gap: "20px",
-          marginBottom: "30px"
-        }}
-      >
-
-        <div
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        gap: "14px",
+        marginBottom: "30px"
+      }}
+    >
+      <div style={tarjeta}>
+        <h3
           style={{
-            background: "#fff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,.08)"
+            margin: "0 0 12px",
+            color: "#d7f7ff",
+            fontSize: "16px"
           }}
         >
-          <h3>📦 Producción</h3>
+          📦 Producción
+        </h3>
 
-          <h1>{unidades}</h1>
-
-          <p>{receta.unidad_produccion}</p>
-
-          <br />
-
-          <input
-            type="number"
-            min="1"
-            value={cantidad}
-            onChange={(e) => setCantidad(Number(e.target.value))}
-            style={{
-              width: "80px",
-              padding: "8px"
-            }}
-          />
-
-          <br /><br />
-
-          <button
-            onClick={producir}
-            disabled={cargandoElaboracion || !elaboracion}
-            style={{
-              padding: "10px 18px",
-              cursor: "pointer"
-            }}
-          >
-            {cargandoElaboracion ? "Cargando elaboración..." : "▶ PRODUCIR"}
-          </button>
-
-        </div>
-
-        <div
+        <h1
           style={{
-            background: "#fff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,.08)"
+            margin: "0 0 4px",
+            color: "#00d9ff",
+            fontSize: "32px"
           }}
         >
-          <h3>🍽 Platos disponibles</h3>
+          {unidades}
+        </h1>
 
-          <h1>{platosDisponibles}</h1>
-
-          <p>Platos</p>
-
-        </div>
-
-        <div
+        <p
           style={{
-            background: "#fff",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 2px 8px rgba(0,0,0,.08)"
+            margin: "0 0 18px",
+            color: "#8f9baa"
           }}
         >
-          <h3>🍴 Consumo</h3>
+          {receta.unidad_produccion}
+        </p>
 
-          <h1>{receta.consumo_servicio}</h1>
+        <input
+          type="number"
+          min="1"
+          value={cantidad}
+          onChange={(e) => setCantidad(Number(e.target.value))}
+          style={{
+            width: "90px",
+            minHeight: "44px",
+            padding: "8px 10px",
+            boxSizing: "border-box",
+            background: "#0f141a",
+            color: "#ffffff",
+            border: "1px solid #303945",
+            borderRadius: "8px",
+            fontSize: "16px"
+          }}
+        />
 
-          <p>{receta.unidad_consumo} / plato</p>
+        <br />
+        <br />
 
-        </div>
+        <button
+          onClick={producir}
+          disabled={cargandoElaboracion || !elaboracion}
+          style={{
+            minHeight: "44px",
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "9px",
+            background:
+              cargandoElaboracion || !elaboracion
+                ? "#303945"
+                : "#00d9ff",
+            color:
+              cargandoElaboracion || !elaboracion
+                ? "#8f9baa"
+                : "#071016",
+            cursor:
+              cargandoElaboracion || !elaboracion
+                ? "not-allowed"
+                : "pointer",
+            fontWeight: "800"
+          }}
+        >
+          {cargandoElaboracion
+            ? "Cargando elaboración..."
+            : "▶ PRODUCIR"}
+        </button>
       </div>
 
-    </>
+      <div style={tarjeta}>
+        <h3
+          style={{
+            margin: "0 0 12px",
+            color: "#d7f7ff",
+            fontSize: "16px"
+          }}
+        >
+          🍽 Platos disponibles
+        </h3>
 
+        <h1
+          style={{
+            margin: "0 0 4px",
+            color: "#00d9ff",
+            fontSize: "32px"
+          }}
+        >
+          {platosDisponibles}
+        </h1>
+
+        <p
+          style={{
+            margin: 0,
+            color: "#8f9baa"
+          }}
+        >
+          Platos
+        </p>
+      </div>
+
+      <div style={tarjeta}>
+        <h3
+          style={{
+            margin: "0 0 12px",
+            color: "#d7f7ff",
+            fontSize: "16px"
+          }}
+        >
+          🍴 Consumo
+        </h3>
+
+        <h1
+          style={{
+            margin: "0 0 4px",
+            color: "#00d9ff",
+            fontSize: "32px"
+          }}
+        >
+          {receta.consumo_servicio}
+        </h1>
+
+        <p
+          style={{
+            margin: 0,
+            color: "#8f9baa"
+          }}
+        >
+          {receta.unidad_consumo} / plato
+        </p>
+      </div>
+    </div>
   );
 }

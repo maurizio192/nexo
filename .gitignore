@@ -6,3 +6,13 @@ dist/
 
 # Backups locales de trabajo
 _nexo_archivo_backups/
+
+# Entorno y credenciales
+.env
+.env.*
+!.env.example
+
+# Certificati SSL locali di sviluppo
+cert/
+*.bak
+*.bak-*

@@ -1,6 +1,7 @@
 function crearErrorProduccion(statusCode, message) {
   const error = new Error(message);
   error.statusCode = statusCode;
+  error.public = true;
   return error;
 }
 
@@ -35,6 +36,77 @@ function convertirCantidad(cantidad, unidadOrigen, unidadDestino) {
   };
 
   return conversiones[`${origen}:${destino}`] ?? null;
+}
+
+function calcularConsumoStock(
+  cantidadReceta,
+  unidadReceta,
+  unidadStock,
+  cantidadFormato,
+  unidadFormato,
+  cantidadUnidad,
+  unidadProducto
+) {
+  const cantidadFormatoNumerica = Number(cantidadFormato || 0);
+  const cantidadUnidadNumerica = Number(cantidadUnidad || 0);
+
+  /*
+   * Calcula cuánto stock consumir según cómo está almacenado
+   * el producto.
+   *
+   * HUEVO LÍQUIDOS:
+   * stock = caja
+   * formato = 6 UDS
+   * cada unidad = 1 L
+   * => 1 caja = 6 L
+   *
+   * SAL LEDA:
+   * stock = Uds
+   * formato = 8 UDS por caja
+   * cada unidad = 1 kg
+   * => 1 Ud de stock = 1 kg
+   *
+   * ACEITE:
+   * stock = L
+   * formato = L
+   * cada unidad = 1 L
+   * => 1 L de stock = 1 L
+   */
+  if (
+    cantidadUnidadNumerica > 0 &&
+    unidadProducto
+  ) {
+    const consumoEnUnidadProducto = convertirCantidad(
+      cantidadReceta,
+      unidadReceta,
+      unidadProducto
+    );
+
+    if (consumoEnUnidadProducto === null) {
+      return null;
+    }
+
+    const stockEsUnidadDeFormato =
+      unidadStock &&
+      unidadFormato &&
+      unidadStock === unidadFormato;
+
+    const contenidoPorStock = stockEsUnidadDeFormato
+      ? cantidadUnidadNumerica
+      : cantidadFormatoNumerica * cantidadUnidadNumerica;
+
+    if (contenidoPorStock <= 0) {
+      return null;
+    }
+
+    return consumoEnUnidadProducto / contenidoPorStock;
+  }
+
+  return convertirCantidad(
+    cantidadReceta,
+    unidadReceta,
+    unidadStock
+  );
 }
 
 module.exports = {
@@ -118,7 +190,11 @@ module.exports = {
           ri.cantidad,
           ri.unidad AS unidad_receta,
           p.nombre AS producto_nombre,
-          p.unidad AS unidad_producto,
+          p.unidad AS unidad_producto_stock,
+          p.cantidad_formato,
+          p.unidad_formato,
+          p.cantidad_unidad,
+          p.unidad_producto,
           p.stock_actual
         FROM receta_ingredientes ri
         JOIN productos p ON p.id = ri.producto_id
@@ -141,15 +217,22 @@ module.exports = {
           const cantidadReceta = Number(ingrediente.cantidad) * cantidadNumerica;
 const stockActual = Number(ingrediente.stock_actual);
 const unidadReceta = normalizarUnidad(ingrediente.unidad_receta);
-const unidadProducto = normalizarUnidad(ingrediente.unidad_producto);
+const unidadProductoStock = normalizarUnidad(ingrediente.unidad_producto_stock);
+const unidadProducto = normalizarUnidad(
+  ingrediente.unidad_producto || ingrediente.unidad_producto_stock
+);
 
-const consumoEnUnidadProducto = convertirCantidad(
+const consumoEnUnidadProducto = calcularConsumoStock(
   cantidadReceta,
   unidadReceta,
+  unidadProductoStock,
+  ingrediente.cantidad_formato,
+  ingrediente.unidad_formato,
+  ingrediente.cantidad_unidad,
   unidadProducto
 );
 
-        if (!unidadReceta || !unidadProducto) {
+        if (!unidadReceta || !unidadProductoStock) {
           throw crearErrorProduccion(
             400,
             `La unidad de ${ingrediente.producto_nombre} no está definida en la receta o en el producto`

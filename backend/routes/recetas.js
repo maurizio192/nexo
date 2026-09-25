@@ -32,7 +32,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -67,7 +67,7 @@ router.get("/categorias/lista", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -101,7 +101,7 @@ router.get("/alergenos/lista", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -152,7 +152,7 @@ DO NOTHING
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -181,7 +181,7 @@ router.get("/categorias", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -212,7 +212,7 @@ router.get("/categoria/:categoria", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -284,7 +284,7 @@ res.json({
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -360,7 +360,7 @@ router.post("/:id/producir", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -391,7 +391,7 @@ router.post("/", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -495,7 +495,7 @@ router.post("/:id/ingredientes", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -550,7 +550,7 @@ router.post("/:id/pasos", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -572,6 +572,8 @@ router.post("/:id/alergenos", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
 
+  const client = await pool.connect();
+
   try {
 
     const {
@@ -590,7 +592,9 @@ router.put("/:id", async (req, res) => {
       temperatura
     } = req.body;
 
-    await pool.query(
+    await client.query("BEGIN");
+
+    await client.query(
       `
       UPDATE recetas
       SET
@@ -627,17 +631,47 @@ router.put("/:id", async (req, res) => {
       ]
     );
 
+    /*
+     * Sincronizar el procedimiento estructurado.
+     * Esta pantalla utiliza un único campo de procedimiento,
+     * por lo que mantenemos un único paso asociado a la receta.
+     */
+    await client.query(
+      `DELETE FROM receta_pasos WHERE receta_id = $1`,
+      [req.params.id]
+    );
+
+    if (procedimiento && procedimiento.trim() !== "") {
+      await client.query(
+        `
+        INSERT INTO receta_pasos
+          (receta_id, orden, titulo, descripcion)
+        VALUES
+          ($1, 1, 'Procedimiento', $2)
+        `,
+        [req.params.id, procedimiento.trim()]
+      );
+    }
+
+    await client.query("COMMIT");
+
     res.json({
       ok: true
     });
 
   } catch (err) {
 
+    await client.query("ROLLBACK");
+
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
+
+  } finally {
+
+    client.release();
 
   }
 
@@ -666,7 +700,7 @@ router.put("/:id/archivar", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -698,7 +732,7 @@ router.delete("/:id/ingredientes", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -724,7 +758,7 @@ router.delete("/:id/alergenos", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }

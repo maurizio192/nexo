@@ -58,7 +58,7 @@ ON pr.id = pp.proveedor_id
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -161,7 +161,7 @@ res.json(producto);
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -268,7 +268,7 @@ res.json(result.rows[0] || {});
     console.error(err);
 
     res.status(500).json({
-      error: err.message
+      error: "Error interno del servidor"
     });
 
   }
@@ -303,7 +303,7 @@ router.delete("/:id", async (req, res) => {
 
     res.status(500).json({
       ok:false,
-      error:err.message
+      error:"Error interno del servidor"
     });
 
   }

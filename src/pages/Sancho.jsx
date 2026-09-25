@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API } from "../config/api";
 
 function Tarjeta({ titulo, valor, color }) {
   return (
@@ -53,12 +54,6 @@ export default function Sancho() {
   const [respuesta, setRespuesta] = useState("");
   const [textoVoz, setTextoVoz] = useState("");
 
-  const API = "http://localhost:3001";
-
-  useEffect(() => {
-    cargarSancho();
-  }, []);
-
   async function cargarSancho() {
     try {
       const res = await fetch(`${API}/sancho`);
@@ -72,6 +67,10 @@ export default function Sancho() {
       console.error(err);
     }
   }
+
+  useEffect(() => {
+    cargarSancho();
+  }, []);
 
   async function hablarConSancho() {
     if (!pregunta.trim()) return;

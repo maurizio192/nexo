@@ -70,7 +70,7 @@ module.exports = (pool) => {
       );
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -359,7 +359,7 @@ console.dir(
       );
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }

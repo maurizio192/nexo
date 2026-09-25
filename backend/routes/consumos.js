@@ -29,7 +29,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message,
+        error: "Error interno del servidor",
       });
 
     }
@@ -57,7 +57,7 @@ router.delete("/:id", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
-      error: err.message,
+      error: "Error interno del servidor",
     });
 
   }

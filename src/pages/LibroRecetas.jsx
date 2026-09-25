@@ -37,6 +37,7 @@ export default function LibroRecetas() {
           margin: "0 auto",
         }}
       >
+        {/* CABECERA */}
         <div style={{ marginBottom: "24px" }}>
           <div
             style={{
@@ -60,7 +61,7 @@ export default function LibroRecetas() {
               lineHeight: "1.1",
             }}
           >
-            📖 Libro de Recetas
+            📖 Libro Maestro
           </h1>
 
           <p
@@ -70,10 +71,98 @@ export default function LibroRecetas() {
               fontSize: "14px",
             }}
           >
-            Selecciona una categoría para consultar las recetas
+            Recetas y elaboraciones de cocina
           </p>
         </div>
 
+        {/* ELABORACIONES */}
+        <div
+          onClick={() => navigate("/elaboraciones")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            background: "#10252c",
+            color: "#ffffff",
+            padding: "18px",
+            minHeight: "88px",
+            boxSizing: "border-box",
+            borderRadius: "14px",
+            border: "1px solid #245563",
+            boxShadow: "0 8px 20px rgba(0,0,0,0.20)",
+            cursor: "pointer",
+            marginBottom: "14px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                fontSize: "30px",
+                flexShrink: 0,
+              }}
+            >
+              🧑‍🍳
+            </span>
+
+            <div>
+              <h2
+                style={{
+                  margin: 0,
+                  color: "#d7f7ff",
+                  fontSize: "18px",
+                  fontWeight: "700",
+                  lineHeight: "1.2",
+                }}
+              >
+                Elaboraciones
+              </h2>
+
+              <div
+                style={{
+                  marginTop: "5px",
+                  color: "#8f9baa",
+                  fontSize: "13px",
+                }}
+              >
+                Bases, fondos, salsas y preparaciones
+              </div>
+            </div>
+          </div>
+
+          <span
+            style={{
+              color: "#00d9ff",
+              fontSize: "18px",
+              flexShrink: 0,
+            }}
+          >
+            ▶
+          </span>
+        </div>
+
+        {/* SEPARADOR */}
+        <div
+          style={{
+            color: "#647180",
+            fontSize: "11px",
+            fontWeight: "700",
+            letterSpacing: "1.5px",
+            textTransform: "uppercase",
+            margin: "22px 0 12px",
+          }}
+        >
+          Categorías de recetas
+        </div>
+
+        {/* CATEGORÍAS */}
         <div
           style={{
             display: "grid",

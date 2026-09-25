@@ -44,6 +44,89 @@ class SanchoChat {
         console.log("🔥 SANCHO PROCESAR RECIBE:", pregunta);
         const texto = String(pregunta || "").trim().toLowerCase();
 
+        const normalizarUnidadProduccion = (unidad) => {
+            if (!unidad) return null;
+
+            const u = String(unidad)
+                .trim()
+                .toLowerCase()
+                .replace(/[áàä]/g, "a")
+                .replace(/[éèë]/g, "e")
+                .replace(/[íìï]/g, "i")
+                .replace(/[óòö]/g, "o")
+                .replace(/[úùü]/g, "u");
+
+            const equivalencias = {
+                kg: "kg",
+                kilo: "kg",
+                kilos: "kg",
+                kilogramo: "kg",
+                kilogramos: "kg",
+
+                g: "g",
+                gr: "g",
+                gramo: "g",
+                gramos: "g",
+
+                l: "l",
+                litro: "l",
+                litros: "l",
+
+                ml: "ml",
+                mililitro: "ml",
+                mililitros: "ml",
+
+                ud: "ud",
+                uds: "ud",
+                unidad: "ud",
+                unidades: "ud",
+
+                bolsa: "bolsa",
+                bolsas: "bolsa",
+
+                cubeta: "cubeta",
+                cubetas: "cubeta"
+            };
+
+            return equivalencias[u] || u;
+        };
+
+        const convertirCantidadProduccion = (
+            cantidad,
+            unidadOrigen,
+            unidadDestino
+        ) => {
+            const origen = normalizarUnidadProduccion(unidadOrigen);
+            const destino = normalizarUnidadProduccion(unidadDestino);
+
+            if (!origen || !destino || origen === destino) {
+                return {
+                    ok: true,
+                    cantidad
+                };
+            }
+
+            const conversiones = {
+                "g->kg": cantidad / 1000,
+                "kg->g": cantidad * 1000,
+                "ml->l": cantidad / 1000,
+                "l->ml": cantidad * 1000
+            };
+
+            const clave = `${origen}->${destino}`;
+
+            if (Object.prototype.hasOwnProperty.call(conversiones, clave)) {
+                return {
+                    ok: true,
+                    cantidad: conversiones[clave]
+                };
+            }
+
+            return {
+                ok: false
+            };
+        };
+
         console.log(
             "🧠 ESTADO RECEPCIÓN:",
             {
@@ -93,19 +176,37 @@ class SanchoChat {
                 };
             }
 
+            const conversion = convertirCantidadProduccion(
+                pendiente.cantidad,
+                pendiente.unidad,
+                elaboracion.unidad_produccion
+            );
+
+            if (!conversion.ok) {
+                return {
+                    respuesta:
+                        `No puedo convertir ${pendiente.unidad || "esa unidad"} a ${elaboracion.unidad_produccion || "la unidad de producción"} para ${elaboracion.nombre}.`,
+                    accion: "PRODUCCION_RECHAZADA"
+                };
+            }
+
+            const cantidadFinal = conversion.cantidad;
+
             this.seleccionProduccionPendiente = null;
 
             this.confirmacionProduccionPendiente = {
-                cantidad: pendiente.cantidad,
+                cantidad: cantidadFinal,
+                unidad: elaboracion.unidad_produccion,
                 elaboracion
             };
 
             return {
                 respuesta:
-                    `Vas a producir ${pendiente.cantidad} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
+                    `Vas a producir ${cantidadFinal} ${elaboracion.unidad_produccion || ""} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
                 accion: "CONFIRMAR_PRODUCCION",
                 elaboracion,
-                cantidad: pendiente.cantidad
+                cantidad: cantidadFinal,
+                unidad: elaboracion.unidad_produccion
             };
         }
 
@@ -709,10 +810,6 @@ class SanchoChat {
 
             if (afirmativo) {
 
-                // #region agent log
-                fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'C',location:'engine/sanchoChat.js:recepcion:afirmativo',message:'Confirmación recepción afirmativa',data:{texto,pedidoId:confirmacion.pedidoId,detalleId:confirmacion.detalleId,cantidad:confirmacion.cantidad},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
-
                 this.confirmacionRecepcionPendiente = null;
 
                 const pedidosService =
@@ -778,10 +875,6 @@ class SanchoChat {
                         confirmacion.proveedor
                 };
 
-                // #region agent log
-                fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'A',location:'engine/sanchoChat.js:recepcion:negativo',message:'Recepcion parcial pendiente seteada',data:{texto,recepcionParcial:this.recepcionParcialPendiente},timestamp:Date.now()})}).catch(()=>{});
-                // #endregion
-
                 return {
                     respuesta:
                         `De acuerdo. ¿Cuántos ${confirmacion.formato || "UDS"} de ${confirmacion.producto} han llegado?`,
@@ -814,16 +907,10 @@ class SanchoChat {
                 /^(?:han\s+llegado|ha\s+llegado|llegaron|recibimos)\s+(\d+(?:[.,]\d+)?)\s+(cajas?|paquetes?|unidades?|uds?|botellas?|botes?|piezas?)(?:\s+(?:de\s+)?(.+))?$/i
             );
 
-        // #region agent log
-        if (this.confirmacionRecepcionPendiente && !patronRecepcionParcial) {
-            fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'B',location:'engine/sanchoChat.js:recepcion:fallthrough-confirmacion',message:'Confirmación recepción no sí/no; continúa sin limpiar estado',data:{texto,confirmacion:this.confirmacionRecepcionPendiente},timestamp:Date.now()})}).catch(()=>{});
-        }
-        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'E',location:'engine/sanchoChat.js:recepcion:patron-parcial',message:'Evaluación patrón recepción parcial',data:{texto,matched:!!patronRecepcionParcial,hasRecepcionParcial:!!this.recepcionParcialPendiente,recepcionParcial:this.recepcionParcialPendiente||null,esNumerico:/^\d+(?:[.,]\d+)?$/.test(texto)},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
+
 
         if (patronRecepcionParcial) {
 
-            console.log("🚨 PRUEBA PARCIAL SANCHO: BLOQUE EJECUTADO");
 
             const cantidadRecibida =
                 Number(
@@ -1306,10 +1393,6 @@ if (numeroPedidoTexto) {
                     pedido.id,
                     detalleResult.rows.length
                 );
-
-                // #region agent log
-                try { require("fs").appendFileSync("/home/maurizio/.cursor/debug-logs/debug-a85c6b.log", JSON.stringify({sessionId:"a85c6b",runId:"post-fix",hypothesisId:"F",location:"engine/sanchoChat.js:recepcion-sin-cantidad:detalle",message:"Detalle pedido leído sin ReferenceError",data:{pedidoId:pedido.id,detalles:detalleResult.rows.length},timestamp:Date.now()}) + "\n"); } catch (e) {}
-                // #endregion
 
                 for (const detalle of detalleResult.rows) {
 
@@ -2602,8 +2685,8 @@ Los proveedores sin día fijo también están disponibles.`,
         // =========================================
 
         const patronProduccion = texto.match(
-    /^(?:produce|producir|prepara|preparar|haz|hacer)\s+(\d+(?:[.,]\d+)?)\s*(?:bolsas?|cubetas?|unidades?|uds?|ud)?\s+(?:de\s+)?(.+)$/i
-);
+            /^(?:produce|producir|prepara|preparar|haz|hacer)\s+(\d+(?:[.,]\d+)?)\s*(kg|kilo|kilos|kilogramo|kilogramos|g|gr|gramo|gramos|l|litro|litros|ml|mililitro|mililitros|bolsas?|cubetas?|unidades?|uds?|ud)?\s+(?:de\s+)?(.+)$/i
+        );
 
         if (patronProduccion) {
 
@@ -2611,7 +2694,11 @@ Los proveedores sin día fijo también están disponibles.`,
                 patronProduccion[1].replace(",", ".")
             );
 
-            const nombreBuscado = patronProduccion[2]
+            const unidadSolicitada = normalizarUnidadProduccion(
+                patronProduccion[2]
+            );
+
+            const nombreBuscado = patronProduccion[3]
                 .replace(/\bpor favor\b/gi, "")
                 .replace(/^(el|la|los|las|un|una)\s+/i, "")
                 .trim();
@@ -2628,7 +2715,8 @@ Los proveedores sin día fijo también están disponibles.`,
                 SELECT
                     e.id,
                     e.nombre,
-                    r.nombre AS receta
+                    r.nombre AS receta,
+                    COALESCE(e.unidad, r.unidad_produccion) AS unidad_produccion
                 FROM elaboraciones e
                 JOIN recetas r
                     ON r.id = e.receta_id
@@ -2655,6 +2743,7 @@ Los proveedores sin día fijo también están disponibles.`,
 
                 this.seleccionProduccionPendiente = {
                     cantidad,
+                    unidad: unidadSolicitada,
                     elaboraciones: elaboraciones.rows
                 };
 
@@ -2668,17 +2757,35 @@ Los proveedores sin día fijo también están disponibles.`,
 
             const elaboracion = elaboraciones.rows[0];
 
-            this.confirmacionProduccionPendiente = {
+            const conversion = convertirCantidadProduccion(
                 cantidad,
+                unidadSolicitada,
+                elaboracion.unidad_produccion
+            );
+
+            if (!conversion.ok) {
+                return {
+                    respuesta:
+                        `No puedo convertir ${unidadSolicitada || "esa unidad"} a ${elaboracion.unidad_produccion || "la unidad de producción"} para ${elaboracion.nombre}.`,
+                    accion: "PRODUCCION_RECHAZADA"
+                };
+            }
+
+            const cantidadFinal = conversion.cantidad;
+
+            this.confirmacionProduccionPendiente = {
+                cantidad: cantidadFinal,
+                unidad: elaboracion.unidad_produccion,
                 elaboracion
             };
 
             return {
                 respuesta:
-                    `Vas a producir ${cantidad} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
+                    `Vas a producir ${cantidadFinal} ${elaboracion.unidad_produccion || ""} de ${elaboracion.nombre}, vinculada a la receta ${elaboracion.receta}. ¿Confirmas?`,
                 accion: "CONFIRMAR_PRODUCCION",
                 elaboracion,
-                cantidad
+                cantidad: cantidadFinal,
+                unidad: elaboracion.unidad_produccion
             };
         }
 // =========================================
@@ -3206,10 +3313,6 @@ if (cantidad !== 1) {
             };
         }
     // AYUDA
-
-        // #region agent log
-        fetch('http://127.0.0.1:7823/ingest/dde89641-9cf6-4105-bbf3-211e36fbd11e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'a85c6b'},body:JSON.stringify({sessionId:'a85c6b',runId:'pre-fix',hypothesisId:'A',location:'engine/sanchoChat.js:procesar:ayuda',message:'Cayó a AYUDA sin consumir recepción parcial',data:{texto,hasRecepcionParcial:!!this.recepcionParcialPendiente,recepcionParcial:this.recepcionParcialPendiente||null},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
 
     return {
         respuesta:

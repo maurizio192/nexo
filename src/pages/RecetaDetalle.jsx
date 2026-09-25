@@ -1,517 +1,567 @@
-import { useParams } from "react-router-dom";
-import IngredientesReceta from "../components/recetas/IngredientesReceta";
-import PestanasReceta from "../components/recetas/PestanasReceta";
-import ProduccionReceta from "../components/recetas/ProduccionReceta";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { API } from "../config/api";
 
 export default function RecetaDetalle() {
-
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [datos, setDatos] = useState(null);
-  const [pestana, setPestana] = useState("informacion");
-const [menuAbierto, setMenuAbierto] = useState(false);
+  const [pestana, setPestana] = useState("ingredientes");
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    const cargar = async () => {
+      try {
+        setCargando(true);
 
-useEffect(() => {
-  let cancelado = false;
+        const respuesta = await fetch(API + "/recetas/" + id);
 
-  async function cargarReceta() {
-    try {
-      const [resReceta, resElaboracion] = await Promise.all([
-        fetch(`${API}/recetas/${id}`),
-        fetch(`${API}/elaboraciones/receta/${id}`)
-      ]);
+        if (!respuesta.ok) {
+          throw new Error("No se pudo cargar la receta");
+        }
 
-      const data = await resReceta.json();
-      const dataElaboracion = await resElaboracion.json();
-
-      if (!resReceta.ok) {
-        throw new Error(data.error || "Error al cargar la receta");
-      }
-
-      if (!resElaboracion.ok) {
-        throw new Error(
-          dataElaboracion.error || "Error al cargar la elaboración"
-        );
-      }
-
-      if (!cancelado) {
-        console.log("DATOS API:", data);
-        console.log("ELABORACIÓN:", dataElaboracion.elaboracion);
-
-        setDatos({
-          ...data,
-          elaboracion: dataElaboracion.elaboracion
-        });
-      }
-
-    } catch (err) {
-      if (!cancelado) {
+        const data = await respuesta.json();
+        setDatos(data);
+      } catch (err) {
         console.error(err);
+        setError("No se pudo cargar la receta.");
+      } finally {
+        setCargando(false);
       }
-    }
-  }
+    };
 
-  cargarReceta();
+    cargar();
+  }, [id]);
 
-  return () => {
-    cancelado = true;
-  };
-}, [id]);
-
-  
-
- async function archivarReceta() {
-
-  if (!window.confirm("¿Seguro que quieres archivar esta receta?")) return;
-
-  try {
-
-    const res = await fetch(
-      `${API}/recetas/${id}/archivar`,
-      {
-        method: "PUT"
-      }
+  if (cargando) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0b0f14",
+          color: "#d7f7ff",
+          padding: "30px",
+        }}
+      >
+        Cargando receta...
+      </div>
     );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Error");
-    }
-
-    alert("✅ Receta archivada");
-
-    window.location.href = "/recetas";
-
-  } catch (err) {
-
-    alert("❌ " + err.message);
-
   }
 
-}
+  if (error || !datos) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#0b0f14",
+          color: "#ffffff",
+          padding: "30px",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "900px",
+            margin: "0 auto",
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "24px",
+          }}
+        >
+          <p style={{ color: "#ff8f8f" }}>{error || "Receta no encontrada."}</p>
 
-async function eliminarReceta() {
-
-  if (
-    !window.confirm(
-      "⚠️ Esta acción eliminará definitivamente la receta.\n\n¿Continuar?"
-    )
-  ) return;
-
-  try {
-
-    const res = await fetch(
-      `${API}/recetas/${id}`,
-      {
-        method: "DELETE"
-      }
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              marginTop: "15px",
+              background: "#00d9ff",
+              color: "#071016",
+              border: 0,
+              borderRadius: "10px",
+              padding: "13px 18px",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
+          >
+            ← Volver
+          </button>
+        </div>
+      </div>
     );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Error");
-    }
-
-    alert("✅ Receta eliminada");
-
-    window.location.href = "/recetas";
-
-  } catch (err) {
-
-    alert("❌ " + err.message);
-
   }
 
-}
-  if (!datos) return <h2>Cargando receta...</h2>;
-  const { receta, ingredientes, pasos, alergenos } = datos;
+  const receta = datos.receta || {};
+  const ingredientes = datos.ingredientes || [];
+  const pasos = datos.pasos || [];
+  const alergenos = datos.alergenos || [];
 
-  const unidades = Number(receta.unidades_producidas || 0);
-  const platosPorUnidad = Number(receta.raciones_por_unidad || 0);
-  const platosDisponibles = unidades * platosPorUnidad;
-  const estiloMenu = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  padding: "12px 18px",
-  border: "none",
-  background: "white",
-  cursor: "pointer",
-  fontSize: "15px"
-};
-return (
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        boxSizing: "border-box",
+        background: "#0b0f14",
+        color: "#ffffff",
+        padding: "24px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "1000px",
+          margin: "0 auto",
+        }}
+      >
+        {/* CABECERA */}
+        <div style={{ marginBottom: "22px" }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: "transparent",
+              border: "1px solid #303945",
+              color: "#aeb8c4",
+              borderRadius: "10px",
+              padding: "10px 14px",
+              marginBottom: "20px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "700",
+            }}
+          >
+            ← Volver
+          </button>
 
+          <div
+            style={{
+              color: "#00d9ff",
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1.8px",
+              textTransform: "uppercase",
+              marginBottom: "6px",
+            }}
+          >
+            NEXO · LIBRO MAESTRO
+          </div>
+
+          <h1
+            style={{
+              margin: 0,
+              color: "#d7f7ff",
+              fontSize: "32px",
+              lineHeight: "1.1",
+              fontWeight: "800",
+            }}
+          >
+            {receta.nombre}
+          </h1>
+
+          <div
+            style={{
+              marginTop: "10px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <span
+              style={{
+                background: "#18242b",
+                border: "1px solid #24434d",
+                color: "#7feaff",
+                padding: "6px 10px",
+                borderRadius: "999px",
+                fontSize: "13px",
+                fontWeight: "700",
+              }}
+            >
+              {receta.categoria}
+            </span>
+
+            {receta.codigo && (
+              <span
+                style={{
+                  background: "#151a21",
+                  border: "1px solid #303945",
+                  color: "#aeb8c4",
+                  padding: "6px 10px",
+                  borderRadius: "999px",
+                  fontSize: "13px",
+                }}
+              >
+                {receta.codigo}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* INFORMACIÓN DE PRODUCCIÓN */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "12px",
+            marginBottom: "20px",
+          }}
+        >
+          {[
+            ["Producción", receta.unidad_produccion],
+            ["Unidades", receta.unidades_producidas],
+            ["Raciones / unidad", receta.raciones_por_unidad],
+            ["Consumo servicio", receta.consumo_servicio],
+            ["Preparación", receta.tiempo_preparacion ? receta.tiempo_preparacion + " min" : null],
+            ["Cocción", receta.tiempo_coccion ? receta.tiempo_coccion + " min" : null],
+          ].map(([titulo, valor]) => (
+            <div
+              key={titulo}
+              style={{
+                background: "#151a21",
+                border: "1px solid #252d38",
+                borderRadius: "12px",
+                padding: "14px",
+                minHeight: "68px",
+                boxSizing: "border-box",
+              }}
+            >
+              <div
+                style={{
+                  color: "#7f8b99",
+                  fontSize: "12px",
+                  marginBottom: "5px",
+                }}
+              >
+                {titulo}
+              </div>
+
+              <div
+                style={{
+                  color: "#d7f7ff",
+                  fontSize: "16px",
+                  fontWeight: "700",
+                }}
+              >
+                {valor !== null && valor !== undefined && valor !== ""
+                  ? valor
+                  : "—"}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ALÉRGENOS */}
+        <div
+          style={{
+            background: "#151a21",
+            border: "1px solid #252d38",
+            borderRadius: "14px",
+            padding: "18px",
+            marginBottom: "20px",
+          }}
+        >
+          <div
+            style={{
+              color: "#7f8b99",
+              fontSize: "12px",
+              fontWeight: "700",
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+              marginBottom: "10px",
+            }}
+          >
+            Alérgenos
+          </div>
+
+          {alergenos.length === 0 ? (
+            <div
+              style={{
+                color: "#8f9baa",
+                fontSize: "14px",
+              }}
+            >
+              Sin alérgenos registrados.
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {alergenos.map((alergeno, index) => (
+                <span
+                  key={alergeno.id || index}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    background: "#2a2020",
+                    border: "1px solid #5a3838",
+                    color: "#ffd4d4",
+                    padding: "8px 11px",
+                    borderRadius: "999px",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                  }}
+                >
+                  {alergeno.icono || "⚠️"}
+                  {alergeno.nombre || alergeno.codigo}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+         {receta.emplatado && (
   <div
     style={{
-      padding:"20px",
-      maxWidth:"1100px",
-      margin:"0 auto"
+      background: "#151a21",
+      border: "1px solid #252d38",
+      borderRadius: "14px",
+      padding: "18px",
+      marginBottom: "20px",
     }}
   >
+    <div
+      style={{
+        color: "#7f8b99",
+        fontSize: "12px",
+        fontWeight: "700",
+        letterSpacing: "1px",
+        textTransform: "uppercase",
+        marginBottom: "10px",
+      }}
+    >
+      🍽️ Emplatado
+    </div>
 
     <div
       style={{
-        display:"flex",
-        justifyContent:"space-between",
-        alignItems:"center",
-        marginBottom:"25px"
+        color: "#d7dfe7",
+        fontSize: "16px",
+        lineHeight: "1.65",
+        whiteSpace: "pre-line",
       }}
     >
-
-      <div>
-
-        <h1
-  style={{
-    margin:0,
-    fontSize:"24px",
-    lineHeight:"1.2",
-    fontWeight:"700"
-  }}
->
-  {receta.nombre}
-</h1>
-
-        <div
-  style={{
-    color:"#666",
-    marginTop:"6px",
-    fontSize:"14px"
-  }}
->
-  {receta.categoria}
-</div>
-
-      </div>
-
-      <div
-        style={{
-          display:"flex",
-          gap:"10px"
-        }}
-      >
-
-        <button
-          onClick={archivarReceta}
-          style={{
-            background:"#f59e0b",
-            color:"#fff",
-            border:"none",
-            padding:"12px 18px",
-            borderRadius:"10px",
-            cursor:"pointer",
-            fontWeight:"bold"
-          }}
-        >
-          📁 Archivar
-        </button>
-
-        <button
-  onClick={() => {
-    window.location.href = `/editar-receta/${id}`;
-  }}
->
-  ✏️ Editar receta
-</button>
-
-        <button
-          onClick={eliminarReceta}
-          style={{
-            background:"#dc2626",
-            color:"#fff",
-            border:"none",
-            padding:"12px 18px",
-            borderRadius:"10px",
-            cursor:"pointer",
-            fontWeight:"bold"
-          }}
-        >
-          🗑 Eliminar
-        </button>
-
-      </div>
-
+      {receta.emplatado}
     </div>
-
-    <PestanasReceta
-      pestana={pestana}
-      setPestana={setPestana}
-    />
-
-    {pestana === "informacion" && (
-
-  <>
-
-    <h2>📋 Información</h2>
-
-    <p><b>Código:</b> {receta.codigo}</p>
-    <p><b>Estado:</b> {receta.estado}</p>
-    <p><b>Categoría:</b> {receta.categoria}</p>
-    <p><b>Unidad de producción:</b> {receta.unidad_produccion}</p>
-    <p><b>Cantidad producida:</b> {receta.unidades_producidas || 0}</p>
-    <p><b>Raciones por unidad:</b> {receta.raciones_por_unidad}</p>
-    <p>
-      <b>Consumo por servicio:</b> {receta.consumo_servicio} {receta.unidad_consumo}
-    </p>
-
-    <hr />
-
-  </>
-
+  </div>
 )}
 
-
-{pestana === "ingredientes" && (
-
-  <>
-
-    <IngredientesReceta
-      ingredientes={ingredientes || []}
-    />
-
-    <hr />
-
-  </>
-
-)}
-
-
-{pestana === "procedimiento" && (
-
-  <>
-
-    <h2>👨‍🍳 Procedimiento</h2>
-
-    {pasos && pasos.length > 0 ? (
-
-      pasos.map((paso) => (
-
+        {/* PESTAÑAS */}
         <div
-          key={paso.id}
           style={{
-            background:"#ffffff",
-            border:"1px solid #e5e7eb",
-            borderRadius:"10px",
-            padding:"15px",
-            marginBottom:"15px"
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "8px",
+            marginBottom: "18px",
           }}
         >
-
-         <h3
-  style={{
-    fontSize:"16px",
-    marginBottom:"8px"
-  }}
->
-  {paso.orden}. {paso.titulo}
-</h3>
-
-<p
-  style={{
-    fontSize:"14px",
-    lineHeight:"1.5",
-    margin:"0",
-    whiteSpace:"pre-line"
-  }}
->
-  {paso.descripcion}
-</p>
-
-        </div>
-
-      ))
-
-    ) : (
-
-      <p>No hay procedimiento registrado.</p>
-
-    )}
-
-    <hr />
-
-  </>
-
-)}
-
-
-
-{pestana === "produccion" && (
-
-  <>
-
-    <h2>📦 Producción</h2>
-
-    <p>
-      <b>Unidad:</b> {receta.unidad_produccion}
-    </p>
-
-    <p>
-      <b>Raciones por unidad:</b> {receta.raciones_por_unidad}
-    </p>
-
-
-    <ProduccionReceta
-      receta={receta}
-    />
-
-
-    <hr />
-
-  </>
-
-)}
-
-
-
-{pestana === "compartir" && (
-
-  <>
-
-    <h2>📧 Compartir receta</h2>
-
-
-    <button
-      style={{
-        padding:"12px 20px",
-        borderRadius:"10px",
-        cursor:"pointer"
-      }}
-
-      onClick={() => {
-
-        if (navigator.share) {
-
-          navigator.share({
-            title: receta.nombre,
-            text:`Receta NEXO: ${receta.nombre}`
-          });
-
-        } else {
-
-          alert("Compartir no disponible en este dispositivo");
-
-        }
-
-      }}
-
-    >
-      📤 Compartir
-
-    </button>
-
-
-  </>
-
-)}
-
-
-
-{pestana === "observaciones" && (
-
-  <>
-
-    <h2>📝 Observaciones</h2>
-
-
-    {receta.emplatado && (
-
-      <>
-
-      <h3
-  style={{
-    fontSize:"16px",
-    marginBottom:"8px"
-  }}
->
-  🍽 Presentación
-</h3>
-
-<p
-  style={{
-    fontSize:"14px",
-    lineHeight:"1.5",
-    whiteSpace:"pre-line"
-  }}
->
-  {receta.emplatado}
-</p>
-      </>
-
-    )}
-
-
-    <p
-  style={{
-    fontSize:"14px",
-    lineHeight:"1.5",
-    whiteSpace:"pre-line"
-  }}
->
-  {receta.observaciones || "Sin observaciones"}
-</p>
-
-
-    <hr />
-
-  </>
-
-)}
-
-
-
-{pestana === "alergenos" && (
-
-  <>
-
-    <h2>⚠️ Alérgenos</h2>
-
-    {alergenos && alergenos.length > 0 ? (
-
-      <div
-        style={{
-          background:"#fff8e1",
-          padding:"20px",
-          borderRadius:"10px",
-          border:"1px solid #facc15"
-        }}
-      >
-
-        {alergenos.map((a)=>(
-
-          <div
-            key={a.id}
+          <button
+            onClick={() => setPestana("ingredientes")}
             style={{
-              fontSize:"20px",
-              marginBottom:"12px"
+              minHeight: "48px",
+              borderRadius: "10px",
+              border:
+                pestana === "ingredientes"
+                  ? "1px solid #00d9ff"
+                  : "1px solid #303945",
+              background:
+                pestana === "ingredientes" ? "#102a31" : "#151a21",
+              color:
+                pestana === "ingredientes" ? "#7feaff" : "#aeb8c4",
+              fontWeight: "800",
+              cursor: "pointer",
             }}
           >
+            🧂 Ingredientes
+          </button>
 
-            {a.icono} {a.nombre}
+          <button
+            onClick={() => setPestana("procedimiento")}
+            style={{
+              minHeight: "48px",
+              borderRadius: "10px",
+              border:
+                pestana === "procedimiento"
+                  ? "1px solid #00d9ff"
+                  : "1px solid #303945",
+              background:
+                pestana === "procedimiento" ? "#102a31" : "#151a21",
+              color:
+                pestana === "procedimiento" ? "#7feaff" : "#aeb8c4",
+              fontWeight: "800",
+              cursor: "pointer",
+            }}
+          >
+            👨‍🍳 Preparación
+          </button>
+        </div>
 
+        {/* INGREDIENTES */}
+        {pestana === "ingredientes" && (
+          <div>
+            {ingredientes.length === 0 ? (
+              <div
+                style={{
+                  background: "#151a21",
+                  border: "1px solid #252d38",
+                  borderRadius: "14px",
+                  padding: "20px",
+                  color: "#aeb8c4",
+                }}
+              >
+                No hay ingredientes registrados.
+              </div>
+            ) : (
+              ingredientes.map((ingrediente, index) => (
+                <div
+                  key={ingrediente.id || index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "15px",
+                    background: "#151a21",
+                    border: "1px solid #252d38",
+                    borderRadius: "12px",
+                    padding: "15px 16px",
+                    marginBottom: "9px",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#d7f7ff",
+                      fontSize: "16px",
+                      fontWeight: "700",
+                    }}
+                  >
+                    {ingrediente.ingrediente}
+                  </div>
+
+                  <div
+                    style={{
+                      color: "#8f9baa",
+                      fontSize: "15px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {ingrediente.cantidad ?? "—"} {ingrediente.unidad || ""}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+        )}
 
-        ))}
+        {/* PREPARACIÓN */}
+        {pestana === "procedimiento" && (
+          <div>
+            {pasos.length > 0 ? (
+              pasos.map((paso, index) => (
+                <div
+                  key={paso.id || index}
+                  style={{
+                    background: "#151a21",
+                    border: "1px solid #252d38",
+                    borderRadius: "14px",
+                    padding: "20px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#00d9ff",
+                      fontSize: "13px",
+                      fontWeight: "800",
+                      marginBottom: "9px",
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    {paso.titulo || "Preparación"}
+                  </div>
 
+                  <div
+                    style={{
+                      color: "#d7dfe7",
+                      fontSize: "16px",
+                      lineHeight: "1.65",
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {paso.descripcion}
+                  </div>
+                </div>
+              ))
+            ) : receta.procedimiento ? (
+              <div
+                style={{
+                  background: "#151a21",
+                  border: "1px solid #252d38",
+                  borderRadius: "14px",
+                  padding: "20px",
+                  color: "#d7dfe7",
+                  fontSize: "16px",
+                  lineHeight: "1.65",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {receta.procedimiento}
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "#151a21",
+                  border: "1px solid #252d38",
+                  borderRadius: "14px",
+                  padding: "20px",
+                  color: "#8f9baa",
+                }}
+              >
+                No hay preparación registrada.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* OBSERVACIONES */}
+        {receta.observaciones && (
+          <div
+            style={{
+              marginTop: "20px",
+              background: "#151a21",
+              border: "1px solid #252d38",
+              borderRadius: "14px",
+              padding: "18px",
+            }}
+          >
+            <div
+              style={{
+                color: "#7f8b99",
+                fontSize: "12px",
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "8px",
+              }}
+            >
+              Observaciones
+            </div>
+
+            <div
+              style={{
+                color: "#c6d0da",
+                lineHeight: "1.5",
+              }}
+            >
+              {receta.observaciones}
+            </div>
+          </div>
+        )}
       </div>
-
-    ) : (
-
-      <p>
-        No hay alérgenos registrados.
-      </p>
-
-    )}
-
-  </>
-
-)}
-
     </div>
-
   );
-
 }

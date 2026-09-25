@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API } from "../config/api";
 
 export default function ProveedorForm({ actualizar }) {
   const [nombre, setNombre] = useState("");
@@ -11,7 +12,7 @@ export default function ProveedorForm({ actualizar }) {
 
     try {
       const res = await fetch(
-        "http://192.168.1.67:3001/api/proveedores",
+        `${API}/proveedores`,
         {
           method: "POST",
           headers: {

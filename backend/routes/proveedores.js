@@ -27,7 +27,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -77,7 +77,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -128,7 +128,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -160,7 +160,7 @@ module.exports = (pool) => {
 
       res.status(500).json({
         ok: false,
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
@@ -198,7 +198,7 @@ module.exports = (pool) => {
       console.error(err);
 
       res.status(500).json({
-        error: err.message
+        error: "Error interno del servidor"
       });
 
     }
